@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "objects": [
+    {
+      "id": 1,
+      "name": "Cube",
+      "kind": "cube",
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "visible": true,
+      "mirror": false
+    },
+    {
+      "id": 2,
+      "name": "sphere 2",
+      "kind": "sphere",
+      "position": [
+        2.0,
+        0.0,
+        0.0
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "visible": true,
+      "mirror": true
+    }
+  ],
+  "selected": 2
+}

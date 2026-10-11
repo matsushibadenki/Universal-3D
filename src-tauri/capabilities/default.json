@@ -1,0 +1,10 @@
+{
+  "identifier": "editor",
+  "windows": [
+    "main",
+    "panel-*"
+  ],
+  "permissions": [
+    "core:default"
+  ]
+}

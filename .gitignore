@@ -1,0 +1,35 @@
+# Frontend dependencies and build output
+node_modules/
+/dist/
+.vite/
+*.tsbuildinfo
+coverage/
+
+# Rust build output (including the Tauri application bundles)
+target/
+
+# Tauri-generated permission and configuration schemas
+/src-tauri/gen/schemas/
+
+# Local environment variables and secrets
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Logs
+*.log
+
+# macOS and Windows metadata
+.DS_Store
+._*
+Thumbs.db
+Desktop.ini
+
+# Local IDE settings and editor temporary files
+.idea/
+*.swp
+*.swo
+*~
+
+# Keep package-lock.json and Cargo.lock tracked for reproducible builds.

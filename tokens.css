@@ -1,0 +1,15 @@
+:root {
+  --color-bg: #171a1e;
+  --color-panel: #20242a;
+  --color-field: #191d22;
+  --color-border: #363e47;
+  --color-text: #e8ebed;
+  --color-muted: #aab3bd;
+  --color-accent: #b9de80;
+  --color-selected: #35452d;
+  --color-error: #ffb6ab;
+  --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-display: var(--font-body);
+  --radius-control: 3px;
+  --space-gutter: 16px;
+}
