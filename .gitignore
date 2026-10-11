@@ -33,3 +33,6 @@ Desktop.ini
 *~
 
 # Keep package-lock.json and Cargo.lock tracked for reproducible builds.
+
+# Temporary reference checkout; never ship or depend on this symlink.
+/ThreeX

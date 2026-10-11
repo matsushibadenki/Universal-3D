@@ -1,5 +1,7 @@
 # Universal 3D
 
+ThreeXとの協調方針とエンジン境界は [docs/engine-coordination.md](docs/engine-coordination.md) に記録しています。参照用シンボリックリンクへのビルド・実行依存は追加しません。
+
 Tauri 2 + Rust + wgpuによる統合3D制作アプリの初期実装です。現段階は基本シーン編集ができるMVPであり、Maya・3ds Max相当の全機能はまだ備えていません。
 
 ## 起動
