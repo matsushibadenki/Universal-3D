@@ -2,21 +2,68 @@
 mod document;
 mod editor;
 mod renderer;
-use document::{Document, Editor};
+mod viewport;
+mod workspace;
+use document::{Document, DocumentPatch, Editor};
 use editor::Command;
 use serde::Serialize;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Arc, Mutex};
+#[cfg(not(target_os = "macos"))]
+use std::sync::Arc;
+use std::sync::Mutex;
 use tauri::{Emitter, Manager};
 struct State {
     quit_approved: AtomicBool,
     quitting: AtomicBool,
     editor: Mutex<Editor>,
     renderer: Mutex<Option<renderer::Renderer>>,
+    workspace_write: Mutex<()>,
+    viewport_visible: AtomicBool,
+}
+fn save_workspace(app: &tauri::AppHandle) -> Result<(), String> {
+    let state = app.state::<State>();
+    let _write = state.workspace_write.lock().map_err(|e| e.to_string())?;
+    let floating = state
+        .editor
+        .lock()
+        .map_err(|e| e.to_string())?
+        .floating
+        .clone();
+    let path = app
+        .path()
+        .app_config_dir()
+        .map_err(|e| e.to_string())?
+        .join("workspace.json");
+    workspace::Workspace::new(floating).save(&path)
+}
+fn create_panel(app: &tauri::AppHandle, panel: &str) -> Result<(), String> {
+    if !["scene", "inspector", "timeline"].contains(&panel) {
+        return Err("Unknown panel".into());
+    }
+    tauri::WebviewWindowBuilder::new(
+        app,
+        format!("panel-{panel}"),
+        tauri::WebviewUrl::App(format!("index.html?panel={panel}").into()),
+    )
+    .title(format!("Universal 3D · {panel}"))
+    .inner_size(380., 560.)
+    .build()
+    .map_err(|e| e.to_string())?;
+    app.state::<State>()
+        .editor
+        .lock()
+        .map_err(|e| e.to_string())?
+        .floating
+        .push(panel.into());
+    Ok(())
 }
 fn request_quit(app: &tauri::AppHandle) {
     let state = app.state::<State>();
+    if let Err(error) = save_workspace(app) {
+        eprintln!("Workspace save failed: {error}");
+    }
     if !state.editor.lock().unwrap().dirty {
+        state.quit_approved.store(true, Ordering::SeqCst);
         app.exit(0);
         return;
     }
@@ -44,8 +91,8 @@ fn request_quit(app: &tauri::AppHandle) {
     });
 }
 #[derive(Clone, Serialize)]
-struct Snapshot {
-    document: Document,
+struct Metadata {
+    revision: u64,
     can_undo: bool,
     can_redo: bool,
     dirty: bool,
@@ -55,10 +102,24 @@ struct Snapshot {
     frame: u32,
     camera: [f32; 3],
 }
-fn snapshot(s: &State) -> Snapshot {
-    let e = s.editor.lock().unwrap();
-    Snapshot {
-        document: e.document.clone(),
+#[derive(Clone, Serialize)]
+struct Snapshot {
+    document: Document,
+    #[serde(flatten)]
+    metadata: Metadata,
+}
+#[derive(Serialize, Clone)]
+struct Change {
+    base_revision: u64,
+    patches: Vec<DocumentPatch>,
+    reset: Option<Document>,
+    selected: Option<u64>,
+    #[serde(flatten)]
+    metadata: Metadata,
+}
+fn metadata(e: &Editor, viewport: bool) -> Metadata {
+    Metadata {
+        revision: e.revision,
         can_undo: !e.undo.is_empty(),
         can_redo: !e.redo.is_empty(),
         dirty: e.dirty,
@@ -69,19 +130,54 @@ fn snapshot(s: &State) -> Snapshot {
             .map(|n| n.to_string_lossy().to_string())
             .unwrap_or_else(|| "Untitled.u3d".into()),
         floating: e.floating.clone(),
-        viewport: s.renderer.lock().unwrap().is_some(),
+        viewport,
         frame: e.frame,
         camera: [e.yaw, e.pitch, e.distance],
     }
 }
-fn broadcast(app: &tauri::AppHandle, s: &State) -> Result<Snapshot, String> {
-    let snap = snapshot(s);
-    app.emit("editor-changed", &snap)
-        .map_err(|e| e.to_string())?;
+fn snapshot(s: &State) -> Snapshot {
+    let mut e = s.editor.lock().unwrap();
+    // A snapshot can race between a mutation and its broadcast. Fence captured
+    // patches so subscribers never apply them twice to this newer document.
+    if !e.pending.is_empty() {
+        e.revision += 1;
+        e.pending.clear();
+        e.pending_reset = true;
+    }
+    Snapshot {
+        document: e.document.clone(),
+        metadata: metadata(&e, s.renderer.lock().unwrap().is_some()),
+    }
+}
+fn broadcast(app: &tauri::AppHandle, s: &State) -> Result<(), String> {
+    notify(app, s, false)
+}
+fn notify(app: &tauri::AppHandle, s: &State, reset: bool) -> Result<(), String> {
+    {
+        // Serialize sequence assignment, snapshot reads and emission under the same lock.
+        let mut e = s.editor.lock().map_err(|e| e.to_string())?;
+        let reset = reset || e.pending_reset;
+        let base_revision = e.revision;
+        e.revision = e.revision.checked_add(1).ok_or("Revision limit reached")?;
+        let change = Change {
+            base_revision,
+            patches: if reset { vec![] } else { e.pending.clone() },
+            reset: reset.then(|| e.document.clone()),
+            selected: e.document.selected,
+            metadata: metadata(&e, s.renderer.lock().unwrap().is_some()),
+        };
+        e.pending.clear();
+        e.pending_reset = false;
+        app.emit("editor-changed", &change)
+            .map_err(|e| e.to_string())?;
+    }
     draw(s)?;
-    Ok(snap)
+    Ok(())
 }
 fn draw(s: &State) -> Result<(), String> {
+    if !s.viewport_visible.load(Ordering::Acquire) {
+        return Ok(());
+    }
     let e = s.editor.lock().unwrap();
     if let Some(r) = s.renderer.lock().unwrap().as_mut() {
         r.draw(&e)?;
@@ -97,7 +193,7 @@ fn execute(
     app: tauri::AppHandle,
     state: tauri::State<State>,
     command: Command,
-) -> Result<Snapshot, String> {
+) -> Result<(), String> {
     {
         let mut e = state.editor.lock().map_err(|e| e.to_string())?;
         e.execute(command)?;
@@ -171,12 +267,15 @@ async fn open_document(
     {
         let mut e = state.editor.lock().unwrap();
         e.document = doc;
+        e.invalidate_document();
+        e.pending.clear();
+        e.pending_reset = true;
         e.undo.clear();
         e.redo.clear();
         e.dirty = false;
         e.path = Some(file.path().to_owned());
     }
-    broadcast(&app, &state)?;
+    notify(&app, &state, true)?;
     Ok(())
 }
 #[tauri::command]
@@ -193,17 +292,9 @@ async fn float_panel(
         w.set_focus().map_err(|e| e.to_string())?;
         return Ok(());
     }
-    tauri::WebviewWindowBuilder::new(
-        &app,
-        &label,
-        tauri::WebviewUrl::App(format!("index.html?panel={panel}").into()),
-    )
-    .title(format!("Universal 3D · {panel}"))
-    .inner_size(380., 560.)
-    .build()
-    .map_err(|e| e.to_string())?;
-    state.editor.lock().unwrap().floating.push(panel);
+    create_panel(&app, &panel)?;
     broadcast(&app, &state)?;
+    save_workspace(&app)?;
     Ok(())
 }
 #[tauri::command]
@@ -225,10 +316,67 @@ fn dock_panel(
         .floating
         .retain(|p| p != &panel);
     broadcast(&app, &state)?;
+    save_workspace(&app)?;
     Ok(())
 }
 #[tauri::command]
+async fn set_viewport_rect(
+    window: tauri::WebviewWindow,
+    rect: viewport::ViewportRect,
+) -> Result<(), String> {
+    if window.label() != "main" {
+        return Err("Only the main window owns the embedded viewport".into());
+    }
+    #[cfg(target_os = "macos")]
+    {
+        let handle = window.app_handle().clone();
+        let native_window = window.ns_window().map_err(|e| e.to_string())? as usize;
+        let scale = window.scale_factor().map_err(|e| e.to_string())?;
+        let (tx, rx) = std::sync::mpsc::channel();
+        window
+            .with_webview(move |web| {
+                let state = handle.state::<State>();
+                let result =
+                    viewport::update(web.inner(), native_window as *mut _, rect, scale, &state)
+                        .and_then(|created| {
+                            if created {
+                                broadcast(&handle, &state)
+                            } else {
+                                draw(&state)
+                            }
+                        });
+                let _ = tx.send(result);
+            })
+            .map_err(|e| e.to_string())?;
+        tauri::async_runtime::spawn_blocking(move || rx.recv().map_err(|e| e.to_string())?)
+            .await
+            .map_err(|e| e.to_string())?
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = rect;
+        Err("Embedded viewport is currently supported on macOS".into())
+    }
+}
+#[tauri::command]
 async fn open_viewport(app: tauri::AppHandle) -> Result<(), String> {
+    #[cfg(target_os = "macos")]
+    {
+        app.get_webview_window("main")
+            .ok_or("Missing main window")?
+            .set_focus()
+            .map_err(|e| e.to_string())?;
+        app.emit_to("main", "viewport-focus", ())
+            .map_err(|e| e.to_string())
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        open_detached_viewport(app).await
+    }
+}
+#[cfg(not(target_os = "macos"))]
+#[tauri::command]
+async fn open_detached_viewport(app: tauri::AppHandle) -> Result<(), String> {
     if let Some(w) = app.get_window("viewport") {
         w.set_focus().map_err(|e| e.to_string())?;
         return Ok(());
@@ -303,6 +451,19 @@ fn main() {
             quitting: AtomicBool::new(false),
             editor: Mutex::new(Editor::new()),
             renderer: Mutex::new(None),
+            workspace_write: Mutex::new(()),
+            viewport_visible: AtomicBool::new(true),
+        })
+        .setup(|app| {
+            let path = app.path().app_config_dir()?.join("workspace.json");
+            let layout = workspace::Workspace::load(&path);
+            for panel in layout.floating {
+                if let Err(error) = create_panel(app.handle(), &panel) {
+                    eprintln!("Panel restore failed: {error}");
+                }
+            }
+            broadcast(app.handle(), &app.state::<State>()).map_err(std::io::Error::other)?;
+            Ok(())
         })
         .invoke_handler(tauri::generate_handler![
             get_snapshot,
@@ -311,7 +472,8 @@ fn main() {
             open_document,
             float_panel,
             dock_panel,
-            open_viewport
+            open_viewport,
+            set_viewport_rect
         ])
         .on_window_event(|window, event| {
             let app = window.app_handle();
@@ -322,6 +484,16 @@ fn main() {
                     request_quit(app);
                 }
 
+                tauri::WindowEvent::Resized(_) | tauri::WindowEvent::ScaleFactorChanged { .. }
+                    if window.label() == "main" =>
+                {
+                    let _ = app.emit_to("main", "viewport-layout-needed", ());
+                }
+                #[cfg(target_os = "macos")]
+                tauri::WindowEvent::Destroyed if window.label() == "main" => {
+                    *s.renderer.lock().unwrap() = None;
+                    viewport::destroy();
+                }
                 tauri::WindowEvent::Resized(size) if window.label() == "viewport" => {
                     if let Some(r) = s.renderer.lock().unwrap().as_mut() {
                         r.resize(size.width, size.height);
@@ -330,15 +502,21 @@ fn main() {
                 }
                 tauri::WindowEvent::Destroyed if window.label() == "viewport" => {
                     *s.renderer.lock().unwrap() = None;
-                    let _ = app.emit("editor-changed", snapshot(&s));
+                    let _ = broadcast(app, &s);
                 }
                 tauri::WindowEvent::Destroyed if window.label().starts_with("panel-") => {
+                    if s.quit_approved.load(Ordering::SeqCst) {
+                        return;
+                    }
                     s.editor
                         .lock()
                         .unwrap()
                         .floating
                         .retain(|p| format!("panel-{p}") != window.label());
-                    let _ = app.emit("editor-changed", snapshot(&s));
+                    let _ = broadcast(app, &s);
+                    if let Err(error) = save_workspace(app) {
+                        eprintln!("Workspace save failed: {error}");
+                    }
                 }
                 _ => {}
             }
@@ -351,7 +529,72 @@ fn main() {
             if !state.quit_approved.load(Ordering::SeqCst) && state.editor.lock().unwrap().dirty {
                 api.prevent_exit();
                 request_quit(app);
+            } else if !state.quit_approved.swap(true, Ordering::SeqCst) {
+                if let Err(error) = save_workspace(app) {
+                    eprintln!("Workspace save failed: {error}");
+                }
             }
         }
     });
+}
+
+#[cfg(test)]
+mod sync_tests {
+    use super::*;
+    fn state() -> State {
+        State {
+            quit_approved: AtomicBool::new(false),
+            quitting: AtomicBool::new(false),
+            editor: Mutex::new(Editor::new()),
+            renderer: Mutex::new(None),
+            workspace_write: Mutex::new(()),
+            viewport_visible: AtomicBool::new(true),
+        }
+    }
+    #[test]
+    fn snapshot_fences_pending_edits_and_requests_reset() {
+        let state = state();
+        state
+            .editor
+            .lock()
+            .unwrap()
+            .execute(Command::Add {
+                kind: "sphere".into(),
+            })
+            .unwrap();
+        let captured = snapshot(&state);
+        assert_eq!(captured.metadata.revision, 1);
+        let editor = state.editor.lock().unwrap();
+        assert!(editor.pending.is_empty());
+        assert!(editor.pending_reset);
+        assert_eq!(captured.document, editor.document);
+        drop(editor);
+        assert_eq!(snapshot(&state).metadata.revision, 1);
+    }
+    #[test]
+    fn update_payload_has_one_object_and_no_full_document() {
+        let mut editor = Editor::new();
+        for id in 2..=10_000 {
+            let mut o = editor.document.objects[0].clone();
+            o.id = id;
+            editor.document.objects.push(o);
+        }
+        let mut object = editor.document.objects[7000].clone();
+        object.position[0] = 2.;
+        editor.execute(Command::Update { object }).unwrap();
+        editor.revision = 1;
+        let change = Change {
+            base_revision: 0,
+            patches: editor.pending.clone(),
+            reset: None,
+            selected: editor.document.selected,
+            metadata: metadata(&editor, false),
+        };
+        let json = serde_json::to_value(&change).unwrap();
+        assert!(json.get("document").is_none());
+        assert_eq!(json["revision"], 1);
+        assert_eq!(json["patches"][0]["objects"].as_array().unwrap().len(), 1);
+        assert_eq!(json["patches"][0]["start"], 7000);
+        assert!(serde_json::to_vec(&change).unwrap().len() < 1024);
+    }
 }

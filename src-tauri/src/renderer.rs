@@ -1,7 +1,9 @@
-use crate::document::{Editor, Object};
+use crate::document::{Editor, Object, RenderChange};
 use std::collections::{HashMap, HashSet};
 use std::ops::Range;
-use std::sync::{Arc, OnceLock};
+#[cfg(not(target_os = "macos"))]
+use std::sync::Arc;
+use std::sync::OnceLock;
 use wgpu::util::DeviceExt;
 
 type Matrix = [[f32; 4]; 4];
@@ -32,7 +34,7 @@ struct GpuScene {
     previous_camera: Option<Matrix>,
     grid: wgpu::Buffer,
     batches: [Batch; 3],
-    instance_cache: InstanceCache,
+    instance_cache: IncrementalInstances,
 }
 pub struct Renderer {
     surface: wgpu::Surface<'static>,
@@ -265,7 +267,7 @@ impl GpuScene {
             previous_camera: None,
             grid: static_buffer(&grid),
             batches,
-            instance_cache: InstanceCache::default(),
+            instance_cache: IncrementalInstances::default(),
         }
     }
     fn update(&mut self, device: &wgpu::Device, queue: &wgpu::Queue, editor: &Editor, aspect: f32) {
@@ -274,13 +276,30 @@ impl GpuScene {
             queue.write_buffer(&self.camera, 0, bytemuck::bytes_of(&camera));
             self.previous_camera = Some(camera);
         }
-        for (batch, instances) in self
-            .batches
-            .iter_mut()
-            .zip(self.instance_cache.build(editor).0)
-        {
+        let update = self.instance_cache.update(editor);
+        for (index, batch) in self.batches.iter_mut().enumerate() {
+            let instances = &self.instance_cache.groups[index];
             batch.instance_count = instances.len() as u32;
-            batch.instances.upload(device, queue, &instances);
+            if update.full
+                || std::mem::size_of_val(instances.as_slice()) as u64 > batch.instances.capacity
+            {
+                batch.instances.upload(device, queue, instances);
+            } else {
+                batch
+                    .instances
+                    .previous
+                    .resize(instances.len(), bytemuck::Zeroable::zeroed());
+                for range in &update.ranges[index] {
+                    let bytes = bytemuck::cast_slice(&instances[range.clone()]);
+                    queue.write_buffer(
+                        &batch.instances.buffer,
+                        (range.start * std::mem::size_of::<Instance>()) as u64,
+                        bytes,
+                    );
+                    batch.instances.previous[range.clone()]
+                        .copy_from_slice(&instances[range.clone()]);
+                }
+            }
         }
     }
     fn encode(
@@ -332,10 +351,33 @@ impl GpuScene {
     }
 }
 impl Renderer {
+    #[cfg(not(target_os = "macos"))]
     pub async fn new(window: Arc<tauri::Window>) -> Result<Self, String> {
         let size = window.inner_size().map_err(|e| e.to_string())?;
         let instance = wgpu::Instance::default();
         let surface = instance.create_surface(window).map_err(|e| e.to_string())?;
+        Self::from_surface(instance, surface, size.width, size.height).await
+    }
+    #[cfg(target_os = "macos")]
+    pub async unsafe fn from_metal_layer(
+        layer: *mut std::ffi::c_void,
+        width: u32,
+        height: u32,
+    ) -> Result<Self, String> {
+        let instance = wgpu::Instance::default();
+        // Caller owns a live CAMetalLayer on the main thread. Metal's Surface retains it.
+        let surface = unsafe {
+            instance.create_surface_unsafe(wgpu::SurfaceTargetUnsafe::CoreAnimationLayer(layer))
+        }
+        .map_err(|e| e.to_string())?;
+        Self::from_surface(instance, surface, width, height).await
+    }
+    async fn from_surface(
+        instance: wgpu::Instance,
+        surface: wgpu::Surface<'static>,
+        width: u32,
+        height: u32,
+    ) -> Result<Self, String> {
         let adapter = instance
             .request_adapter(&wgpu::RequestAdapterOptions {
                 compatible_surface: Some(&surface),
@@ -348,7 +390,7 @@ impl Renderer {
             .await
             .map_err(|e| e.to_string())?;
         let config = surface
-            .get_default_config(&adapter, size.width.max(1), size.height.max(1))
+            .get_default_config(&adapter, width.max(1), height.max(1))
             .ok_or("No surface configuration")?;
         surface.configure(&device, &config);
         let scene = GpuScene::new(&device, config.format);
@@ -396,6 +438,122 @@ impl Renderer {
         Ok(())
     }
 }
+fn world_point(matrix: Matrix, point: [f32; 3]) -> [f32; 3] {
+    std::array::from_fn(|i| matrix[3][i] + (0..3).map(|j| matrix[j][i] * point[j]).sum::<f32>())
+}
+fn object_bounds(object: &Object) -> ([f32; 3], [f32; 3]) {
+    let mut min = [f32::INFINITY; 3];
+    let mut max = [f32::NEG_INFINITY; 3];
+    for mirrored in [false, true]
+        .into_iter()
+        .take(if object.mirror { 2 } else { 1 })
+    {
+        let matrix = model_matrix(object, mirrored);
+        for point in geometry(&object.kind).iter().flatten() {
+            let point = world_point(matrix, *point);
+            for i in 0..3 {
+                min[i] = min[i].min(point[i]);
+                max[i] = max[i].max(point[i]);
+            }
+        }
+    }
+    (min, max)
+}
+pub fn frame_selection(editor: &mut Editor, aspect: f32) -> Result<(), String> {
+    if !aspect.is_finite() || !(0.01..=100.).contains(&aspect) {
+        return Err("Invalid viewport aspect".into());
+    }
+    if let Some(object) = editor
+        .document
+        .selected
+        .and_then(|id| editor.indexed_object(id).map(|(_, o)| o))
+    {
+        let (min, max) = object_bounds(object);
+        let target = std::array::from_fn(|i| (min[i] + max[i]) * 0.5);
+        let radius = (dot(sub(max, min), sub(max, min)).sqrt() * 0.5).max(0.01);
+        let half_fov = (aspect.min(1.) / 1.8).atan();
+        editor.camera_target = target;
+        editor.distance = (radius / half_fov.sin() * 1.15).clamp(0.05, 50000.);
+    }
+    Ok(())
+}
+pub fn pick(editor: &Editor, x: f32, y: f32, aspect: f32) -> Result<Option<u64>, String> {
+    if ![x, y, aspect].iter().all(|v| v.is_finite())
+        || x.abs() > 1.
+        || y.abs() > 1.
+        || !(0.01..=100.).contains(&aspect)
+    {
+        return Err("Invalid pick coordinates".into());
+    }
+    let (eye, right, up, forward) = camera_basis(editor);
+    let ray = normalize(std::array::from_fn(|i| {
+        forward[i] + right[i] * x * aspect / 1.8 + up[i] * y / 1.8
+    }));
+    let mut closest = f32::INFINITY;
+    let mut hit = None;
+    // On click only. Geometry stays cached in Rust; broad-phase spatial acceleration is a later step.
+    for object in editor.document.objects.iter().filter(|o| o.visible) {
+        for mirrored in [false, true]
+            .into_iter()
+            .take(if object.mirror { 2 } else { 1 })
+        {
+            let center = [
+                if mirrored {
+                    -object.position[0]
+                } else {
+                    object.position[0]
+                },
+                object.position[1],
+                object.position[2],
+            ];
+            let radius = object.scale.iter().map(|v| v.abs()).fold(0., f32::max)
+                * match object.kind.as_str() {
+                    "sphere" => 0.5,
+                    "plane" => 1.5,
+                    _ => 0.867,
+                };
+            let to_center = sub(center, eye);
+            let projection = dot(to_center, ray);
+            if projection + radius < 0.
+                || dot(to_center, to_center) - projection * projection > radius * radius
+            {
+                continue;
+            }
+            let matrix = model_matrix(object, mirrored);
+            for face in geometry(&object.kind) {
+                let [a, b, c] = face.map(|p| world_point(matrix, p));
+                let ab = sub(b, a);
+                let ac = sub(c, a);
+                let h = cross(ray, ac);
+                let det = dot(ab, h);
+                if det.abs() < 1e-8 {
+                    continue;
+                }
+                let inv = 1. / det;
+                let s = sub(eye, a);
+                let u = dot(s, h) * inv;
+                if !(0. ..=1.).contains(&u) {
+                    continue;
+                }
+                let q = cross(s, ab);
+                let v = dot(ray, q) * inv;
+                if v < 0. || u + v > 1. {
+                    continue;
+                }
+                let t = dot(ac, q) * inv;
+                let depth = t * dot(ray, forward);
+                if depth >= (editor.distance * 0.1).min(0.1)
+                    && depth <= (editor.distance * 4.).max(100.)
+                    && t < closest
+                {
+                    closest = t;
+                    hit = Some(object.id);
+                }
+            }
+        }
+    }
+    Ok(hit)
+}
 // Preserve the existing degree-based X, then Y, then Z rotation contract.
 // ThreeX's Euler composition is not imported: its contract differs for compound rotations.
 fn model_matrix(object: &Object, mirrored: bool) -> Matrix {
@@ -428,16 +586,23 @@ fn model_matrix(object: &Object, mirrored: bool) -> Matrix {
     ];
     matrix
 }
-fn camera_matrix(editor: &Editor, aspect: f32) -> Matrix {
-    let eye = [
+pub fn camera_basis(editor: &Editor) -> ([f32; 3], [f32; 3], [f32; 3], [f32; 3]) {
+    let offset = [
         editor.distance * editor.pitch.cos() * editor.yaw.sin(),
         editor.distance * editor.pitch.sin(),
         editor.distance * editor.pitch.cos() * editor.yaw.cos(),
     ];
-    let forward = normalize(eye.map(|v| -v));
+    let eye = std::array::from_fn(|i| editor.camera_target[i] + offset[i]);
+    let forward = normalize(offset.map(|v| -v));
     let right = normalize(cross(forward, [0., 1., 0.]));
     let up = cross(right, forward);
-    let z_scale = 100. / 99.9;
+    (eye, right, up, forward)
+}
+fn camera_matrix(editor: &Editor, aspect: f32) -> Matrix {
+    let (eye, right, up, forward) = camera_basis(editor);
+    let far = (editor.distance * 4.).max(100.);
+    let near = (editor.distance * 0.1).min(0.1);
+    let z_scale = far / (far - near);
     let mut m = [[0.; 4]; 4];
     for (axis, column) in m.iter_mut().take(3).enumerate() {
         *column = [
@@ -450,7 +615,7 @@ fn camera_matrix(editor: &Editor, aspect: f32) -> Matrix {
     m[3] = [
         -dot(eye, right) * 1.8 / aspect,
         -dot(eye, up) * 1.8,
-        -dot(eye, forward) * z_scale - 0.1001,
+        -dot(eye, forward) * z_scale - near * z_scale,
         -dot(eye, forward),
     ];
     m
@@ -513,6 +678,197 @@ impl InstanceCache {
             }
         }
         (groups, rebuilt)
+    }
+}
+fn shape_batch(object: &Object) -> usize {
+    match object.kind.as_str() {
+        "sphere" => 1,
+        "plane" => 2,
+        _ => 0,
+    }
+}
+#[derive(Default)]
+struct IncrementalInstances {
+    base: InstanceCache,
+    groups: [Vec<Instance>; 3],
+    // ID -> (shape batch, first instance, instance count).
+    slots: HashMap<u64, (usize, usize, usize)>,
+    owners: [Vec<u64>; 3],
+    revision: Option<u64>,
+}
+struct InstanceUpdate {
+    full: bool,
+    ranges: [Vec<Range<usize>>; 3],
+    visited: usize,
+}
+impl IncrementalInstances {
+    fn repair_slots(&mut self, batch: usize, start: usize) {
+        for index in start..self.owners[batch].len() {
+            let id = self.owners[batch][index];
+            if index == 0 || self.owners[batch][index - 1] != id {
+                self.slots.get_mut(&id).unwrap().1 = index;
+            }
+        }
+    }
+    fn update(&mut self, editor: &Editor) -> InstanceUpdate {
+        let mut update = InstanceUpdate {
+            full: false,
+            ranges: Default::default(),
+            visited: 0,
+        };
+        if self.revision == Some(editor.render_revision) {
+            return update;
+        }
+        let full = self.revision.is_none()
+            || self.revision.is_some_and(|revision| {
+                revision > editor.render_revision
+                    || editor
+                        .render_changes
+                        .front()
+                        .is_none_or(|(first, _)| revision + 1 < *first)
+                    || editor
+                        .render_changes
+                        .iter()
+                        .any(|(r, change)| *r > revision && matches!(change, RenderChange::Reset))
+            });
+        if full {
+            self.groups = self.base.build(editor).0;
+            self.slots.clear();
+            self.owners = Default::default();
+            let mut offsets = [0; 3];
+            for object in &editor.document.objects {
+                update.visited += 1;
+                if !object.visible {
+                    continue;
+                }
+                let batch = match object.kind.as_str() {
+                    "sphere" => 1,
+                    "plane" => 2,
+                    _ => 0,
+                };
+                let count = 1 + usize::from(object.mirror);
+                self.slots.insert(object.id, (batch, offsets[batch], count));
+                self.owners[batch].extend(std::iter::repeat_n(object.id, count));
+                offsets[batch] += count;
+            }
+            update.full = true;
+        } else {
+            let revision = self.revision.unwrap();
+            let mut ids = HashSet::new();
+            for (r, change) in &editor.render_changes {
+                if *r > revision {
+                    if let RenderChange::Objects(changed) = change {
+                        ids.extend(changed);
+                    }
+                }
+            }
+            // Remove vanished/moved/resized slots first so ordering searches see only live IDs.
+            let mut dirty: [Vec<Range<usize>>; 3] = Default::default();
+            let mut structural_start: [Option<usize>; 3] = [None; 3];
+            for &id in &ids {
+                if let Some(&(batch, start, count)) = self.slots.get(id) {
+                    let desired = editor.indexed_object(*id).filter(|(_, o)| o.visible);
+                    let same = desired.is_some_and(|(index, o)| {
+                        let left = start.checked_sub(1).map(|i| self.owners[batch][i]);
+                        let right = self.owners[batch].get(start + count).copied();
+                        let ordered = left.is_none_or(|id| {
+                            editor.indexed_object(id).is_some_and(|(i, _)| i < index)
+                        }) && right.is_none_or(|id| {
+                            editor.indexed_object(id).is_some_and(|(i, _)| i > index)
+                        });
+                        shape_batch(o) == batch && 1 + usize::from(o.mirror) == count && ordered
+                    });
+                    if !same {
+                        self.groups[batch].drain(start..start + count);
+                        self.owners[batch].drain(start..start + count);
+                        self.slots.remove(id);
+                        self.repair_slots(batch, start);
+                        structural_start[batch] =
+                            Some(structural_start[batch].map_or(start, |old| old.min(start)));
+                        dirty[batch].push(start..self.groups[batch].len());
+                    }
+                }
+            }
+            for id in ids {
+                update.visited += 1;
+                let Some((index, object)) = editor.indexed_object(*id) else {
+                    self.base.transforms.remove(id);
+                    continue;
+                };
+                if !object.visible {
+                    continue;
+                }
+                let key = TransformKey::from(object);
+                let cached = self.base.transforms.entry(*id).or_insert_with(|| {
+                    (
+                        key,
+                        [model_matrix(object, false), model_matrix(object, true)],
+                    )
+                });
+                if cached.0 != key {
+                    *cached = (
+                        key,
+                        [model_matrix(object, false), model_matrix(object, true)],
+                    );
+                }
+                let color = if editor.document.selected == Some(object.id) {
+                    [0.65, 0.79, 0.45, 1.]
+                } else {
+                    [0.58, 0.62, 0.67, 1.]
+                };
+                let count = 1 + usize::from(object.mirror);
+                let values: Vec<Instance> = (0..count)
+                    .map(|mirror| Instance {
+                        model: cached.1[mirror],
+                        color,
+                    })
+                    .collect();
+                if let Some(&(batch, start, _)) = self.slots.get(id) {
+                    for (offset, value) in values.into_iter().enumerate() {
+                        if self.groups[batch][start + offset] != value {
+                            self.groups[batch][start + offset] = value;
+                            dirty[batch].push(start + offset..start + offset + 1);
+                        }
+                    }
+                } else {
+                    let batch = shape_batch(object);
+                    let start = self.owners[batch]
+                        .partition_point(|owner| editor.indexed_object(*owner).unwrap().0 < index);
+                    self.groups[batch].splice(start..start, values);
+                    self.owners[batch].splice(start..start, std::iter::repeat_n(*id, count));
+                    self.slots.insert(*id, (batch, start, count));
+                    self.repair_slots(batch, start);
+                    structural_start[batch] =
+                        Some(structural_start[batch].map_or(start, |old| old.min(start)));
+                    dirty[batch].push(start..self.groups[batch].len());
+                }
+            }
+            for (batch, ranges) in dirty.iter_mut().enumerate() {
+                if let Some(start) = structural_start[batch] {
+                    ranges.push(start..self.groups[batch].len());
+                }
+                // Structural edits can extend the tail after an earlier removal/insertion.
+                // All slots after the earliest structural offset are conservatively dirty.
+                ranges.sort_unstable_by_key(|range| range.start);
+                for range in ranges.iter() {
+                    let range = range.start.min(self.groups[batch].len())
+                        ..range.end.min(self.groups[batch].len());
+                    if range.is_empty() {
+                        continue;
+                    }
+                    if let Some(last) = update.ranges[batch]
+                        .last_mut()
+                        .filter(|last| last.end >= range.start)
+                    {
+                        last.end = last.end.max(range.end);
+                    } else {
+                        update.ranges[batch].push(range);
+                    }
+                }
+            }
+        }
+        self.revision = Some(editor.render_revision);
+        update
     }
 }
 #[cfg(test)]
@@ -812,6 +1168,206 @@ mod tests {
     }
 
     #[test]
+    fn revisions_limit_visits_to_changed_ids_for_ten_thousand_objects() {
+        use crate::editor::Command;
+        let mut e = Editor::new();
+        for id in 2..=10_000 {
+            let mut o = e.document.objects[0].clone();
+            o.id = id;
+            e.document.objects.push(o);
+        }
+        e.invalidate_document();
+        let mut cache = IncrementalInstances::default();
+        assert!(cache.update(&e).full);
+        e.execute(Command::Camera {
+            yaw: 1.,
+            pitch: 0.5,
+            distance: 7.,
+        })
+        .unwrap();
+        e.execute(Command::SetFrame { frame: 42 }).unwrap();
+        assert_eq!(cache.update(&e).visited, 0);
+        let mut object = e.document.objects[7000].clone();
+        object.position[0] = 3.;
+        e.execute(Command::Update { object }).unwrap();
+        let result = cache.update(&e);
+        assert!(!result.full);
+        assert_eq!(result.visited, 1);
+        assert_eq!(result.ranges[0], vec![7000..7001]);
+        e.execute(Command::Select { id: 2 }).unwrap();
+        let result = cache.update(&e);
+        assert_eq!(result.visited, 2);
+        assert_eq!(result.ranges[0], vec![0..2]);
+        let mut object = e.document.objects[7000].clone();
+        object.name = "New name".into();
+        e.execute(Command::Update { object }).unwrap();
+        let result = cache.update(&e);
+        assert_eq!(result.visited, 1);
+        assert!(result.ranges.iter().all(Vec::is_empty));
+        assert!(cache.groups == scene_instances(&e));
+        e.execute(Command::Undo).unwrap();
+        cache.update(&e);
+        assert!(cache.groups == scene_instances(&e));
+        e.execute(Command::Undo).unwrap();
+        cache.update(&e);
+        assert!(cache.groups == scene_instances(&e));
+        e.execute(Command::Redo).unwrap();
+        cache.update(&e);
+        assert!(cache.groups == scene_instances(&e));
+        // Independent renderers consume the same retained history, never drain it.
+        let mut second = IncrementalInstances::default();
+        second.update(&e);
+        let mut object = e.document.objects[7000].clone();
+        object.position[1] = 2.;
+        e.execute(Command::Update { object }).unwrap();
+        assert_eq!(cache.update(&e).visited, 1);
+        assert_eq!(second.update(&e).visited, 1);
+        assert!(cache.groups == second.groups);
+    }
+    #[test]
+    fn structural_changes_history_gaps_and_replacements_rebuild_safely() {
+        use crate::editor::Command;
+        let mut e = Editor::new();
+        let mut cache = IncrementalInstances::default();
+        cache.update(&e);
+        for command in [
+            Command::Add {
+                kind: "sphere".into(),
+            },
+            Command::Delete,
+            Command::Undo,
+            Command::Redo,
+        ] {
+            e.execute(command).unwrap();
+            assert!(!cache.update(&e).full);
+            assert!(cache.groups == scene_instances(&e));
+        }
+        for flag in 0..3 {
+            let mut object = e.document.objects[0].clone();
+            match flag {
+                0 => object.visible = false,
+                1 => object.visible = true,
+                _ => object.mirror = true,
+            };
+            e.execute(Command::Update { object }).unwrap();
+            assert!(!cache.update(&e).full);
+            assert!(cache.groups == scene_instances(&e));
+        }
+        let mut object = e.document.objects[0].clone();
+        object.kind = "plane".into();
+        e.execute(Command::Update { object }).unwrap();
+        assert!(!cache.update(&e).full);
+        for step in 1..=140 {
+            let mut object = e.document.objects[0].clone();
+            object.position[0] = step as f32;
+            e.execute(Command::Update { object }).unwrap();
+        }
+        assert_eq!(e.render_changes.len(), 128);
+        assert!(cache.update(&e).full);
+        assert!(cache.groups == scene_instances(&e));
+        e.document = crate::document::Document::default();
+        e.invalidate_document();
+        assert!(cache.update(&e).full);
+        assert!(cache.groups == scene_instances(&e));
+    }
+
+    #[test]
+    fn mixed_structural_edits_match_full_build_and_replay_gpu_ranges() {
+        use crate::editor::Command;
+        let mut e = Editor::new();
+        let mut cache = IncrementalInstances::default();
+        cache.update(&e);
+        let mut shadow = cache.groups.clone();
+        let mut seed = 42_u64;
+        for step in 0..600 {
+            seed = seed.wrapping_mul(6364136223846793005).wrapping_add(1);
+            let choice = (seed >> 32) as usize;
+            let index = choice % e.document.objects.len().max(1);
+            if e.document.objects.is_empty() || choice.is_multiple_of(8) {
+                e.execute(Command::Add {
+                    kind: ["cube", "sphere", "plane"][choice % 3].into(),
+                })
+                .unwrap();
+            } else {
+                let mut object = e.document.objects[index].clone();
+                match choice % 8 {
+                    1 => {
+                        object.kind = ["cube", "sphere", "plane"][(choice / 8) % 3].into();
+                        e.execute(Command::Update { object }).unwrap();
+                    }
+                    2 => {
+                        object.visible = !object.visible;
+                        e.execute(Command::Update { object }).unwrap();
+                    }
+                    3 => {
+                        object.mirror = !object.mirror;
+                        e.execute(Command::Update { object }).unwrap();
+                    }
+                    4 => {
+                        e.execute(Command::Select { id: object.id }).unwrap();
+                        e.execute(Command::Delete).unwrap();
+                    }
+                    5 => e.execute(Command::Undo).unwrap(),
+                    6 => e.execute(Command::Redo).unwrap(),
+                    _ => {
+                        object.position = [step as f32, 1., 2.];
+                        e.execute(Command::Update { object }).unwrap();
+                    }
+                }
+            }
+            // Accumulate several changes between render calls, including delete/re-add.
+            if step % 7 != 0 {
+                continue;
+            }
+            let update = cache.update(&e);
+            assert!(!update.full);
+            assert!(cache.groups == scene_instances(&e), "oracle step {step}");
+            for (batch, values) in shadow.iter_mut().enumerate() {
+                values.resize(cache.groups[batch].len(), bytemuck::Zeroable::zeroed());
+                for range in &update.ranges[batch] {
+                    values[range.clone()].copy_from_slice(&cache.groups[batch][range.clone()]);
+                }
+            }
+            assert!(shadow == cache.groups, "range replay step {step}");
+            e.document.validate().unwrap();
+        }
+        // Arbitrary same-length reorder via the core splice API also preserves batch order.
+        let mut reversed = e.document.objects.clone();
+        reversed.reverse();
+        e.edit_span(0, reversed.len(), reversed, e.document.selected)
+            .unwrap();
+        cache.update(&e);
+        assert!(cache.groups == scene_instances(&e));
+    }
+    #[test]
+    fn structural_change_touches_only_source_and_destination_batches() {
+        use crate::editor::Command;
+        let mut e = Editor::new();
+        for id in 2..=10_000 {
+            let mut object = e.document.objects[0].clone();
+            object.id = id;
+            e.document.objects.push(object);
+        }
+        e.invalidate_document();
+        e.select(None);
+        let mut cache = IncrementalInstances::default();
+        cache.update(&e);
+        let mut object = e.document.objects[5000].clone();
+        object.kind = "sphere".into();
+        e.execute(Command::Update { object }).unwrap();
+        let update = cache.update(&e);
+        assert!(!update.full);
+        assert_eq!(update.visited, 1);
+        assert_eq!(update.ranges[0], vec![5000..9999]);
+        assert_eq!(update.ranges[1], vec![0..1]);
+        assert!(update.ranges[2].is_empty());
+        assert!(cache.groups == scene_instances(&e));
+        e.execute(Command::Undo).unwrap();
+        cache.update(&e);
+        assert!(cache.groups == scene_instances(&e));
+    }
+
+    #[test]
     #[ignore = "Requires a GPU adapter; run explicitly on a GPU-enabled host"]
     fn gpu_offscreen_instanced_scene() {
         pollster::block_on(async {
@@ -890,6 +1446,11 @@ mod tests {
                 });
                 let depth = depth_view(&device, size, size);
                 scene.update(&device, &queue, &e, 1.);
+                let mut object = e.document.objects[0].clone();
+                object.position[0] += 0.1;
+                e.execute(crate::editor::Command::Update { object })
+                    .unwrap();
+                scene.update(&device, &queue, &e, 1.);
                 let mut encoder = device.create_command_encoder(&Default::default());
                 scene.encode(
                     &mut encoder,
@@ -899,10 +1460,132 @@ mod tests {
                 queue.submit([encoder.finish()]);
                 device.poll(wgpu::PollType::wait_indefinitely()).unwrap();
             }
+            for step in 0..18 {
+                let mut object = e.document.objects[step % e.document.objects.len()].clone();
+                object.mirror = !object.mirror;
+                object.visible = step % 4 != 0;
+                object.kind = ["cube", "sphere", "plane"][step % 3].into();
+                e.execute(crate::editor::Command::Update { object })
+                    .unwrap();
+                scene.update(&device, &queue, &e, 1.);
+                assert!(scene.instance_cache.groups == scene_instances(&e));
+            }
+            e.execute(crate::editor::Command::Add {
+                kind: "cube".into(),
+            })
+            .unwrap();
+            scene.update(&device, &queue, &e, 1.);
+            e.execute(crate::editor::Command::Delete).unwrap();
+            scene.update(&device, &queue, &e, 1.);
+            e.execute(crate::editor::Command::Undo).unwrap();
+            scene.update(&device, &queue, &e, 1.);
+            for batch in 0..3 {
+                if scene.instance_cache.groups[batch].is_empty() {
+                    continue;
+                }
+                let expected =
+                    bytemuck::cast_slice::<Instance, u8>(&scene.instance_cache.groups[batch]);
+                let readback = device.create_buffer(&wgpu::BufferDescriptor {
+                    label: None,
+                    size: expected.len() as u64,
+                    usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::MAP_READ,
+                    mapped_at_creation: false,
+                });
+                let mut encoder = device.create_command_encoder(&Default::default());
+                encoder.copy_buffer_to_buffer(
+                    &scene.batches[batch].instances.buffer,
+                    0,
+                    &readback,
+                    0,
+                    expected.len() as u64,
+                );
+                queue.submit([encoder.finish()]);
+                let (tx, rx) = std::sync::mpsc::channel();
+                readback
+                    .slice(..)
+                    .map_async(wgpu::MapMode::Read, move |r| tx.send(r).unwrap());
+                device.poll(wgpu::PollType::wait_indefinitely()).unwrap();
+                rx.recv().unwrap().unwrap();
+                assert_eq!(&*readback.slice(..).get_mapped_range(), expected);
+                readback.unmap();
+            }
             e.document.objects.clear();
+            e.invalidate_document();
             scene.update(&device, &queue, &e, 1.);
             assert!(scene.batches.iter().all(|b| b.instance_count == 0));
             assert!(device.pop_error_scope().await.is_none());
         });
+    }
+}
+
+#[cfg(test)]
+mod interaction_tests {
+    use super::*;
+    #[test]
+    fn picking_follows_pan_projection_visibility_and_mirrored_geometry() {
+        let mut e = Editor::new();
+        e.yaw = 0.;
+        e.pitch = 0.;
+        assert_eq!(pick(&e, 0., 0., 1.).unwrap(), Some(1));
+        assert_eq!(pick(&e, 0.99, 0.99, 1.).unwrap(), None);
+        let mut object = e.document.objects[0].clone();
+        object.position = [2., 0., 0.];
+        object.mirror = true;
+        e.execute(crate::editor::Command::Update {
+            object: object.clone(),
+        })
+        .unwrap();
+        e.camera_target = [-2., 0., 0.];
+        assert_eq!(pick(&e, 0., 0., 1.).unwrap(), Some(1));
+        object.visible = false;
+        e.execute(crate::editor::Command::Update { object })
+            .unwrap();
+        assert_eq!(pick(&e, 0., 0., 1.).unwrap(), None);
+        assert!(pick(&e, f32::NAN, 0., 1.).is_err());
+    }
+    #[test]
+    fn picking_chooses_nearest_surface_and_handles_negative_scale() {
+        let mut e = Editor::new();
+        e.yaw = 0.;
+        e.pitch = 0.;
+        let mut object = e.document.objects[0].clone();
+        object.id = 2;
+        object.position[2] = 2.;
+        object.scale = [-1., 2., 1.];
+        let mut doc = e.document.clone();
+        doc.objects.push(object);
+        e.commit(doc).unwrap();
+        assert_eq!(pick(&e, 0., 0., 1.).unwrap(), Some(2));
+    }
+    #[test]
+    fn frame_selection_fits_rotated_mirrored_bounds_at_narrow_aspect() {
+        let mut e = Editor::new();
+        let mut object = e.document.objects[0].clone();
+        object.position = [5., 2., 3.];
+        object.rotation = [25., 40., 10.];
+        object.scale = [2., 3., 1.];
+        object.mirror = true;
+        e.execute(crate::editor::Command::Update {
+            object: object.clone(),
+        })
+        .unwrap();
+        let history = e.undo.len();
+        frame_selection(&mut e, 0.5).unwrap();
+        assert_eq!(e.camera_target[0], 0.);
+        let matrix = camera_matrix(&e, 0.5);
+        for mirrored in [false, true] {
+            for point in geometry(&object.kind).iter().flatten() {
+                let world = world_point(model_matrix(&object, mirrored), *point);
+                let clip: [f32; 4] = std::array::from_fn(|i| {
+                    matrix[3][i] + (0..3).map(|j| matrix[j][i] * world[j]).sum::<f32>()
+                });
+                assert!(
+                    clip[3] > 0.
+                        && (clip[0] / clip[3]).abs() < 1.
+                        && (clip[1] / clip[3]).abs() < 1.
+                );
+            }
+        }
+        assert_eq!(history, e.undo.len());
     }
 }

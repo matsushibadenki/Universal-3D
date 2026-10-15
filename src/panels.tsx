@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, useRef, type ReactNode } from "react";
 import {
   Box,
   Circle,
@@ -11,7 +11,13 @@ import {
   Layers,
   Film,
   Trash2,
+  Search,
+  ChevronRight,
+  SkipBack,
+  SkipForward,
+  ChevronLeft,
 } from "lucide-react";
+import { IconButton, InfoTip } from "./EditorChrome";
 import { desktop } from "./store";
 import type { Snapshot, SceneObject, Command } from "./types";
 import type { Key } from "./i18n";
@@ -69,10 +75,24 @@ export function Panel({
   );
 }
 export function Scene(p: PanelProps) {
+  const [query, setQuery] = useState("");
+  const objects = p.s.document.objects.filter((o) =>
+    o.name.toLocaleLowerCase().includes(query.toLocaleLowerCase()),
+  );
   return (
     <Panel id="scene" title={p.t("scene")} icon={Layers} p={p}>
+      <label className="scene-search">
+        <Search size={14} />
+        <input
+          type="search"
+          placeholder={p.t("search")}
+          aria-label={p.t("search")}
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+        />
+      </label>
       <div className="scene-list">
-        {p.s.document.objects.map((o) => {
+        {objects.map((o) => {
           const Icon = icons[o.kind] ?? Box;
           return (
             <div
@@ -81,9 +101,11 @@ export function Scene(p: PanelProps) {
             >
               <button
                 disabled={p.disabled}
+                aria-pressed={o.id === p.s.document.selected}
                 onClick={() => void p.execute({ type: "select", id: o.id })}
               >
-                <Icon size={17} />
+                <ChevronRight size={11} className="row-branch" />
+                <Icon size={15} />
                 <span>{o.name}</span>
               </button>
               <button
@@ -103,12 +125,14 @@ export function Scene(p: PanelProps) {
             </div>
           );
         })}
-        {!p.s.document.objects.length && (
-          <p className="muted inset">{p.t("noObjects")}</p>
+        {!objects.length && (
+          <p className="muted inset">
+            {p.t(query ? "noResults" : "noObjects")}
+          </p>
         )}
       </div>
       <div className="panel-foot">
-        {p.s.document.objects.length} {p.t("scene")}
+        {objects.length} / {p.s.document.objects.length} {p.t("objects")}
       </div>
     </Panel>
   );
@@ -125,6 +149,7 @@ function NumberField({
   disabled: boolean;
 }) {
   const [draft, setDraft] = useState(String(value));
+  const cancel = useRef(false);
   return (
     <input
       aria-label={label}
@@ -136,11 +161,19 @@ function NumberField({
       onBlur={() => {
         const n = Number(draft);
         setDraft(String(value));
-        if (draft !== "" && Number.isFinite(n) && n !== value) commit(n);
+        if (
+          !cancel.current &&
+          draft.trim() !== "" &&
+          Number.isFinite(n) &&
+          n !== value
+        )
+          commit(n);
+        cancel.current = false;
       }}
       onKeyDown={(e) => {
         if (e.key === "Enter") e.currentTarget.blur();
         if (e.key === "Escape") {
+          cancel.current = true;
           setDraft(String(value));
           e.currentTarget.blur();
         }
@@ -162,7 +195,7 @@ export function Inspector(p: PanelProps) {
       {o ? (
         <div className="inspector-body">
           <div className="object-name">
-            <Box size={24} />
+            <Box size={16} />
             <input
               key={`${o.id}-${o.name}`}
               aria-label={p.t("name")}
@@ -189,12 +222,14 @@ export function Inspector(p: PanelProps) {
           </label>
           <div className="section-heading">{p.t("transform")}</div>
           {(["position", "rotation", "scale"] as const).map((field) => (
-            <div className="transform" key={field}>
-              <h3>{p.t(field)}</h3>
+            <div className="transform" key={field} data-channel={field}>
               <div className="axis-fields">
                 {["X", "Y", "Z"].map((axis, i) => (
                   <label key={axis}>
-                    <span>{axis}</span>
+                    <span>
+                      {p.t(field)}{" "}
+                      <b className={`axis-${axis.toLowerCase()}`}>{axis}</b>
+                    </span>
                     <NumberField
                       key={`${o.id}-${field}-${i}-${o[field][i]}`}
                       label={`${p.t(field)} ${axis}`}
@@ -214,7 +249,15 @@ export function Inspector(p: PanelProps) {
           <div className="section-heading">{p.t("modifiers")}</div>
           <div className="modifier">
             <Box size={17} />
-            <span>{o.kind}</span>
+            <span>
+              {p.t(
+                o.kind === "sphere"
+                  ? "sphereLabel"
+                  : o.kind === "plane"
+                    ? "planeLabel"
+                    : "cubeLabel",
+              )}
+            </span>
           </div>
           <label className="check">
             <input
@@ -249,7 +292,9 @@ export function Timeline(p: PanelProps) {
     <Panel id="timeline" title={p.t("timeline")} icon={Film} p={p}>
       <div className="timeline-ruler">
         {[1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120].map((n) => (
-          <span key={n}>{n}</span>
+          <span key={n} style={{ left: `${((n - 1) / 119) * 100}%` }}>
+            {n}
+          </span>
         ))}
       </div>
       <div className="track">
@@ -266,17 +311,48 @@ export function Timeline(p: PanelProps) {
         />
       </div>
       <div className="timeline-footer">
-        <label>
-          {p.t("frame")}{" "}
-          <NumberField
-            key={p.s.frame}
-            label={`${p.t("frame")} number`}
-            value={p.s.frame}
-            disabled={p.disabled}
-            commit={(n) => setFrame(Math.max(1, Math.min(120, Math.round(n))))}
+        <div className="frame-controls">
+          <IconButton
+            icon={SkipBack}
+            label={p.t("firstFrame")}
+            disabled={p.disabled || p.s.frame === 1}
+            onClick={() => setFrame(1)}
           />
-        </label>
-        <span className="muted">{p.t("timelineNote")}</span>
+          <IconButton
+            icon={ChevronLeft}
+            label={p.t("previousFrame")}
+            disabled={p.disabled || p.s.frame === 1}
+            onClick={() => setFrame(p.s.frame - 1)}
+          />
+          <label>
+            <span>{p.t("frame")}</span>
+            <NumberField
+              key={p.s.frame}
+              label={p.t("frame")}
+              value={p.s.frame}
+              disabled={p.disabled}
+              commit={(n) =>
+                setFrame(Math.max(1, Math.min(120, Math.round(n))))
+              }
+            />
+          </label>
+          <IconButton
+            icon={ChevronRight}
+            label={p.t("nextFrame")}
+            disabled={p.disabled || p.s.frame === 120}
+            onClick={() => setFrame(p.s.frame + 1)}
+          />
+          <IconButton
+            icon={SkipForward}
+            label={p.t("lastFrame")}
+            disabled={p.disabled || p.s.frame === 120}
+            onClick={() => setFrame(120)}
+          />
+        </div>
+        <div className="frame-range">
+          <span>1 — 120</span>
+          <InfoTip label={p.t("info")} text={p.t("timelineNote")} />
+        </div>
       </div>
     </Panel>
   );

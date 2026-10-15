@@ -1,0 +1,9 @@
+{
+  "date": "2026-10-15",
+  "framework": "React 19 + Vite 6 + Tauri 2",
+  "font": "system sans (tokens.css)",
+  "palette": "neutral gray / blue per explicit Maya design request",
+  "motion": "none",
+  "spacing": "compact 4px workbench",
+  "source": "src/App.tsx, src/panels.tsx, src/styles.css, tokens.css, package.json"
+}

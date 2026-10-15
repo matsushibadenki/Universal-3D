@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "build": "tsc && vite build",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "test:sync": "node --test tests/sync.test.mjs"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.0.0",

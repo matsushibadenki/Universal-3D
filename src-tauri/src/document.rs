@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use std::collections::{BTreeSet, HashMap, VecDeque};
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
 pub struct Object {
     pub id: u64,
@@ -41,19 +42,9 @@ impl Document {
         }
         let mut ids = std::collections::HashSet::new();
         for o in &self.objects {
-            if o.id == 0
-                || o.id > 9_007_199_254_740_991
-                || !ids.insert(o.id)
-                || !["cube", "sphere", "plane"].contains(&o.kind.as_str())
-                || o.name.len() > 256
-                || o.position
-                    .iter()
-                    .chain(&o.rotation)
-                    .chain(&o.scale)
-                    .any(|v| !v.is_finite() || v.abs() > 10000.)
-                || o.scale.iter().any(|v| v.abs() < 0.001)
-            {
-                return Err("Invalid object data".into());
+            o.validate()?;
+            if !ids.insert(o.id) {
+                return Err("Duplicate object ID".into());
             }
         }
         if self.selected.is_some_and(|id| !ids.contains(&id)) {
@@ -61,6 +52,31 @@ impl Document {
         }
         Ok(())
     }
+}
+impl Object {
+    pub fn validate(&self) -> Result<(), String> {
+        if self.id == 0
+            || self.id > 9_007_199_254_740_991
+            || !["cube", "sphere", "plane"].contains(&self.kind.as_str())
+            || self.name.len() > 256
+            || self
+                .position
+                .iter()
+                .chain(&self.rotation)
+                .chain(&self.scale)
+                .any(|v| !v.is_finite() || v.abs() > 10000.)
+            || self.scale.iter().any(|v| v.abs() < 0.001)
+        {
+            return Err("Invalid object data".into());
+        }
+        Ok(())
+    }
+}
+#[derive(Clone, Serialize)]
+pub struct DocumentPatch {
+    pub start: usize,
+    pub remove: usize,
+    pub objects: Vec<Object>,
 }
 // A reversible splice preserves ordering while retaining only the changed span.
 // Single-object edits keep two objects, independent of document size.
@@ -72,6 +88,7 @@ pub struct HistoryEntry {
     after_selected: Option<u64>,
 }
 impl HistoryEntry {
+    #[cfg(test)]
     fn between(before: &Document, after: &Document) -> Self {
         let start = before
             .objects
@@ -106,6 +123,11 @@ impl HistoryEntry {
         document.selected = selected;
     }
 }
+#[derive(Clone)]
+pub enum RenderChange {
+    Reset,
+    Objects(Vec<u64>),
+}
 #[derive(Default)]
 pub struct Editor {
     pub document: Document,
@@ -117,28 +139,202 @@ pub struct Editor {
     pub yaw: f32,
     pub pitch: f32,
     pub distance: f32,
+    pub camera_target: [f32; 3],
     pub frame: u32,
+    pub revision: u64,
+    pub pending: Vec<DocumentPatch>,
+    pub pending_reset: bool,
+    pub render_revision: u64,
+    pub render_changes: VecDeque<(u64, RenderChange)>,
+    indices: HashMap<u64, usize>,
+    indexed_len: usize,
+    ordered_ids: BTreeSet<u64>,
 }
 impl Editor {
     pub fn new() -> Self {
-        Self {
+        let mut editor = Self {
             yaw: 0.7,
             pitch: 0.45,
             distance: 7.,
             frame: 1,
             ..Default::default()
+        };
+        editor.reindex();
+        editor
+    }
+    fn reindex(&mut self) {
+        self.indices = self
+            .document
+            .objects
+            .iter()
+            .enumerate()
+            .map(|(i, o)| (o.id, i))
+            .collect();
+        self.indexed_len = self.document.objects.len();
+        self.ordered_ids = self.indices.keys().copied().collect();
+    }
+    pub fn object_index(&mut self, id: u64) -> Option<usize> {
+        if self.indexed_len != self.document.objects.len() {
+            self.reindex();
+        }
+        self.indices.get(&id).copied()
+    }
+    pub fn indexed_object(&self, id: u64) -> Option<(usize, &Object)> {
+        self.indices
+            .get(&id)
+            .map(|&index| (index, &self.document.objects[index]))
+    }
+    pub fn next_id(&mut self) -> Result<u64, String> {
+        if self.indexed_len != self.document.objects.len() {
+            self.reindex();
+        }
+        self.ordered_ids
+            .last()
+            .copied()
+            .unwrap_or(0)
+            .checked_add(1)
+            .filter(|id| *id <= 9_007_199_254_740_991)
+            .ok_or("Object ID limit reached".into())
+    }
+    fn changed(&mut self, change: RenderChange) {
+        self.render_revision += 1;
+        self.render_changes
+            .push_back((self.render_revision, change));
+        if self.render_changes.len() > 128 {
+            self.render_changes.pop_front();
         }
     }
+    pub fn invalidate_document(&mut self) {
+        self.reindex();
+        self.changed(RenderChange::Reset);
+    }
+    pub fn select(&mut self, selected: Option<u64>) {
+        if self.document.selected != selected {
+            let ids = self.document.selected.into_iter().chain(selected).collect();
+            self.document.selected = selected;
+            self.changed(RenderChange::Objects(ids));
+        }
+    }
+    fn apply_entry(&mut self, entry: &HistoryEntry, forward: bool) {
+        let (before, after, selected) = if forward {
+            (&entry.before, &entry.after, entry.after_selected)
+        } else {
+            (&entry.after, &entry.before, entry.before_selected)
+        };
+        let ids = before
+            .iter()
+            .chain(after)
+            .map(|o| o.id)
+            .chain(
+                self.document
+                    .selected
+                    .filter(|_| self.document.selected != selected),
+            )
+            .chain(selected.filter(|_| self.document.selected != selected))
+            .collect();
+        let shifted = before.len() != after.len();
+        for object in before {
+            self.indices.remove(&object.id);
+            self.ordered_ids.remove(&object.id);
+        }
+        entry.apply(&mut self.document, forward);
+        // Vec ordering is retained: only positions at/after a length-changing splice shift.
+        let end = if shifted {
+            self.document.objects.len()
+        } else {
+            entry.start + after.len()
+        };
+        for index in entry.start..end {
+            let id = self.document.objects[index].id;
+            self.indices.insert(id, index);
+        }
+        for object in after {
+            self.ordered_ids.insert(object.id);
+        }
+        self.indexed_len = self.document.objects.len();
+        self.changed(RenderChange::Objects(ids));
+    }
+    // Validated local splice. Only changed objects are cloned for history/notification.
+    pub fn edit_span(
+        &mut self,
+        start: usize,
+        remove: usize,
+        objects: Vec<Object>,
+        selected: Option<u64>,
+    ) -> Result<(), String> {
+        if start > self.document.objects.len()
+            || remove > self.document.objects.len() - start
+            || self.document.objects.len() - remove + objects.len() > 10000
+        {
+            return Err("Invalid edit range".into());
+        }
+        for object in &objects {
+            object.validate()?;
+        }
+        if self.indexed_len != self.document.objects.len() {
+            self.reindex();
+        }
+        let ids: std::collections::HashSet<u64> = objects.iter().map(|o| o.id).collect();
+        if ids.len() != objects.len()
+            || objects.iter().any(|o| {
+                self.indices
+                    .get(&o.id)
+                    .is_some_and(|i| !(start..start + remove).contains(i))
+            })
+        {
+            return Err("Duplicate object ID".into());
+        }
+        if selected.is_some_and(|id| {
+            !ids.contains(&id)
+                && !self
+                    .indices
+                    .get(&id)
+                    .is_some_and(|i| !(start..start + remove).contains(i))
+        }) {
+            return Err("Invalid selection".into());
+        }
+        if self.document.objects[start..start + remove] == objects
+            && self.document.selected == selected
+        {
+            return Ok(());
+        }
+        let entry = HistoryEntry {
+            start,
+            before: self.document.objects[start..start + remove].to_vec(),
+            after: objects,
+            before_selected: self.document.selected,
+            after_selected: selected,
+        };
+        self.apply_entry(&entry, true);
+        self.pending.push(DocumentPatch {
+            start,
+            remove,
+            objects: entry.after.clone(),
+        });
+        self.record(entry);
+        Ok(())
+    }
+    fn record(&mut self, entry: HistoryEntry) {
+        self.undo.push(entry);
+        if self.undo.len() > 100 {
+            self.undo.remove(0);
+        }
+        self.redo.clear();
+        self.dirty = true;
+    }
+    #[cfg(test)]
     pub fn commit(&mut self, next: Document) -> Result<(), String> {
         next.validate()?;
         if next != self.document {
-            self.undo.push(HistoryEntry::between(&self.document, &next));
-            if self.undo.len() > 100 {
-                self.undo.remove(0);
-            }
-            self.redo.clear();
+            let entry = HistoryEntry::between(&self.document, &next);
+            self.pending.push(DocumentPatch {
+                start: entry.start,
+                remove: entry.before.len(),
+                objects: entry.after.clone(),
+            });
             self.document = next;
-            self.dirty = true;
+            self.invalidate_document();
+            self.record(entry);
         }
         Ok(())
     }
@@ -146,7 +342,12 @@ impl Editor {
         if let Some(mut entry) = self.undo.pop() {
             // Selection is UI state and can change between history operations.
             entry.after_selected = self.document.selected;
-            entry.apply(&mut self.document, false);
+            self.apply_entry(&entry, false);
+            self.pending.push(DocumentPatch {
+                start: entry.start,
+                remove: entry.after.len(),
+                objects: entry.before.clone(),
+            });
             self.redo.push(entry);
             self.dirty = true;
         }
@@ -154,7 +355,12 @@ impl Editor {
     pub fn redo(&mut self) {
         if let Some(mut entry) = self.redo.pop() {
             entry.before_selected = self.document.selected;
-            entry.apply(&mut self.document, true);
+            self.apply_entry(&entry, true);
+            self.pending.push(DocumentPatch {
+                start: entry.start,
+                remove: entry.before.len(),
+                objects: entry.after.clone(),
+            });
             self.undo.push(entry);
             self.dirty = true;
         }

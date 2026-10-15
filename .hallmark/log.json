@@ -1,5 +1,12 @@
 [
   {
+    "date": "2026-10-15",
+    "macrostructure": "DCC workbench",
+    "theme": "Maya-inspired neutral gray / blue",
+    "enrichment": "none",
+    "brief": "User-directed dense Maya-style editor with functional menus, shelf, Outliner, Channel Box and Time Slider"
+  },
+  {
     "date": "2026-10-11",
     "macrostructure": "Docked workspace",
     "theme": "Studio",

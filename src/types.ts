@@ -9,6 +9,7 @@ export type SceneObject = {
   mirror: boolean;
 };
 export type Snapshot = {
+  revision: number;
   document: {
     version: number;
     objects: SceneObject[];
@@ -25,6 +26,7 @@ export type Snapshot = {
 };
 export type Command = { type: string; [key: string]: unknown };
 export const preview: Snapshot = {
+  revision: 0,
   document: {
     version: 1,
     objects: [
@@ -49,4 +51,11 @@ export const preview: Snapshot = {
   viewport: false,
   frame: 1,
   camera: [0.7, 0.45, 7],
+};
+
+export type EditorChange = Omit<Snapshot, "document"> & {
+  base_revision: number;
+  patches: { start: number; remove: number; objects: SceneObject[] }[];
+  reset: Snapshot["document"] | null;
+  selected: number | null;
 };
