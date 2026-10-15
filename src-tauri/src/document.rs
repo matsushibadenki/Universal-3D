@@ -62,11 +62,55 @@ impl Document {
         Ok(())
     }
 }
+// A reversible splice preserves ordering while retaining only the changed span.
+// Single-object edits keep two objects, independent of document size.
+pub struct HistoryEntry {
+    start: usize,
+    before: Vec<Object>,
+    after: Vec<Object>,
+    before_selected: Option<u64>,
+    after_selected: Option<u64>,
+}
+impl HistoryEntry {
+    fn between(before: &Document, after: &Document) -> Self {
+        let start = before
+            .objects
+            .iter()
+            .zip(&after.objects)
+            .take_while(|(a, b)| a == b)
+            .count();
+        let tail = before.objects[start..]
+            .iter()
+            .rev()
+            .zip(after.objects[start..].iter().rev())
+            .take_while(|(a, b)| a == b)
+            .count();
+        Self {
+            start,
+            before: before.objects[start..before.objects.len() - tail].to_vec(),
+            after: after.objects[start..after.objects.len() - tail].to_vec(),
+            before_selected: before.selected,
+            after_selected: after.selected,
+        }
+    }
+    fn apply(&self, document: &mut Document, forward: bool) {
+        let (remove, insert, selected) = if forward {
+            (&self.before, &self.after, self.after_selected)
+        } else {
+            (&self.after, &self.before, self.before_selected)
+        };
+        document.objects.splice(
+            self.start..self.start + remove.len(),
+            insert.iter().cloned(),
+        );
+        document.selected = selected;
+    }
+}
 #[derive(Default)]
 pub struct Editor {
     pub document: Document,
-    pub undo: Vec<Document>,
-    pub redo: Vec<Document>,
+    pub undo: Vec<HistoryEntry>,
+    pub redo: Vec<HistoryEntry>,
     pub dirty: bool,
     pub path: Option<std::path::PathBuf>,
     pub floating: Vec<String>,
@@ -88,7 +132,7 @@ impl Editor {
     pub fn commit(&mut self, next: Document) -> Result<(), String> {
         next.validate()?;
         if next != self.document {
-            self.undo.push(self.document.clone());
+            self.undo.push(HistoryEntry::between(&self.document, &next));
             if self.undo.len() > 100 {
                 self.undo.remove(0);
             }
@@ -99,14 +143,19 @@ impl Editor {
         Ok(())
     }
     pub fn undo(&mut self) {
-        if let Some(d) = self.undo.pop() {
-            self.redo.push(std::mem::replace(&mut self.document, d));
+        if let Some(mut entry) = self.undo.pop() {
+            // Selection is UI state and can change between history operations.
+            entry.after_selected = self.document.selected;
+            entry.apply(&mut self.document, false);
+            self.redo.push(entry);
             self.dirty = true;
         }
     }
     pub fn redo(&mut self) {
-        if let Some(d) = self.redo.pop() {
-            self.undo.push(std::mem::replace(&mut self.document, d));
+        if let Some(mut entry) = self.redo.pop() {
+            entry.before_selected = self.document.selected;
+            entry.apply(&mut self.document, true);
+            self.undo.push(entry);
             self.dirty = true;
         }
     }
@@ -114,6 +163,140 @@ impl Editor {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn splices_restore_insert_delete_reorder_and_selection() {
+        let mut e = Editor::new();
+        let mut states = vec![e.document.clone()];
+        for id in 2..=5 {
+            let mut next = e.document.clone();
+            let mut object = next.objects[0].clone();
+            object.id = id;
+            next.objects.insert(0, object);
+            next.selected = Some(id);
+            e.commit(next).unwrap();
+            states.push(e.document.clone());
+        }
+        let mut next = e.document.clone();
+        next.objects.reverse();
+        e.commit(next).unwrap();
+        states.push(e.document.clone());
+        let mut next = e.document.clone();
+        next.objects.remove(2);
+        e.commit(next).unwrap();
+        states.push(e.document.clone());
+        let mut next = e.document.clone();
+        next.objects.clear();
+        next.selected = None;
+        e.commit(next).unwrap();
+        states.push(e.document.clone());
+        for expected in states.iter().rev().skip(1) {
+            e.undo();
+            assert_eq!(&e.document, expected);
+            e.document.validate().unwrap();
+        }
+        for expected in states.iter().skip(1) {
+            e.redo();
+            assert_eq!(&e.document, expected);
+            e.document.validate().unwrap();
+        }
+    }
+    #[test]
+    fn selection_between_undo_redo_matches_snapshot_behavior() {
+        let mut e = Editor::new();
+        let mut next = e.document.clone();
+        let mut object = next.objects[0].clone();
+        object.id = 2;
+        next.objects.push(object);
+        next.selected = Some(2);
+        e.commit(next).unwrap();
+        e.document.selected = Some(1);
+        e.undo();
+        assert_eq!(e.document.selected, Some(1));
+        e.redo();
+        assert_eq!(e.document.selected, Some(1));
+        e.document.selected = Some(2);
+        let mut next = e.document.clone();
+        next.objects[0].name = "Edited".into();
+        e.commit(next).unwrap();
+        e.document.selected = Some(1);
+        e.undo();
+        assert_eq!(e.document.selected, Some(2));
+        e.document.selected = None;
+        e.redo();
+        assert_eq!(e.document.selected, Some(1));
+        e.undo();
+        assert_eq!(e.document.selected, None);
+    }
+    #[test]
+    fn no_op_invalid_edit_and_history_limit_preserve_contract() {
+        let mut e = Editor::new();
+        for step in 1..=105 {
+            let mut next = e.document.clone();
+            next.objects[0].position[0] = step as f32;
+            e.commit(next).unwrap();
+        }
+        assert_eq!(e.undo.len(), 100);
+        for _ in 0..100 {
+            e.undo();
+        }
+        assert_eq!(e.document.objects[0].position[0], 5.);
+        let count = e.redo.len();
+        e.commit(e.document.clone()).unwrap();
+        assert_eq!(e.redo.len(), count);
+        let original = e.document.clone();
+        let mut invalid = original.clone();
+        invalid.objects[0].scale[0] = 0.;
+        assert!(e.commit(invalid).is_err());
+        assert_eq!(e.document, original);
+        assert_eq!(e.redo.len(), count);
+        e.redo();
+        assert_eq!(e.document.objects[0].position[0], 6.);
+    }
+    #[test]
+    fn large_document_history_retains_only_changed_objects() {
+        let mut e = Editor::new();
+        for id in 2..=10_000 {
+            let mut o = e.document.objects[0].clone();
+            o.id = id;
+            e.document.objects.push(o);
+        }
+        for step in 1..=100 {
+            let mut next = e.document.clone();
+            next.objects[5000].position[0] = step as f32;
+            e.commit(next).unwrap();
+        }
+        let retained: usize = e
+            .undo
+            .iter()
+            .map(|entry| entry.before.len() + entry.after.len())
+            .sum();
+        assert_eq!(retained, 200);
+        let delta_bytes: usize = e.undo.capacity() * std::mem::size_of::<HistoryEntry>()
+            + e.undo
+                .iter()
+                .map(|entry| {
+                    (entry.before.capacity() + entry.after.capacity())
+                        * std::mem::size_of::<Object>()
+                        + entry
+                            .before
+                            .iter()
+                            .chain(&entry.after)
+                            .map(|o| o.name.capacity() + o.kind.capacity())
+                            .sum::<usize>()
+                })
+                .sum::<usize>();
+        let old_object_bytes = 100 * 10_000 * std::mem::size_of::<Object>();
+        assert!(delta_bytes * 100 < old_object_bytes);
+        println!("History allocation estimate: delta={delta_bytes} bytes; previous object storage alone={old_object_bytes} bytes");
+        for _ in 0..100 {
+            e.undo();
+        }
+        assert_eq!(e.document.objects[5000].position[0], 0.);
+        for _ in 0..100 {
+            e.redo();
+        }
+        assert_eq!(e.document.objects[5000].position[0], 100.);
+    }
     #[test]
     fn history_roundtrip() {
         let mut e = Editor::new();

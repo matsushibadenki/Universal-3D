@@ -1,4 +1,5 @@
 use crate::document::{Editor, Object};
+use std::collections::{HashMap, HashSet};
 use std::ops::Range;
 use std::sync::{Arc, OnceLock};
 use wgpu::util::DeviceExt;
@@ -31,6 +32,7 @@ struct GpuScene {
     previous_camera: Option<Matrix>,
     grid: wgpu::Buffer,
     batches: [Batch; 3],
+    instance_cache: InstanceCache,
 }
 pub struct Renderer {
     surface: wgpu::Surface<'static>,
@@ -263,6 +265,7 @@ impl GpuScene {
             previous_camera: None,
             grid: static_buffer(&grid),
             batches,
+            instance_cache: InstanceCache::default(),
         }
     }
     fn update(&mut self, device: &wgpu::Device, queue: &wgpu::Queue, editor: &Editor, aspect: f32) {
@@ -271,7 +274,11 @@ impl GpuScene {
             queue.write_buffer(&self.camera, 0, bytemuck::bytes_of(&camera));
             self.previous_camera = Some(camera);
         }
-        for (batch, instances) in self.batches.iter_mut().zip(scene_instances(editor)) {
+        for (batch, instances) in self
+            .batches
+            .iter_mut()
+            .zip(self.instance_cache.build(editor).0)
+        {
             batch.instance_count = instances.len() as u32;
             batch.instances.upload(device, queue, &instances);
         }
@@ -448,28 +455,71 @@ fn camera_matrix(editor: &Editor, aspect: f32) -> Matrix {
     ];
     m
 }
-fn scene_instances(editor: &Editor) -> [Vec<Instance>; 3] {
-    let mut groups: [Vec<Instance>; 3] = Default::default();
-    for object in editor.document.objects.iter().filter(|o| o.visible) {
-        let index = match object.kind.as_str() {
-            "sphere" => 1,
-            "plane" => 2,
-            _ => 0,
-        };
-        let color = if editor.document.selected == Some(object.id) {
-            [0.65, 0.79, 0.45, 1.]
-        } else {
-            [0.58, 0.62, 0.67, 1.]
-        };
-        for mirrored in 0..=u8::from(object.mirror) {
-            groups[index].push(Instance {
-                model: model_matrix(object, mirrored == 1),
-                color,
-            });
+#[derive(Clone, Copy, PartialEq)]
+struct TransformKey {
+    position: [f32; 3],
+    rotation: [f32; 3],
+    scale: [f32; 3],
+}
+impl From<&Object> for TransformKey {
+    fn from(object: &Object) -> Self {
+        Self {
+            position: object.position,
+            rotation: object.rotation,
+            scale: object.scale,
         }
     }
-    groups
 }
+#[derive(Default)]
+struct InstanceCache {
+    transforms: HashMap<u64, (TransformKey, [Matrix; 2])>,
+}
+impl InstanceCache {
+    // No document revision assumption: safe for Undo, file replacement and reused IDs.
+    fn build(&mut self, editor: &Editor) -> ([Vec<Instance>; 3], usize) {
+        let ids: HashSet<u64> = editor.document.objects.iter().map(|o| o.id).collect();
+        self.transforms.retain(|id, _| ids.contains(id));
+        let mut rebuilt = 0;
+        let mut groups: [Vec<Instance>; 3] = Default::default();
+        for object in editor.document.objects.iter().filter(|o| o.visible) {
+            let key = TransformKey::from(object);
+            let cached = self.transforms.entry(object.id).or_insert_with(|| {
+                rebuilt += 1;
+                (
+                    key,
+                    [model_matrix(object, false), model_matrix(object, true)],
+                )
+            });
+            if cached.0 != key {
+                cached.0 = key;
+                cached.1 = [model_matrix(object, false), model_matrix(object, true)];
+                rebuilt += 1;
+            }
+            let index = match object.kind.as_str() {
+                "sphere" => 1,
+                "plane" => 2,
+                _ => 0,
+            };
+            let color = if editor.document.selected == Some(object.id) {
+                [0.65, 0.79, 0.45, 1.]
+            } else {
+                [0.58, 0.62, 0.67, 1.]
+            };
+            for mirrored in 0..=usize::from(object.mirror) {
+                groups[index].push(Instance {
+                    model: cached.1[mirrored],
+                    color,
+                });
+            }
+        }
+        (groups, rebuilt)
+    }
+}
+#[cfg(test)]
+fn scene_instances(editor: &Editor) -> [Vec<Instance>; 3] {
+    InstanceCache::default().build(editor).0
+}
+
 fn sub(a: [f32; 3], b: [f32; 3]) -> [f32; 3] {
     [a[0] - b[0], a[1] - b[1], a[2] - b[2]]
 }
@@ -717,6 +767,48 @@ mod tests {
         let mirrored = scene_instances(&editor);
         assert_eq!(mirrored[0].len(), 10_001);
         assert!(!changed_ranges(&selected[0], &mirrored[0]).is_empty());
+    }
+
+    #[test]
+    fn matrix_cache_tracks_edits_undo_visibility_and_document_replacement() {
+        use crate::editor::Command;
+        let mut e = Editor::new();
+        let mut cache = InstanceCache::default();
+        assert_eq!(cache.build(&e).1, 1);
+        e.yaw += 1.;
+        e.frame += 1;
+        e.document.objects[0].name = "Renamed".into();
+        assert_eq!(cache.build(&e).1, 0);
+        e.document.selected = None;
+        e.document.objects[0].mirror = true;
+        assert_eq!(cache.build(&e).1, 0);
+        let mut object = e.document.objects[0].clone();
+        object.position[0] = 3.;
+        e.execute(Command::Update { object }).unwrap();
+        assert_eq!(cache.build(&e).1, 1);
+        assert_eq!(cache.build(&e).1, 0);
+        e.execute(Command::Undo).unwrap();
+        assert_eq!(cache.build(&e).1, 1);
+        e.execute(Command::Redo).unwrap();
+        assert_eq!(cache.build(&e).1, 1);
+        e.document.objects[0].visible = false;
+        e.document.objects[0].rotation = [15., 30., 45.];
+        assert_eq!(cache.build(&e).1, 0);
+        e.document.objects[0].visible = true;
+        let (groups, rebuilt) = cache.build(&e);
+        assert_eq!(rebuilt, 1);
+        assert!(groups == scene_instances(&e));
+        e.document.objects.clear();
+        assert_eq!(cache.build(&e).1, 0);
+        assert!(cache.transforms.is_empty());
+        e.document = crate::document::Document::default();
+        assert_eq!(cache.build(&e).1, 1);
+        let mut replacement = e.document.clone();
+        replacement.objects[0].scale = [2., -1., 3.];
+        e.document = replacement;
+        let (groups, rebuilt) = cache.build(&e);
+        assert_eq!(rebuilt, 1);
+        assert!(groups == scene_instances(&e));
     }
 
     #[test]

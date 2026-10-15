@@ -42,4 +42,4 @@ ThreeXの階層検証とバッチの原子的検証は、Universal-3Dの階層�
 2026-10-12にThreeX rendererのscene stamp／instance_updates_sinceと範囲転送を再確認。
 Universal-3Dは自分の形状別バッファに前回値を保持し、連続した変更範囲を転送する。
 ThreeXのstampやcoreを依存として導入せず、既存Document・Undo/Redoから生成される表示値を比較する。
-CPU側は全表示インスタンスの行列生成・比較を続けるため、変更追跡によるCPU負荷削減は次工程。
+2026-10-14にTransform比較キャッシュを追加し、未変更行列の再生成を省略。全オブジェクトの走査とインスタンス生成・比較は残っているため、revision／変更IDによる走査削減は次工程。

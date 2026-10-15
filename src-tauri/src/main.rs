@@ -1,8 +1,10 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 mod document;
+mod editor;
 mod renderer;
-use document::{Document, Editor, Object};
-use serde::{Deserialize, Serialize};
+use document::{Document, Editor};
+use editor::Command;
+use serde::Serialize;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use tauri::{Emitter, Manager};
@@ -90,18 +92,6 @@ fn draw(s: &State) -> Result<(), String> {
 fn get_snapshot(state: tauri::State<State>) -> Snapshot {
     snapshot(&state)
 }
-#[derive(Deserialize)]
-#[serde(tag = "type", rename_all = "snake_case")]
-enum Command {
-    SetFrame { frame: u32 },
-    Add { kind: String },
-    Select { id: u64 },
-    Update { object: Object },
-    Delete,
-    Undo,
-    Redo,
-    Camera { yaw: f32, pitch: f32, distance: f32 },
-}
 #[tauri::command]
 fn execute(
     app: tauri::AppHandle,
@@ -110,71 +100,7 @@ fn execute(
 ) -> Result<Snapshot, String> {
     {
         let mut e = state.editor.lock().map_err(|e| e.to_string())?;
-        let mut d = e.document.clone();
-        match command {
-            Command::Add { kind } => {
-                if !["cube", "sphere", "plane"].contains(&kind.as_str()) {
-                    return Err("Unknown primitive".into());
-                }
-                let id = d
-                    .objects
-                    .iter()
-                    .map(|o| o.id)
-                    .max()
-                    .unwrap_or(0)
-                    .checked_add(1)
-                    .ok_or("Object ID limit reached")?;
-                d.objects.push(Object {
-                    id,
-                    name: format!("{} {}", kind, id),
-                    kind,
-                    position: [0.; 3],
-                    rotation: [0.; 3],
-                    scale: [1.; 3],
-                    visible: true,
-                    mirror: false,
-                });
-                d.selected = Some(id);
-                e.commit(d)?;
-            }
-            Command::Select { id } => {
-                if !d.objects.iter().any(|o| o.id == id) {
-                    return Err("Object does not exist".into());
-                }
-                e.document.selected = Some(id);
-            }
-            Command::Update { object } => {
-                let o = d
-                    .objects
-                    .iter_mut()
-                    .find(|o| o.id == object.id)
-                    .ok_or("Object does not exist")?;
-                *o = object;
-                e.commit(d)?;
-            }
-            Command::Delete => {
-                if let Some(id) = d.selected {
-                    d.objects.retain(|o| o.id != id);
-                    d.selected = d.objects.first().map(|o| o.id);
-                    e.commit(d)?;
-                }
-            }
-            Command::SetFrame { frame } => e.frame = frame.clamp(1, 120),
-            Command::Undo => e.undo(),
-            Command::Redo => e.redo(),
-            Command::Camera {
-                yaw,
-                pitch,
-                distance,
-            } => {
-                if ![yaw, pitch, distance].iter().all(|v| v.is_finite()) {
-                    return Err("Invalid camera".into());
-                }
-                e.yaw = yaw;
-                e.pitch = pitch.clamp(-1.4, 1.4);
-                e.distance = distance.clamp(1.5, 60.);
-            }
-        }
+        e.execute(command)?;
     }
     broadcast(&app, &state)
 }
