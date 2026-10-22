@@ -1,8 +1,22 @@
 const en = {
+  selectTool: "Select tool",
+  coordinateSpace: "Axis orientation",
+  worldSpace: "World",
+  localSpace: "Local",
+  stepSnap: "Step snap",
+  snapStep: "Snap increment",
+  snapInfo: "Snap and coordinate settings",
+  snapHelp:
+    "World / Local is remembered per tool. Snap uses changes from the drag start: distance, degrees, or scale factor. Center move snaps in the screen plane. Hold J to temporarily invert snapping. World non-uniform scaling retains shear; its channels appear in the Channel Box. Esc cancels the entire drag.",
+  shear: "Shear",
+
+  moveTool: "Move tool",
+  rotateTool: "Rotate tool · Axis rings / outer view ring",
+  scaleTool: "Scale tool · Axis handles / uniform center",
   frameSelected: "Frame selection",
   embedded: "GPU viewport",
   viewportHelp:
-    "Alt + left drag: tumble · Alt + middle drag: track · Alt + right drag / wheel: dolly · Click: select · F: frame selection · Shift + Space: expand",
+    "Q: select · W: move · E: rotate · R: scale · Drag axis: constrained move · Center: screen plane · Esc: cancel · Alt + left drag: tumble · Alt + middle drag: track · Alt + right drag / wheel: dolly · Click: select · F: frame selection · Shift + Space: expand",
   startingViewport: "Starting GPU viewport…",
   platformViewport:
     "Embedded viewport is available on macOS. Use the separate viewport on this platform.",
@@ -88,10 +102,24 @@ const en = {
 export type Key = keyof typeof en;
 export type Language = "en" | "ja" | "zh";
 const ja: Record<Key, string> = {
+  selectTool: "選択ツール",
+  coordinateSpace: "軸の座標系",
+  worldSpace: "ワールド",
+  localSpace: "ローカル",
+  stepSnap: "ステップスナップ",
+  snapStep: "スナップの刻み",
+  snapInfo: "座標系とスナップの設定",
+  snapHelp:
+    "座標系はツールごとに記憶します。スナップはドラッグ開始時からの移動量・回転角・拡縮倍率を刻みに揃えます。中央の移動は画面平面内でスナップします。Jを押している間はスナップの有効／無効を反転。ワールド軸の非均等スケールではシアーも保持し、チャネルボックスに表示します。Escでドラッグ全体を取消します。",
+  shear: "シアー",
+
+  moveTool: "移動ツール",
+  rotateTool: "回転ツール · 軸リング／外周は画面軸",
+  scaleTool: "スケールツール · 軸ハンドル／中央で均等拡縮",
   frameSelected: "選択対象にフォーカス",
   embedded: "GPUビューポート",
   viewportHelp:
-    "Alt＋左ドラッグ：回転 · Alt＋中ドラッグ：パン · Alt＋右ドラッグ／ホイール：ズーム · クリック：選択 · F：選択対象にフォーカス · Shift＋Space：拡大",
+    "Q：選択 · W：移動 · E：回転 · R：スケール · 軸をドラッグ：軸方向へ移動 · 中央：画面に沿って移動 · Esc：取消 · Alt＋左ドラッグ：回転 · Alt＋中ドラッグ：パン · Alt＋右ドラッグ／ホイール：ズーム · クリック：選択 · F：選択対象にフォーカス · Shift＋Space：拡大",
   startingViewport: "GPUビューポートを起動中…",
   platformViewport:
     "中央への埋め込みはmacOSに対応しています。この環境では独立ビューポートを利用できます。",
@@ -175,10 +203,24 @@ const ja: Record<Key, string> = {
   notConnected: "ビューポート未接続",
 };
 const zh: Record<Key, string> = {
+  selectTool: "选择工具",
+  coordinateSpace: "轴坐标系",
+  worldSpace: "世界",
+  localSpace: "本地",
+  stepSnap: "步进吸附",
+  snapStep: "吸附步长",
+  snapInfo: "坐标系与吸附设置",
+  snapHelp:
+    "各工具分别记住坐标系。吸附按拖动开始时的位移、角度或缩放倍率增量计算。中心移动在屏幕平面内吸附。按住J临时反转吸附状态。世界轴非均匀缩放保留剪切，并在通道栏显示。Esc取消整个拖动。",
+  shear: "剪切",
+
+  moveTool: "移动工具",
+  rotateTool: "旋转工具 · 轴环／外环为视图轴",
+  scaleTool: "缩放工具 · 轴手柄／中心等比缩放",
   frameSelected: "聚焦所选对象",
   embedded: "GPU视口",
   viewportHelp:
-    "Alt＋左键拖动：旋转 · Alt＋中键拖动：平移 · Alt＋右键拖动／滚轮：缩放 · 单击：选择 · F：聚焦所选对象 · Shift＋Space：展开",
+    "Q：选择 · W：移动 · E：旋转 · R：缩放 · 拖动轴：沿轴移动 · 中心：屏幕平面移动 · Esc：取消 · Alt＋左键拖动：旋转 · Alt＋中键拖动：平移 · Alt＋右键拖动／滚轮：缩放 · 单击：选择 · F：聚焦所选对象 · Shift＋Space：展开",
   startingViewport: "正在启动GPU视口…",
   platformViewport: "嵌入式视口目前支持macOS。此平台可使用独立视口。",
   retry: "重试",

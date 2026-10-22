@@ -92,7 +92,13 @@ export default function App() {
   const [hidden, setHidden] = useState<string[]>([]);
   const [focused, setFocused] = useState(false);
   const t = (k: Key) => dictionaries[language][k];
-  const p: PanelProps = { s, t, execute, call, disabled: !desktop || busy };
+  const p: PanelProps = {
+    s,
+    t,
+    execute,
+    call,
+    disabled: !desktop || busy || s.dragging,
+  };
   const standalone = new URLSearchParams(location.search).get("panel");
   const selected = s.document.objects.find((o) => o.id === s.document.selected);
   const toggle = (panel: string) =>
@@ -103,22 +109,6 @@ export default function App() {
     );
   const shown = (panel: string) =>
     !focused && !hidden.includes(panel) && !s.floating.includes(panel);
-  function focusChannel(field?: string) {
-    setFocused(false);
-    const panel = field ? "inspector" : "scene";
-    setHidden((value) => value.filter((v) => v !== panel));
-    if (s.floating.includes(panel)) {
-      void call("float_panel", { panel });
-      return;
-    }
-    requestAnimationFrame(() => {
-      document
-        .querySelector<HTMLInputElement>(
-          field ? `[data-channel="${field}"] input` : ".scene-search input",
-        )
-        ?.focus();
-    });
-  }
   useEffect(() => {
     document.documentElement.lang = language;
     localStorage.setItem("u3d-language", language);
@@ -138,6 +128,22 @@ export default function App() {
         return;
       }
       if (!desktop || busy) return;
+      if (
+        !e.metaKey &&
+        !e.ctrlKey &&
+        !e.altKey &&
+        !standalone &&
+        ["q", "w", "e", "r"].includes(e.key.toLowerCase())
+      ) {
+        e.preventDefault();
+        void execute({
+          type: "set_tool",
+          tool: { q: "select", w: "move", e: "rotate", r: "scale" }[
+            e.key.toLowerCase()
+          ],
+        });
+        return;
+      }
       if (e.metaKey || e.ctrlKey) {
         const key = e.key.toLowerCase();
         if (key === "z") {
@@ -456,26 +462,31 @@ export default function App() {
         <aside className="toolbox" aria-label={t("transform")}>
           <IconButton
             icon={MousePointer2}
-            label={t("selectObject")}
-            onClick={() => focusChannel()}
+            label={`${t("selectTool")} (Q)`}
+            disabled={!desktop || busy}
+            aria-pressed={s.tool === "select"}
+            onClick={() => void execute({ type: "set_tool", tool: "select" })}
           />
           <IconButton
             icon={Move}
-            label={t("editPosition")}
-            disabled={p.disabled || !selected}
-            onClick={() => focusChannel("position")}
+            label={`${t("moveTool")} (W)`}
+            disabled={!desktop || busy}
+            aria-pressed={s.tool === "move"}
+            onClick={() => void execute({ type: "set_tool", tool: "move" })}
           />
           <IconButton
             icon={Rotate3D}
-            label={t("editRotation")}
-            disabled={p.disabled || !selected}
-            onClick={() => focusChannel("rotation")}
+            label={`${t("rotateTool")} (E)`}
+            disabled={!desktop || busy}
+            aria-pressed={s.tool === "rotate"}
+            onClick={() => void execute({ type: "set_tool", tool: "rotate" })}
           />
           <IconButton
             icon={Scaling}
-            label={t("editScale")}
-            disabled={p.disabled || !selected}
-            onClick={() => focusChannel("scale")}
+            label={`${t("scaleTool")} (R)`}
+            disabled={!desktop || busy}
+            aria-pressed={s.tool === "scale"}
+            onClick={() => void execute({ type: "set_tool", tool: "scale" })}
           />
           <div className="separator" />
           <IconButton

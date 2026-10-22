@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
-import { Monitor, Scan, RotateCcw } from "lucide-react";
+import { Monitor, Scan, RotateCcw, Magnet } from "lucide-react";
 import { desktop } from "./store";
 import { IconButton, InfoTip } from "./EditorChrome";
 import type { PanelProps } from "./panels";
@@ -53,16 +53,32 @@ export function Viewport({ p }: { p: PanelProps }) {
   const [error, setError] = useState("");
   const [attempt, setAttempt] = useState(0);
   const [dragging, setDragging] = useState(false);
+  const [snapHeld, setSnapHeld] = useState(false);
+  const snapKey = useRef(false);
+  const snapKeyRef = useRef<(held: boolean) => void>(() => {});
+  const settings = p.s.transform_settings;
+  const tool = p.s.tool === "select" ? "move" : p.s.tool;
+  const space = settings[`${tool}_space`];
+  const step = settings[`${tool}_step`];
+  const steps =
+    tool === "rotate"
+      ? [1, 5, 15, 30, 45, 90]
+      : tool === "scale"
+        ? [0.01, 0.05, 0.1, 0.25, 0.5]
+        : [0.1, 0.25, 0.5, 1, 5, 10];
   const requestLayout = useRef<() => void>(() => {});
   const gesture = useRef<{
     id: number;
     x: number;
     y: number;
-    startX: number;
-    startY: number;
+    token?: string;
+    left: number;
+    top: number;
     travel: number;
     mode?: "orbit" | "pan" | "dolly";
   } | null>(null);
+  const activeToken = useRef<string | null>(null);
+  const cancelRef = useRef<() => void>(() => {});
   const commands = useRef<Command[]>([]);
   const sending = useRef(false);
   const mounted = useRef(true);
@@ -71,13 +87,26 @@ export function Viewport({ p }: { p: PanelProps }) {
   async function drain() {
     if (sending.current) return;
     sending.current = true;
-    while (mounted.current && commands.current.length) {
+    while (commands.current.length) {
       const command = commands.current.shift()!;
       try {
         await invoke("execute", { command });
+        if (
+          command.type === "transform_end" &&
+          activeToken.current === command.token
+        )
+          activeToken.current = null;
       } catch (e) {
         if (mounted.current) setError(String(e));
         commands.current = [];
+        const token = activeToken.current;
+        activeToken.current = null;
+        if (token)
+          await invoke("execute", {
+            command: { type: "transform_end", token, cancel: true },
+          }).catch(() => {});
+        gesture.current = null;
+        if (mounted.current) setDragging(false);
       }
     }
     sending.current = false;
@@ -93,9 +122,40 @@ export function Viewport({ p }: { p: PanelProps }) {
     ) {
       last.dx = Number(last.dx) + Number(command.dx);
       last.dy = Number(last.dy) + Number(command.dy);
+    } else if (
+      command.type === "transform_update" &&
+      last?.type === "transform_update" &&
+      last.token === command.token &&
+      last.snap_toggle === command.snap_toggle &&
+      (last.points as number[][]).length +
+        (command.points as number[][]).length <=
+        256
+    ) {
+      // Rotations need every angular crossing; keep the path while batching IPC.
+      (last.points as number[][]).push(...(command.points as number[][]));
     } else commands.current.push(command);
     void drain();
   }
+  snapKeyRef.current = (held) => {
+    if (snapKey.current === held) return;
+    snapKey.current = held;
+    setSnapHeld(held);
+    const g = gesture.current;
+    if (g?.token && g.travel >= 4)
+      send({
+        type: "transform_update",
+        token: g.token,
+        points: [[g.x - g.left, g.y - g.top]],
+        snap_toggle: held,
+      });
+  };
+  function cancelGesture() {
+    const token = activeToken.current;
+    if (token) send({ type: "transform_end", token, cancel: true });
+    gesture.current = null;
+    setDragging(false);
+  }
+  cancelRef.current = cancelGesture;
   function frameSelection() {
     const bounds = canvas.current?.getBoundingClientRect();
     if (bounds && bounds.height > 0)
@@ -105,7 +165,50 @@ export function Viewport({ p }: { p: PanelProps }) {
     mounted.current = true;
     return () => {
       mounted.current = false;
-      commands.current = [];
+      const token = activeToken.current;
+      commands.current = token
+        ? [{ type: "transform_end", token, cancel: true }]
+        : [];
+      void drain();
+    };
+  }, []);
+  useEffect(() => {
+    const cancel = () => {
+      snapKey.current = false;
+      setSnapHeld(false);
+      cancelRef.current();
+    };
+    const keyDown = (e: KeyboardEvent) => {
+      if (
+        e.key.toLowerCase() !== "j" ||
+        e.repeat ||
+        e.isComposing ||
+        e.altKey ||
+        e.ctrlKey ||
+        e.metaKey ||
+        (e.target as HTMLElement).closest(
+          "input,select,textarea,[contenteditable=true]",
+        )
+      )
+        return;
+      e.preventDefault();
+      snapKeyRef.current(true);
+    };
+    const keyUp = (e: KeyboardEvent) => {
+      if (e.key.toLowerCase() === "j") snapKeyRef.current(false);
+    };
+    const hidden = () => {
+      if (document.hidden) cancel();
+    };
+    window.addEventListener("keydown", keyDown);
+    window.addEventListener("keyup", keyUp);
+    window.addEventListener("blur", cancel);
+    document.addEventListener("visibilitychange", hidden);
+    return () => {
+      window.removeEventListener("keydown", keyDown);
+      window.removeEventListener("keyup", keyUp);
+      window.removeEventListener("blur", cancel);
+      document.removeEventListener("visibilitychange", hidden);
     };
   }, []);
   useEffect(() => {
@@ -129,6 +232,7 @@ export function Viewport({ p }: { p: PanelProps }) {
       };
       const signature = JSON.stringify(rect);
       if (signature === last) return;
+      if (last && activeToken.current) cancelRef.current();
       last = signature;
       void sendLayout(rect)
         .then(() => {
@@ -158,6 +262,7 @@ export function Viewport({ p }: { p: PanelProps }) {
     // OS DPI changes and panel-focus requests also invalidate the last CSS bounds.
     const listeners = [
       listen("viewport-layout-needed", () => {
+        if (activeToken.current) cancelRef.current();
         last = "";
         requestLayout.current();
       }),
@@ -197,6 +302,7 @@ export function Viewport({ p }: { p: PanelProps }) {
     const wheel = (e: WheelEvent) => {
       if (!ready) return;
       e.preventDefault();
+      if (activeToken.current) return;
       node.focus();
       const unit =
         e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? node.clientHeight : 1;
@@ -229,6 +335,56 @@ export function Viewport({ p }: { p: PanelProps }) {
           disabled={!ready}
           onClick={() => send({ type: "camera_reset" })}
         />
+        <select
+          className="transform-setting"
+          aria-label={p.t("coordinateSpace")}
+          title={p.t("coordinateSpace")}
+          value={space}
+          disabled={!ready || p.s.dragging}
+          onChange={(e) =>
+            void p.execute({ type: "set_space", space: e.target.value })
+          }
+        >
+          <option value="world">{p.t("worldSpace")}</option>
+          <option value="local">{p.t("localSpace")}</option>
+        </select>
+        <IconButton
+          icon={Magnet}
+          label={`${p.t("stepSnap")} (J)`}
+          aria-pressed={settings.snap !== snapHeld}
+          disabled={!ready || p.s.dragging}
+          onClick={() =>
+            void p.execute({ type: "set_snap", enabled: !settings.snap })
+          }
+        />
+        <select
+          className="transform-setting"
+          aria-label={p.t("snapStep")}
+          title={p.t("snapStep")}
+          value={step}
+          disabled={!ready || p.s.dragging}
+          onChange={(e) =>
+            void p.execute({
+              type: "set_snap_step",
+              tool,
+              step: Number(e.target.value),
+            })
+          }
+        >
+          {(steps.includes(step)
+            ? steps
+            : [...steps, step].sort((a, b) => a - b)
+          ).map((value) => (
+            <option key={value} value={value}>
+              {tool === "scale"
+                ? `${Math.round(value * 100)}%`
+                : tool === "rotate"
+                  ? `${value}°`
+                  : value}
+            </option>
+          ))}
+        </select>
+        <InfoTip label={p.t("snapInfo")} text={p.t("snapHelp")} />
         <span>{p.t(ready ? "embedded" : "notConnected")}</span>
         <InfoTip label={p.t("info")} text={p.t("viewportHelp")} />
       </div>
@@ -238,11 +394,18 @@ export function Viewport({ p }: { p: PanelProps }) {
         tabIndex={0}
         role="region"
         aria-label={p.t("viewport")}
-        aria-keyshortcuts="F Shift+Space"
+        aria-keyshortcuts="Q W E R J F Escape Shift+Space"
         onContextMenu={(e) => {
           if (ready) e.preventDefault();
         }}
         onKeyDown={(e) => {
+          if (e.key === "Escape") {
+            e.preventDefault();
+            e.stopPropagation();
+            cancelGesture();
+            return;
+          }
+          if (activeToken.current) return;
           if (
             e.key.toLowerCase() === "f" &&
             !e.altKey &&
@@ -255,7 +418,8 @@ export function Viewport({ p }: { p: PanelProps }) {
           }
         }}
         onPointerDown={(e) => {
-          if (!ready || (!e.altKey && e.button !== 0)) return;
+          if (!ready || gesture.current || (!e.altKey && e.button !== 0))
+            return;
           e.preventDefault();
           e.currentTarget.focus();
           e.currentTarget.setPointerCapture(e.pointerId);
@@ -268,16 +432,31 @@ export function Viewport({ p }: { p: PanelProps }) {
                   ? "dolly"
                   : undefined
             : undefined;
+          const bounds = e.currentTarget.getBoundingClientRect();
+          const token =
+            !mode && p.s.tool !== "select" ? crypto.randomUUID() : undefined;
+          if (token) {
+            activeToken.current = token;
+            send({
+              type: "transform_begin",
+              token,
+              x: e.clientX - bounds.left,
+              y: e.clientY - bounds.top,
+              width: bounds.width,
+              height: bounds.height,
+            });
+          }
           gesture.current = {
             id: e.pointerId,
             x: e.clientX,
             y: e.clientY,
-            startX: e.clientX,
-            startY: e.clientY,
+            token,
+            left: bounds.left,
+            top: bounds.top,
             travel: 0,
             mode,
           };
-          setDragging(Boolean(mode));
+          setDragging(Boolean(mode || token));
         }}
         onPointerMove={(e) => {
           const g = gesture.current;
@@ -287,6 +466,13 @@ export function Viewport({ p }: { p: PanelProps }) {
           g.x = e.clientX;
           g.y = e.clientY;
           g.travel += Math.hypot(dx, dy);
+          if (g.token && g.travel >= 4 && (dx || dy))
+            send({
+              type: "transform_update",
+              token: g.token,
+              points: [[e.clientX - g.left, e.clientY - g.top]],
+              snap_toggle: snapKey.current,
+            });
           if (g.mode && (dx || dy))
             send({
               type: "navigate",
@@ -299,7 +485,17 @@ export function Viewport({ p }: { p: PanelProps }) {
         onPointerUp={(e) => {
           const g = gesture.current;
           if (!g || g.id !== e.pointerId) return;
-          if (!g.mode && g.travel < 4) {
+          if (g.token) {
+            if (g.travel >= 4)
+              send({
+                type: "transform_update",
+                token: g.token,
+                points: [[e.clientX - g.left, e.clientY - g.top]],
+                snap_toggle: snapKey.current,
+              });
+            send({ type: "transform_end", token: g.token, cancel: false });
+          }
+          if (!g.token && !g.mode && g.travel < 4) {
             const r = e.currentTarget.getBoundingClientRect();
             send({
               type: "viewport_pick",
@@ -313,13 +509,9 @@ export function Viewport({ p }: { p: PanelProps }) {
           e.currentTarget.releasePointerCapture(e.pointerId);
         }}
         onLostPointerCapture={() => {
-          gesture.current = null;
-          setDragging(false);
+          if (gesture.current) cancelGesture();
         }}
-        onPointerCancel={() => {
-          gesture.current = null;
-          setDragging(false);
-        }}
+        onPointerCancel={cancelGesture}
       >
         {!ready && (
           <div className="native-message">

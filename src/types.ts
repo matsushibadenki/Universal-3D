@@ -5,6 +5,7 @@ export type SceneObject = {
   position: number[];
   rotation: number[];
   scale: number[];
+  shear: number[];
   visible: boolean;
   mirror: boolean;
 };
@@ -23,12 +24,23 @@ export type Snapshot = {
   viewport: boolean;
   frame: number;
   camera: number[];
+  tool: "select" | "move" | "rotate" | "scale";
+  transform_settings: {
+    move_space: "world" | "local";
+    rotate_space: "world" | "local";
+    scale_space: "world" | "local";
+    snap: boolean;
+    move_step: number;
+    rotate_step: number;
+    scale_step: number;
+  };
+  dragging: boolean;
 };
 export type Command = { type: string; [key: string]: unknown };
 export const preview: Snapshot = {
   revision: 0,
   document: {
-    version: 1,
+    version: 2,
     objects: [
       {
         id: 1,
@@ -37,6 +49,7 @@ export const preview: Snapshot = {
         position: [0, 0, 0],
         rotation: [0, 0, 0],
         scale: [1, 1, 1],
+        shear: [0, 0, 0],
         visible: true,
         mirror: false,
       },
@@ -51,6 +64,17 @@ export const preview: Snapshot = {
   viewport: false,
   frame: 1,
   camera: [0.7, 0.45, 7],
+  tool: "select",
+  transform_settings: {
+    move_space: "world",
+    rotate_space: "local",
+    scale_space: "local",
+    snap: false,
+    move_step: 1,
+    rotate_step: 15,
+    scale_step: 0.1,
+  },
+  dragging: false,
 };
 
 export type EditorChange = Omit<Snapshot, "document"> & {

@@ -29,6 +29,9 @@ struct Batch {
 struct GpuScene {
     triangles: wgpu::RenderPipeline,
     lines: wgpu::RenderPipeline,
+    gizmo_pipeline: wgpu::RenderPipeline,
+    gizmo_vertices: wgpu::Buffer,
+    gizmo_count: u32,
     camera: wgpu::Buffer,
     camera_bind: wgpu::BindGroup,
     previous_camera: Option<Matrix>,
@@ -43,6 +46,7 @@ pub struct Renderer {
     config: wgpu::SurfaceConfiguration,
     depth: wgpu::TextureView,
     scene: GpuScene,
+    pub ui_scale: f32,
 }
 struct VertexBuffer {
     buffer: wgpu::Buffer,
@@ -194,8 +198,12 @@ impl GpuScene {
                 },
                 depth_stencil: Some(wgpu::DepthStencilState {
                     format: wgpu::TextureFormat::Depth32Float,
-                    depth_write_enabled: true,
-                    depth_compare: wgpu::CompareFunction::LessEqual,
+                    depth_write_enabled: entry != "vs_gizmo",
+                    depth_compare: if entry == "vs_gizmo" {
+                        wgpu::CompareFunction::Always
+                    } else {
+                        wgpu::CompareFunction::LessEqual
+                    },
                     stencil: Default::default(),
                     bias: Default::default(),
                 }),
@@ -209,6 +217,17 @@ impl GpuScene {
             "vs_grid",
             std::slice::from_ref(&vertex_layout),
         );
+        let gizmo_pipeline = make(
+            wgpu::PrimitiveTopology::TriangleList,
+            "vs_gizmo",
+            std::slice::from_ref(&vertex_layout),
+        );
+        let gizmo_vertices = device.create_buffer(&wgpu::BufferDescriptor {
+            label: Some("Transform handles"),
+            size: (2048 * std::mem::size_of::<Vertex>()) as u64,
+            usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
+            mapped_at_creation: false,
+        });
         let triangles = make(
             wgpu::PrimitiveTopology::TriangleList,
             "vs_mesh",
@@ -262,6 +281,9 @@ impl GpuScene {
         Self {
             triangles,
             lines,
+            gizmo_pipeline,
+            gizmo_vertices,
+            gizmo_count: 0,
             camera,
             camera_bind,
             previous_camera: None,
@@ -300,6 +322,13 @@ impl GpuScene {
                         .copy_from_slice(&instances[range.clone()]);
                 }
             }
+        }
+    }
+    fn update_gizmo(&mut self, queue: &wgpu::Queue, editor: &Editor, size: [f32; 2]) {
+        let vertices = gizmo_geometry(editor, size);
+        self.gizmo_count = vertices.len() as u32;
+        if !vertices.is_empty() {
+            queue.write_buffer(&self.gizmo_vertices, 0, bytemuck::cast_slice(&vertices));
         }
     }
     fn encode(
@@ -347,6 +376,11 @@ impl GpuScene {
             pass.set_vertex_buffer(0, batch.vertices.slice(..));
             pass.set_vertex_buffer(1, batch.instances.buffer.slice(..));
             pass.draw(0..batch.vertex_count, 0..batch.instance_count);
+        }
+        if self.gizmo_count > 0 {
+            pass.set_pipeline(&self.gizmo_pipeline);
+            pass.set_vertex_buffer(0, self.gizmo_vertices.slice(..));
+            pass.draw(0..self.gizmo_count, 0..1);
         }
     }
 }
@@ -402,6 +436,7 @@ impl Renderer {
             config,
             depth,
             scene,
+            ui_scale: 1.,
         })
     }
     pub fn resize(&mut self, w: u32, h: u32) {
@@ -430,6 +465,14 @@ impl Renderer {
             editor,
             self.config.width as f32 / self.config.height as f32,
         );
+        self.scene.update_gizmo(
+            &self.queue,
+            editor,
+            [
+                self.config.width as f32 / self.ui_scale,
+                self.config.height as f32 / self.ui_scale,
+            ],
+        );
         let view = frame.texture.create_view(&Default::default());
         let mut encoder = self.device.create_command_encoder(&Default::default());
         self.scene.encode(&mut encoder, &view, &self.depth);
@@ -438,6 +481,94 @@ impl Renderer {
         Ok(())
     }
 }
+
+fn gizmo_geometry(editor: &Editor, size: [f32; 2]) -> Vec<Vertex> {
+    use crate::gizmo::{handles, Handle, Tool};
+    let Some(handles) = handles(editor, size) else {
+        return vec![];
+    };
+    let mut vertices = Vec::with_capacity(if handles.tool == Tool::Rotate {
+        1536
+    } else {
+        42
+    });
+    let mut triangle = |points: [[f32; 2]; 3], color| {
+        vertices.extend(points.map(|p| Vertex {
+            position: [p[0] / size[0] * 2. - 1., 1. - p[1] / size[1] * 2., 0.],
+            edge_a: color,
+            edge_b: [0.; 3],
+        }));
+    };
+    let active = editor.transform_drag.as_ref().map(|drag| drag.handle);
+    let color = |handle| {
+        if active == Some(handle) {
+            [1., 0.8, 0.08]
+        } else {
+            match handle {
+                Handle::Axis(0) => [0.9, 0.07, 0.05],
+                Handle::Axis(1) => [0.12, 0.8, 0.12],
+                Handle::Axis(_) => [0.08, 0.32, 1.],
+                Handle::Screen => [0.9; 3],
+            }
+        }
+    };
+    if handles.tool == Tool::Rotate {
+        for ring in &handles.rings {
+            for segment in ring.points.windows(2) {
+                let (Some(a), Some(b)) = (segment[0], segment[1]) else {
+                    continue;
+                };
+                let d = [b[0] - a[0], b[1] - a[1]];
+                let length = d[0].hypot(d[1]);
+                if length < 0.1 {
+                    continue;
+                }
+                let side = [-d[1] / length, d[0] / length];
+                let offset =
+                    |p: [f32; 2], sign: f32| std::array::from_fn(|i| p[i] + side[i] * sign);
+                triangle(
+                    [offset(a, -1.), offset(b, -1.), offset(b, 1.)],
+                    color(ring.handle),
+                );
+                triangle(
+                    [offset(a, -1.), offset(b, 1.), offset(a, 1.)],
+                    color(ring.handle),
+                );
+            }
+        }
+    } else {
+        for i in 0..3 {
+            let Some(tip) = handles.tips[i] else {
+                continue;
+            };
+            let o = handles.origin;
+            let delta = [tip[0] - o[0], tip[1] - o[1]];
+            let length = delta[0].hypot(delta[1]);
+            let dir = delta.map(|v| v / length);
+            let side = [-dir[1], dir[0]];
+            let at = |distance: f32, offset: f32| {
+                std::array::from_fn(|j| o[j] + dir[j] * distance + side[j] * offset)
+            };
+            let end = length - if handles.tool == Tool::Scale { 4. } else { 11. };
+            let c = color(Handle::Axis(i));
+            triangle([at(7., -1.5), at(end, -1.5), at(end, 1.5)], c);
+            triangle([at(7., -1.5), at(end, 1.5), at(7., 1.5)], c);
+            if handles.tool == Tool::Scale {
+                let [x, y] = tip;
+                triangle([[x - 4., y - 4.], [x + 4., y - 4.], [x + 4., y + 4.]], c);
+                triangle([[x - 4., y - 4.], [x + 4., y + 4.], [x - 4., y + 4.]], c);
+            } else {
+                triangle([tip, at(length - 13., -5.5), at(length - 13., 5.5)], c);
+            }
+        }
+        let [x, y] = handles.origin;
+        let c = color(Handle::Screen);
+        triangle([[x - 5., y - 5.], [x + 5., y - 5.], [x + 5., y + 5.]], c);
+        triangle([[x - 5., y - 5.], [x + 5., y + 5.], [x - 5., y + 5.]], c);
+    }
+    vertices
+}
+
 fn world_point(matrix: Matrix, point: [f32; 3]) -> [f32; 3] {
     std::array::from_fn(|i| matrix[3][i] + (0..3).map(|j| matrix[j][i] * point[j]).sum::<f32>())
 }
@@ -506,7 +637,13 @@ pub fn pick(editor: &Editor, x: f32, y: f32, aspect: f32) -> Result<Option<u64>,
                 object.position[1],
                 object.position[2],
             ];
-            let radius = object.scale.iter().map(|v| v.abs()).fold(0., f32::max)
+            // Frobenius norm bounds the stretch even for sheared objects.
+            let radius = crate::affine::linear_basis(object)
+                .iter()
+                .flatten()
+                .map(|v| v * v)
+                .sum::<f32>()
+                .sqrt()
                 * match object.kind.as_str() {
                     "sphere" => 0.5,
                     "plane" => 1.5,
@@ -558,17 +695,9 @@ pub fn pick(editor: &Editor, x: f32, y: f32, aspect: f32) -> Result<Option<u64>,
 // ThreeX's Euler composition is not imported: its contract differs for compound rotations.
 fn model_matrix(object: &Object, mirrored: bool) -> Matrix {
     let mut matrix = [[0.; 4]; 4];
+    let basis = crate::affine::linear_basis(object);
     for (axis, column) in matrix.iter_mut().take(3).enumerate() {
-        let mut p = [0.; 3];
-        p[axis] = object.scale[axis];
-        for axis in 0..3 {
-            let a = (axis + 1) % 3;
-            let b = (axis + 2) % 3;
-            let (s, c) = object.rotation[axis].to_radians().sin_cos();
-            let x = p[a] * c - p[b] * s;
-            p[b] = p[a] * s + p[b] * c;
-            p[a] = x;
-        }
+        let mut p = basis[axis];
         if mirrored {
             p[0] = -p[0];
         }
@@ -625,6 +754,7 @@ struct TransformKey {
     position: [f32; 3],
     rotation: [f32; 3],
     scale: [f32; 3],
+    shear: [f32; 3],
 }
 impl From<&Object> for TransformKey {
     fn from(object: &Object) -> Self {
@@ -632,6 +762,7 @@ impl From<&Object> for TransformKey {
             position: object.position,
             rotation: object.rotation,
             scale: object.scale,
+            shear: object.shear,
         }
     }
 }
@@ -1426,6 +1557,7 @@ mod tests {
                 o.kind = ["cube", "sphere", "plane"][(id % 3) as usize].into();
                 o.rotation = [31., -47., 73.];
                 o.scale = [-1., 0.5, 2.];
+                o.shear = [0.3, -0.4, 0.2];
                 o.mirror = true;
                 e.document.objects.push(o);
             }
@@ -1451,14 +1583,23 @@ mod tests {
                 e.execute(crate::editor::Command::Update { object })
                     .unwrap();
                 scene.update(&device, &queue, &e, 1.);
-                let mut encoder = device.create_command_encoder(&Default::default());
-                scene.encode(
-                    &mut encoder,
-                    &target.create_view(&Default::default()),
-                    &depth,
-                );
-                queue.submit([encoder.finish()]);
-                device.poll(wgpu::PollType::wait_indefinitely()).unwrap();
+                for tool in [
+                    crate::gizmo::Tool::Move,
+                    crate::gizmo::Tool::Rotate,
+                    crate::gizmo::Tool::Scale,
+                ] {
+                    e.tool = tool;
+                    scene.update_gizmo(&queue, &e, [size as f32; 2]);
+                    assert!(scene.gizmo_count >= 6 && scene.gizmo_count <= 2048);
+                    let mut encoder = device.create_command_encoder(&Default::default());
+                    scene.encode(
+                        &mut encoder,
+                        &target.create_view(&Default::default()),
+                        &depth,
+                    );
+                    queue.submit([encoder.finish()]);
+                    device.poll(wgpu::PollType::wait_indefinitely()).unwrap();
+                }
             }
             for step in 0..18 {
                 let mut object = e.document.objects[step % e.document.objects.len()].clone();
@@ -1564,6 +1705,7 @@ mod interaction_tests {
         object.position = [5., 2., 3.];
         object.rotation = [25., 40., 10.];
         object.scale = [2., 3., 1.];
+        object.shear = [1.2, -0.7, 0.3];
         object.mirror = true;
         e.execute(crate::editor::Command::Update {
             object: object.clone(),
@@ -1587,5 +1729,30 @@ mod interaction_tests {
             }
         }
         assert_eq!(history, e.undo.len());
+    }
+    #[test]
+    fn shear_only_edits_invalidate_instances_and_remain_pickable_outside_old_bounds() {
+        let mut e = Editor::new();
+        e.yaw = 0.;
+        e.pitch = 0.;
+        e.distance = 30.;
+        let mut cache = InstanceCache::default();
+        let (original, _) = cache.build(&e);
+        let mut object = e.document.objects[0].clone();
+        object.shear = [20., 0., 0.];
+        e.execute(crate::editor::Command::Update { object })
+            .unwrap();
+        let (changed, rebuilt) = cache.build(&e);
+        assert_eq!(rebuilt, 1);
+        assert!(changed != original);
+        // Ray through [8,.4,0], well outside the old unsheared bounding sphere.
+        assert_eq!(
+            pick(&e, 8. * 1.8 / 30., 0.4 * 1.8 / 30., 1.).unwrap(),
+            Some(1)
+        );
+        e.execute(crate::editor::Command::Undo).unwrap();
+        let (restored, rebuilt) = cache.build(&e);
+        assert_eq!(rebuilt, 1);
+        assert!(restored == original);
     }
 }

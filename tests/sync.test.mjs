@@ -98,3 +98,40 @@ test("panel/viewport close updates metadata without replacing the document", () 
   assert.deepEqual(closed.floating, []);
   assert.equal(closed.document.objects, initial.document.objects);
 });
+
+for (const [tool, field, value] of [
+  ["move", "position", [2, 0, 0]],
+  ["rotate", "rotation", [0, 45, 90]],
+  ["scale", "scale", [-2, 3, 4]],
+]) {
+  test(`${tool} preview, cancellation and tool metadata reach every panel`, () => {
+    const original = preview.document.objects[0];
+    const changed = { ...original, [field]: value };
+    let state = applyChange(preview, event(1, [], { tool, dragging: true }));
+    assert.equal(state.document.objects, preview.document.objects);
+    assert.equal(state.dragging, true);
+    state = applyChange(state, event(2, [{ start: 0, remove: 1, objects: [changed] }], {
+      tool, dragging: true, dirty: true, can_undo: false,
+    }));
+    assert.deepEqual(state.document.objects[0][field], value);
+    state = applyChange(state, event(3, [{ start: 0, remove: 1, objects: [original] }], {
+      tool, dragging: false, dirty: false, can_undo: false,
+    }));
+    assert.deepEqual(state.document, preview.document);
+    assert.equal(state.tool, tool);
+    assert.equal(state.dragging, false);
+    assert.equal(state.dirty, false);
+  });
+}
+
+
+test("coordinate and snap settings synchronize without copying objects; shear survives patches", () => {
+  const settings={...preview.transform_settings, move_space:"local", scale_space:"world", snap:true, rotate_step:30};
+  const configured=applyChange(preview,event(1,[],{transform_settings:settings}));
+  assert.deepEqual(configured.transform_settings,settings);
+  assert.equal(configured.document.objects,preview.document.objects);
+  const sheared={...preview.document.objects[0],shear:[0.5,-0.2,0.3]};
+  const changed=applyChange(configured,event(2,[{start:0,remove:1,objects:[sheared]}],{transform_settings:settings}));
+  assert.deepEqual(changed.document.objects[0].shear,sheared.shear);
+  assert.deepEqual(changed.transform_settings,settings);
+});

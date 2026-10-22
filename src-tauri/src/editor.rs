@@ -3,6 +3,36 @@ use serde::Deserialize;
 #[derive(Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum Command {
+    SetTool {
+        tool: crate::gizmo::Tool,
+    },
+    SetSpace {
+        space: crate::gizmo::Space,
+    },
+    SetSnap {
+        enabled: bool,
+    },
+    SetSnapStep {
+        tool: crate::gizmo::Tool,
+        step: f32,
+    },
+    TransformBegin {
+        token: String,
+        x: f32,
+        y: f32,
+        width: f32,
+        height: f32,
+    },
+    TransformUpdate {
+        token: String,
+        points: Vec<[f32; 2]>,
+        #[serde(default)]
+        snap_toggle: bool,
+    },
+    TransformEnd {
+        token: String,
+        cancel: bool,
+    },
     Navigate {
         mode: Navigation,
         dx: f32,
@@ -48,9 +78,102 @@ pub enum Navigation {
     Dolly,
 }
 
+impl Command {
+    pub fn is_transform_gesture(&self) -> bool {
+        matches!(
+            self,
+            Self::TransformBegin { .. } | Self::TransformUpdate { .. } | Self::TransformEnd { .. }
+        )
+    }
+}
 impl Editor {
     pub fn execute(&mut self, command: Command) -> Result<(), String> {
+        if !matches!(
+            command,
+            Command::TransformUpdate { .. }
+                | Command::TransformEnd { .. }
+                | Command::SetTool { .. }
+                | Command::SetSpace { .. }
+                | Command::SetSnap { .. }
+                | Command::SetSnapStep { .. }
+        ) {
+            self.ensure_not_dragging()?;
+        }
         match command {
+            Command::SetTool { tool } => {
+                self.finish_transform(true);
+                self.tool = tool;
+            }
+            Command::SetSpace { space } => {
+                self.finish_transform(true);
+                self.transform_settings.set_space(self.tool, space);
+            }
+            Command::SetSnap { enabled } => {
+                self.finish_transform(true);
+                self.transform_settings.snap = enabled;
+            }
+            Command::SetSnapStep { tool, step } => {
+                let mut settings = self.transform_settings;
+                settings.set_step(tool, step)?;
+                self.finish_transform(true);
+                self.transform_settings = settings;
+            }
+            Command::TransformBegin {
+                token,
+                x,
+                y,
+                width,
+                height,
+            } => {
+                crate::gizmo::valid_pointer(x, y, [width, height])?;
+                if token.is_empty() || token.len() > 80 {
+                    return Err("Invalid transform token".into());
+                }
+                self.transform_drag =
+                    crate::gizmo::TransformDrag::begin(self, token, [x, y], [width, height]);
+                if self.transform_drag.is_none() {
+                    let selected = crate::renderer::pick(
+                        self,
+                        x / width * 2. - 1.,
+                        1. - y / height * 2.,
+                        width / height,
+                    )?;
+                    self.select(selected);
+                }
+            }
+            Command::TransformUpdate {
+                token,
+                points,
+                snap_toggle,
+            } => {
+                if let Some(mut drag) = self
+                    .transform_drag
+                    .as_ref()
+                    .filter(|drag| drag.token == token)
+                    .cloned()
+                {
+                    if points.is_empty() || points.len() > 256 {
+                        return Err("Invalid transform sample count".into());
+                    }
+                    // Keep angular crossings, but publish only the final object. A rejected
+                    // sample leaves both the document and the accumulated gesture unchanged.
+                    let mut object = drag.before.clone();
+                    for [x, y] in points {
+                        object = drag.object_at(x, y, snap_toggle)?;
+                    }
+                    self.preview_transform(object);
+                    self.transform_drag = Some(drag);
+                }
+            }
+            Command::TransformEnd { token, cancel } => {
+                if self
+                    .transform_drag
+                    .as_ref()
+                    .is_some_and(|drag| drag.token == token)
+                {
+                    self.finish_transform(cancel);
+                }
+            }
             Command::CameraReset => {
                 self.yaw = 0.7;
                 self.pitch = 0.45;
@@ -107,6 +230,7 @@ impl Editor {
                     position: [0.; 3],
                     rotation: [0.; 3],
                     scale: [1.; 3],
+                    shear: [0.; 3],
                     visible: true,
                     mirror: false,
                 };

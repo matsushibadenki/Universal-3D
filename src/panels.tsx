@@ -221,31 +221,39 @@ export function Inspector(p: PanelProps) {
             {p.t("visible")}
           </label>
           <div className="section-heading">{p.t("transform")}</div>
-          {(["position", "rotation", "scale"] as const).map((field) => (
-            <div className="transform" key={field} data-channel={field}>
-              <div className="axis-fields">
-                {["X", "Y", "Z"].map((axis, i) => (
-                  <label key={axis}>
-                    <span>
-                      {p.t(field)}{" "}
-                      <b className={`axis-${axis.toLowerCase()}`}>{axis}</b>
-                    </span>
-                    <NumberField
-                      key={`${o.id}-${field}-${i}-${o[field][i]}`}
-                      label={`${p.t(field)} ${axis}`}
-                      value={o[field][i]}
-                      disabled={p.disabled}
-                      commit={(n) => {
-                        const v = [...o[field]];
-                        v[i] = n;
-                        update({ ...o, [field]: v });
-                      }}
-                    />
-                  </label>
-                ))}
+          {(["position", "rotation", "scale", "shear"] as const)
+            .filter(
+              (field) =>
+                field !== "shear" ||
+                o.shear.some((v) => Math.abs(v) > 0.000001),
+            )
+            .map((field) => (
+              <div className="transform" key={field} data-channel={field}>
+                <div className="axis-fields">
+                  {["X", "Y", "Z"].map((axis, i) => (
+                    <label key={axis}>
+                      <span>
+                        {p.t(field)}{" "}
+                        <b className={`axis-${axis.toLowerCase()}`}>
+                          {field === "shear" ? ["XY", "XZ", "YZ"][i] : axis}
+                        </b>
+                      </span>
+                      <NumberField
+                        key={`${o.id}-${field}-${i}-${o[field][i]}`}
+                        label={`${p.t(field)} ${field === "shear" ? ["XY", "XZ", "YZ"][i] : axis}`}
+                        value={o[field][i]}
+                        disabled={p.disabled}
+                        commit={(n) => {
+                          const v = [...o[field]];
+                          v[i] = n;
+                          update({ ...o, [field]: v });
+                        }}
+                      />
+                    </label>
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
           <div className="section-heading">{p.t("modifiers")}</div>
           <div className="modifier">
             <Box size={17} />

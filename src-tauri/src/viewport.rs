@@ -183,6 +183,7 @@ mod macos {
             host.clip.setHidden(false);
             CATransaction::commit();
             if let Some(renderer) = state.renderer.lock().map_err(|e| e.to_string())?.as_mut() {
+                renderer.ui_scale = rect.dpr as f32;
                 renderer.resize(layout.pixels[0], layout.pixels[1]);
             }
             state.viewport_visible.store(true, Ordering::Release);

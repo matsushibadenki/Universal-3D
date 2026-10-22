@@ -31,3 +31,10 @@ struct Out {
     return out;
 }
 @fragment fn fs(input: Out) -> @location(0) vec4<f32> { return vec4<f32>(input.color,1.0); }
+
+@vertex fn vs_gizmo(@location(0) p: vec3<f32>, @location(1) color: vec3<f32>) -> Out {
+    var out: Out;
+    out.position = vec4<f32>(p, 1.0);
+    out.color = color;
+    return out;
+}

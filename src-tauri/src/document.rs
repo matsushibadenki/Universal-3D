@@ -8,6 +8,8 @@ pub struct Object {
     pub position: [f32; 3],
     pub rotation: [f32; 3],
     pub scale: [f32; 3],
+    #[serde(default)]
+    pub shear: [f32; 3],
     pub visible: bool,
     pub mirror: bool,
 }
@@ -20,7 +22,7 @@ pub struct Document {
 impl Default for Document {
     fn default() -> Self {
         Self {
-            version: 1,
+            version: 2,
             objects: vec![Object {
                 id: 1,
                 name: "Cube".into(),
@@ -28,6 +30,7 @@ impl Default for Document {
                 position: [0.; 3],
                 rotation: [0.; 3],
                 scale: [1.; 3],
+                shear: [0.; 3],
                 visible: true,
                 mirror: false,
             }],
@@ -36,8 +39,22 @@ impl Default for Document {
     }
 }
 impl Document {
+    // Version 2 prevents older readers silently dropping shear. Version 1 remains readable.
+    pub fn file_bytes(&self) -> Result<Vec<u8>, serde_json::Error> {
+        #[derive(Serialize)]
+        struct File<'a> {
+            version: u32,
+            objects: &'a [Object],
+            selected: Option<u64>,
+        }
+        serde_json::to_vec_pretty(&File {
+            version: 2,
+            objects: &self.objects,
+            selected: self.selected,
+        })
+    }
     pub fn validate(&self) -> Result<(), String> {
-        if self.version != 1 || self.objects.len() > 10000 {
+        if !matches!(self.version, 1 | 2) || self.objects.len() > 10000 {
             return Err("Unsupported document version or too many objects".into());
         }
         let mut ids = std::collections::HashSet::new();
@@ -64,6 +81,7 @@ impl Object {
                 .iter()
                 .chain(&self.rotation)
                 .chain(&self.scale)
+                .chain(&self.shear)
                 .any(|v| !v.is_finite() || v.abs() > 10000.)
             || self.scale.iter().any(|v| v.abs() < 0.001)
         {
@@ -140,6 +158,9 @@ pub struct Editor {
     pub pitch: f32,
     pub distance: f32,
     pub camera_target: [f32; 3],
+    pub tool: crate::gizmo::Tool,
+    pub transform_settings: crate::gizmo::Settings,
+    pub transform_drag: Option<crate::gizmo::TransformDrag>,
     pub frame: u32,
     pub revision: u64,
     pub pending: Vec<DocumentPatch>,
@@ -313,6 +334,54 @@ impl Editor {
         });
         self.record(entry);
         Ok(())
+    }
+    pub fn ensure_not_dragging(&self) -> Result<(), String> {
+        if self.transform_drag.is_some() {
+            Err("Finish or cancel the transform before editing / 変形を確定または取消してください / 请先完成或取消变换".into())
+        } else {
+            Ok(())
+        }
+    }
+    pub fn preview_transform(&mut self, object: Object) {
+        let (index, current) = self
+            .indexed_object(object.id)
+            .expect("Transform owns its selected object");
+        if *current == object {
+            return;
+        }
+        let id = object.id;
+        self.document.objects[index] = object.clone();
+        self.pending.push(DocumentPatch {
+            start: index,
+            remove: 1,
+            objects: vec![object],
+        });
+        self.changed(RenderChange::Objects(vec![id]));
+        self.dirty = true;
+    }
+    pub fn finish_transform(&mut self, cancel: bool) -> bool {
+        let Some(drag) = self.transform_drag.take() else {
+            return false;
+        };
+        let (index, current) = self
+            .indexed_object(drag.before.id)
+            .expect("Transform owns its selected object");
+        if cancel {
+            self.preview_transform(drag.before);
+            self.dirty = drag.dirty_before;
+        } else if *current != drag.before {
+            let entry = HistoryEntry {
+                start: index,
+                before: vec![drag.before],
+                after: vec![current.clone()],
+                before_selected: self.document.selected,
+                after_selected: self.document.selected,
+            };
+            self.record(entry);
+        } else {
+            self.dirty = drag.dirty_before;
+        }
+        true
     }
     fn record(&mut self, entry: HistoryEntry) {
         self.undo.push(entry);

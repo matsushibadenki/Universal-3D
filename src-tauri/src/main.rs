@@ -1,6 +1,8 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+mod affine;
 mod document;
 mod editor;
+mod gizmo;
 mod renderer;
 mod viewport;
 mod workspace;
@@ -62,6 +64,8 @@ fn request_quit(app: &tauri::AppHandle) {
     if let Err(error) = save_workspace(app) {
         eprintln!("Workspace save failed: {error}");
     }
+    state.editor.lock().unwrap().finish_transform(true);
+    let _ = broadcast(app, &state);
     if !state.editor.lock().unwrap().dirty {
         state.quit_approved.store(true, Ordering::SeqCst);
         app.exit(0);
@@ -101,6 +105,9 @@ struct Metadata {
     viewport: bool,
     frame: u32,
     camera: [f32; 3],
+    tool: gizmo::Tool,
+    transform_settings: gizmo::Settings,
+    dragging: bool,
 }
 #[derive(Clone, Serialize)]
 struct Snapshot {
@@ -133,6 +140,9 @@ fn metadata(e: &Editor, viewport: bool) -> Metadata {
         viewport,
         frame: e.frame,
         camera: [e.yaw, e.pitch, e.distance],
+        tool: e.tool,
+        transform_settings: e.transform_settings,
+        dragging: e.transform_drag.is_some(),
     }
 }
 fn snapshot(s: &State) -> Snapshot {
@@ -193,7 +203,11 @@ fn execute(
     app: tauri::AppHandle,
     state: tauri::State<State>,
     command: Command,
+    window: tauri::WebviewWindow,
 ) -> Result<(), String> {
+    if command.is_transform_gesture() && window.label() != "main" {
+        return Err("Only the main viewport can transform objects directly".into());
+    }
     {
         let mut e = state.editor.lock().map_err(|e| e.to_string())?;
         e.execute(command)?;
@@ -207,6 +221,7 @@ async fn save_document(
 ) -> Result<(), String> {
     let (doc, path) = {
         let e = state.editor.lock().unwrap();
+        e.ensure_not_dragging()?;
         (e.document.clone(), e.path.clone())
     };
     let path = match path {
@@ -221,13 +236,13 @@ async fn save_document(
             None => return Ok(()),
         },
     };
-    let bytes = serde_json::to_vec_pretty(&doc).map_err(|e| e.to_string())?;
+    let bytes = doc.file_bytes().map_err(|e| e.to_string())?;
     let temporary = path.with_extension("u3d.tmp");
     std::fs::write(&temporary, bytes).map_err(|e| e.to_string())?;
     std::fs::rename(&temporary, &path).map_err(|e| e.to_string())?;
     {
         let mut e = state.editor.lock().unwrap();
-        if e.document == doc {
+        if e.document == doc && e.transform_drag.is_none() {
             e.dirty = false;
         }
         e.path = Some(path);
@@ -240,6 +255,7 @@ async fn open_document(
     app: tauri::AppHandle,
     state: tauri::State<'_, State>,
 ) -> Result<(), String> {
+    state.editor.lock().unwrap().ensure_not_dragging()?;
     if state.editor.lock().unwrap().dirty {
         let answer=rfd::AsyncMessageDialog::new().set_title("Universal 3D").set_description("Unsaved changes / 未保存の変更 / 未保存的更改\nDiscard and open? / 破棄して開きますか？ / 放弃并打开？").set_buttons(rfd::MessageButtons::YesNo).show().await;
         if answer != rfd::MessageDialogResult::Yes {
@@ -266,6 +282,7 @@ async fn open_document(
     doc.validate()?;
     {
         let mut e = state.editor.lock().unwrap();
+        e.ensure_not_dragging()?;
         e.document = doc;
         e.invalidate_document();
         e.pending.clear();
@@ -479,6 +496,12 @@ fn main() {
             let app = window.app_handle();
             let s = app.state::<State>();
             match event {
+                tauri::WindowEvent::Focused(false) if window.label() == "main" => {
+                    let cancelled = s.editor.lock().unwrap().finish_transform(true);
+                    if cancelled {
+                        let _ = broadcast(app, &s);
+                    }
+                }
                 tauri::WindowEvent::CloseRequested { api, .. } if window.label() == "main" => {
                     api.prevent_close();
                     request_quit(app);
