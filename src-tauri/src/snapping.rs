@@ -60,10 +60,9 @@ enum GeometryKey {
     Mesh(usize),
 }
 impl GeometryKey {
-    fn of(editor: &Editor, object: &Object) -> Option<Self> {
+    fn in_document(document: &Document, object: &Object) -> Option<Self> {
         if let Some(id) = &object.mesh_id {
-            editor
-                .document
+            document
                 .meshes
                 .get(id)
                 .map(|mesh| Self::Mesh(Arc::as_ptr(mesh) as usize))
@@ -255,6 +254,7 @@ pub(crate) fn check_cancel(cancel: Option<&AtomicBool>) -> Result<(), String> {
 /// Buffer capacities and logical map entries are reported separately from process RSS.
 #[derive(Default, Clone, Copy, Debug, serde::Serialize)]
 pub struct IndexMemory {
+    pub instances: usize,
     pub shapes: usize,
     pub ready_surface_shapes: usize,
     pub vertices: usize,
@@ -316,6 +316,7 @@ pub struct PreparedVertices {
 #[derive(Default, Clone, Copy, Debug, serde::Serialize)]
 pub struct PreparationMetrics {
     pub elapsed_us: u64,
+    pub budget: crate::snap_budget::Reservation,
     pub memory: IndexMemory,
     pub buffer_bytes: usize,
 }
@@ -356,9 +357,28 @@ impl PreparedVertices {
         assets: impl IntoIterator<Item = &'a Arc<crate::mesh::Mesh>>,
         cancel: Option<&AtomicBool>,
     ) -> Result<Self, String> {
+        Self::meshes_with_budget(
+            assets,
+            cancel,
+            crate::snap_budget::IndexBudget::configured()?,
+        )
+    }
+    fn meshes_with_budget<'a>(
+        assets: impl IntoIterator<Item = &'a Arc<crate::mesh::Mesh>>,
+        cancel: Option<&AtomicBool>,
+        budget: crate::snap_budget::IndexBudget,
+    ) -> Result<Self, String> {
         let started = std::time::Instant::now();
-        let mut prepared = Self::default();
+        check_cancel(cancel)?;
+        let mut collected = Vec::new();
         for asset in assets {
+            check_cancel(cancel)?;
+            collected.push(asset);
+        }
+        let reservation = budget.meshes(collected.iter().copied())?;
+        let mut prepared = Self::default();
+        let mut retained_bytes = 0usize;
+        for asset in collected {
             check_cancel(cancel)?;
             let key = GeometryKey::Mesh(Arc::as_ptr(asset) as usize);
             if prepared.geometries.contains_key(&key) {
@@ -367,28 +387,149 @@ impl PreparedVertices {
             asset.validate()?;
             let geometry = Geometry::from_faces(&asset.triangles, Some(asset.clone()), cancel)?;
             geometry.prepare_surfaces(cancel)?;
+            let mut memory = IndexMemory::default();
+            memory.add(&geometry);
+            retained_bytes = retained_bytes
+                .checked_add(memory.buffer_bytes())
+                .ok_or("SNAP_INDEX_BUDGET_EXCEEDED")?;
+            budget.check_capacity(retained_bytes)?;
             prepared.geometries.insert(key, Arc::new(geometry));
         }
         check_cancel(cancel)?;
         let memory = prepared.memory();
         prepared.metrics = PreparationMetrics {
+            budget: reservation,
             elapsed_us: started.elapsed().as_micros().min(u128::from(u64::MAX)) as u64,
             buffer_bytes: memory.buffer_bytes(),
             memory,
         };
         Ok(prepared)
     }
+    #[cfg(test)]
     pub fn document(document: &Document) -> Result<Self, String> {
+        Self::document_with_budget(document, crate::snap_budget::IndexBudget::configured()?)
+    }
+    fn document_with_budget(
+        document: &Document,
+        budget: crate::snap_budget::IndexBudget,
+    ) -> Result<Self, String> {
         // Hidden referenced assets are warm too; orphan assets retained for undo need no work.
         let ids: BTreeSet<_> = document
             .objects
             .iter()
             .filter_map(|o| o.mesh_id.as_ref())
             .collect();
-        Self::meshes(
+        Self::meshes_with_budget(
             ids.into_iter().filter_map(|id| document.meshes.get(id)),
             None,
+            budget,
         )
+    }
+}
+/// Own the exact document that produced the scene. It cannot be adopted into another document.
+pub struct PreparedDocument {
+    document: Document,
+    geometries: HashMap<GeometryKey, Arc<Geometry>>,
+    scene: Arc<SceneIndex>,
+    metrics: PreparationMetrics,
+}
+impl PreparedDocument {
+    pub fn new(document: Document) -> Result<Self, String> {
+        Self::with_budget(document, crate::snap_budget::IndexBudget::configured()?)
+    }
+    fn with_budget(
+        document: Document,
+        budget: crate::snap_budget::IndexBudget,
+    ) -> Result<Self, String> {
+        let started = std::time::Instant::now();
+        document.validate()?;
+        let reservation = budget.document(&document)?;
+        let mut prepared = PreparedVertices::document_with_budget(&document, budget)?;
+        let mut scene = SceneIndex::default();
+        let mut leaves = Vec::new();
+        for object in &document.objects {
+            if !object.visible {
+                continue;
+            }
+            let Some(revision) = InstanceRevision::in_document(&document, object) else {
+                continue;
+            };
+            let geometry = match prepared.geometries.entry(revision.geometry) {
+                std::collections::hash_map::Entry::Occupied(entry) => entry.get().clone(),
+                std::collections::hash_map::Entry::Vacant(entry) => {
+                    // All referenced mesh assets are prepared above. Only built-in shapes remain.
+                    let geometry =
+                        Geometry::from_faces(crate::renderer::geometry(&object.kind), None, None)?;
+                    geometry.prepare_surfaces(None)?;
+                    entry.insert(Arc::new(geometry)).clone()
+                }
+            };
+            let Some(root) = geometry.nodes.first() else {
+                continue;
+            };
+            for mirrored in [false, true] {
+                if mirrored && !object.mirror {
+                    continue;
+                }
+                let matrix = model_matrix(object, mirrored);
+                let bounds = root.bounds.transformed(matrix);
+                let key = (object.id, mirrored);
+                scene.instances.insert(
+                    key,
+                    Instance {
+                        revision,
+                        geometry: geometry.clone(),
+                        matrix,
+                        bounds,
+                    },
+                );
+                leaves.push((key, bounds));
+            }
+        }
+        scene.tree = BoundsTree::from_leaves(leaves);
+        let mut memory = prepared.memory();
+        scene.add_memory(&mut memory);
+        budget.check_capacity(memory.buffer_bytes())?;
+        let metrics = PreparationMetrics {
+            budget: reservation,
+            elapsed_us: started.elapsed().as_micros().min(u128::from(u64::MAX)) as u64,
+            buffer_bytes: memory.buffer_bytes(),
+            memory,
+        };
+        Ok(Self {
+            document,
+            geometries: prepared.geometries,
+            scene: Arc::new(scene),
+            metrics,
+        })
+    }
+    pub fn document(&self) -> &Document {
+        &self.document
+    }
+}
+impl Editor {
+    /// Replacement and indices are inseparable; callers still fence file transactions by Stamp.
+    pub fn replace_prepared_document(
+        &mut self,
+        prepared: PreparedDocument,
+        path: Option<std::path::PathBuf>,
+        recovered: bool,
+    ) {
+        self.replace_document(prepared.document, path, recovered);
+        let mut cache = self.vertex_cache.borrow_mut();
+        let mut work = cache.work;
+        work.prepared_geometries += prepared.geometries.len();
+        work.prepared_vertices += prepared.metrics.memory.vertices;
+        work.prepared_surface_indices += prepared.metrics.memory.ready_surface_shapes;
+        work.prepared_instances += prepared.scene.instances.len();
+        *cache = VertexCache {
+            revision: Some(self.render_revision),
+            epoch: self.document_epoch,
+            geometries: prepared.geometries,
+            scene: prepared.scene,
+            work,
+            last_preparation: Some(prepared.metrics),
+        };
     }
 }
 impl Editor {
@@ -444,8 +585,11 @@ struct InstanceRevision {
 }
 impl InstanceRevision {
     fn new(editor: &Editor, object: &Object) -> Option<Self> {
+        Self::in_document(&editor.document, object)
+    }
+    fn in_document(document: &Document, object: &Object) -> Option<Self> {
         Some(Self {
-            geometry: GeometryKey::of(editor, object)?,
+            geometry: GeometryKey::in_document(document, object)?,
             position: object.position,
             rotation: object.rotation,
             scale: object.scale,
@@ -465,6 +609,15 @@ struct SceneIndex {
     instances: HashMap<(u64, bool), Instance>,
     tree: BoundsTree<(u64, bool)>,
 }
+impl SceneIndex {
+    fn add_memory(&self, memory: &mut IndexMemory) {
+        memory.instances = self.instances.len();
+        memory.scene_tree_vec_bytes = self.tree.vec_bytes();
+        memory.scene_entry_payload_bytes = self.instances.len()
+            * std::mem::size_of::<((u64, bool), Instance)>()
+            + self.tree.entry_payload_bytes();
+    }
+}
 #[derive(Default, Clone, Copy, Debug)]
 pub struct CacheWork {
     pub full_syncs: usize,
@@ -476,6 +629,7 @@ pub struct CacheWork {
     pub prepared_geometries: usize,
     pub prepared_vertices: usize,
     pub prepared_surface_indices: usize,
+    pub prepared_instances: usize,
 }
 #[derive(Default)]
 pub struct VertexCache {
@@ -492,10 +646,7 @@ impl VertexCache {
         for geometry in self.geometries.values() {
             memory.add(geometry);
         }
-        memory.scene_tree_vec_bytes = self.scene.tree.vec_bytes();
-        memory.scene_entry_payload_bytes = self.scene.instances.len()
-            * std::mem::size_of::<((u64, bool), Instance)>()
-            + self.scene.tree.entry_payload_bytes();
+        self.scene.add_memory(&mut memory);
         memory
     }
     fn geometry(&mut self, editor: &Editor, object: &Object, key: GeometryKey) -> Arc<Geometry> {
@@ -547,6 +698,52 @@ impl VertexCache {
         }
         Arc::make_mut(&mut self.scene)
     }
+    fn instance(
+        &mut self,
+        editor: &Editor,
+        object: &Object,
+        revision: InstanceRevision,
+        mirrored: bool,
+    ) -> Option<Instance> {
+        let geometry = self.geometry(editor, object, revision.geometry);
+        let matrix = model_matrix(object, mirrored);
+        let bounds = geometry.nodes.first()?.bounds.transformed(matrix);
+        Some(Instance {
+            revision,
+            geometry,
+            matrix,
+            bounds,
+        })
+    }
+    fn rebuild_scene(&mut self, editor: &Editor) {
+        // Drop the old snapshot before allocating the replacement, unless a gesture owns it.
+        self.scene = Arc::new(SceneIndex::default());
+        let mut scene = SceneIndex::default();
+        let mut leaves = Vec::new();
+        for object in &editor.document.objects {
+            self.work.objects_visited += 1;
+            if !object.visible {
+                continue;
+            }
+            let Some(revision) = InstanceRevision::new(editor, object) else {
+                continue;
+            };
+            for mirrored in [false, true] {
+                if mirrored && !object.mirror {
+                    continue;
+                }
+                let Some(instance) = self.instance(editor, object, revision, mirrored) else {
+                    continue;
+                };
+                let key = (object.id, mirrored);
+                leaves.push((key, instance.bounds));
+                scene.instances.insert(key, instance);
+                self.work.instances_updated += 1;
+            }
+        }
+        scene.tree = BoundsTree::from_leaves(leaves);
+        self.scene = Arc::new(scene);
+    }
     fn update(&mut self, editor: &Editor, id: u64, object: Option<&Object>) {
         self.work.objects_visited += 1;
         let desired = object
@@ -564,18 +761,10 @@ impl VertexCache {
                 {
                     continue;
                 }
-                let geometry = self.geometry(editor, object, revision.geometry);
-                let Some(root) = geometry.nodes.first() else {
+                let Some(instance) = self.instance(editor, object, revision, mirrored) else {
                     continue;
                 };
-                let matrix = model_matrix(object, mirrored);
-                let bounds = root.bounds.transformed(matrix);
-                let instance = Instance {
-                    revision,
-                    geometry,
-                    matrix,
-                    bounds,
-                };
+                let bounds = instance.bounds;
                 let scene = self.scene_mut();
                 scene.tree.insert(key, bounds);
                 scene.instances.insert(key, instance);
@@ -610,14 +799,11 @@ impl VertexCache {
             });
         if full {
             self.work.full_syncs += 1;
-            self.scene = Arc::new(SceneIndex::default());
             if self.epoch != editor.document_epoch {
                 self.geometries.clear();
                 self.last_preparation = None;
             }
-            for object in &editor.document.objects {
-                self.update(editor, object.id, Some(object));
-            }
+            self.rebuild_scene(editor);
         } else {
             let mut ids = BTreeSet::new();
             for (_, change) in editor
@@ -675,7 +861,7 @@ impl Projection {
     fn planes(&self, point: [f32; 2]) -> [[f64; 4]; 6] {
         self.planes_with_radius(point, RADIUS)
     }
-    fn planes_with_radius(&self, point: [f32; 2], radius: f32) -> [[f64; 4]; 6] {
+    pub(crate) fn planes_with_radius(&self, point: [f32; 2], radius: f32) -> [[f64; 4]; 6] {
         let scale = 0.9 * f64::from(self.size[1]);
         let f = self.forward.map(f64::from);
         let r = self.right.map(f64::from);
@@ -1679,6 +1865,198 @@ mod tests {
         assert_eq!(work.snapshot_copies, 0);
     }
     #[test]
+    fn budget_rejection_precedes_geometry_build_and_preserves_editor_state() {
+        use crate::snap_budget::IndexBudget;
+        let mut e = mesh_scene(40, 2);
+        let mut object = e.document.objects[1].clone();
+        object.position[0] += 0.25;
+        e.execute(crate::editor::Command::Update { object })
+            .unwrap();
+        e.undo();
+        assert!(!e.redo.is_empty());
+        VertexIndex::new(&e, [800., 600.], false);
+        let scene = e.vertex_cache.borrow().scene.clone();
+        let stamp = e.stamp();
+        let before = e.document.file_bytes().unwrap();
+        let redo = e.redo.len();
+        let dirty = e.dirty;
+        let asset = e.document.meshes["shared"].clone();
+        let strong = Arc::strong_count(&asset);
+        let budget = IndexBudget::for_test(1024 * 1024);
+        assert!(PreparedDocument::with_budget(e.document.clone(), budget)
+            .err()
+            .unwrap()
+            .contains("SNAP_INDEX_BUDGET_EXCEEDED"));
+        let mut invalid = (*asset).clone();
+        invalid.color[0] = f32::NAN;
+        let invalid = Arc::new(invalid);
+        // Budget rejection comes before validation/index work on this oversized mesh.
+        let error = PreparedVertices::meshes_with_budget([&invalid], None, budget)
+            .err()
+            .unwrap();
+        assert!(error.contains("SNAP_INDEX_BUDGET_EXCEEDED"));
+        assert_eq!(Arc::strong_count(&asset), strong);
+        assert_eq!(e.stamp(), stamp);
+        assert_eq!(e.document.file_bytes().unwrap(), before);
+        assert_eq!(e.redo.len(), redo);
+        assert_eq!(e.dirty, dirty);
+        assert!(Arc::ptr_eq(&scene, &e.vertex_cache.borrow().scene));
+        assert!(e.vertex_cache.borrow().last_preparation.is_none());
+        let cancel = AtomicBool::new(true);
+        assert!(
+            PreparedVertices::meshes_with_budget([&asset], Some(&cancel), budget)
+                .err()
+                .unwrap()
+                .contains("CANCELLED")
+        );
+    }
+    #[test]
+    fn budget_counts_unique_assets_visible_mirrors_and_excludes_orphans() {
+        use crate::snap_budget::IndexBudget;
+        let mut e = mesh_scene(4, 144);
+        let shared = e.document.meshes["shared"].clone();
+        e.document.meshes.insert("alias".into(), shared.clone());
+        e.document.objects[2].mesh_id = Some("alias".into());
+        e.document.objects[1].mirror = true;
+        e.document.objects[2].visible = false;
+        e.document
+            .meshes
+            .insert("orphan".into(), Arc::new((*shared).clone()));
+        let budget = IndexBudget::for_test(1024 * 1024);
+        let reservation = budget.document(&e.document).unwrap();
+        assert_eq!(reservation.shapes, 2); // mesh Arc once, visible cube once
+        assert_eq!(reservation.triangles, 32 + 12);
+        assert_eq!(reservation.instances, 145);
+        let exact = IndexBudget::for_test(reservation.estimated_working_bytes);
+        let prepared = PreparedDocument::with_budget(e.document.clone(), exact).unwrap();
+        assert_eq!(
+            prepared.metrics.budget.limit_bytes,
+            reservation.estimated_working_bytes
+        );
+        assert!(prepared.metrics.buffer_bytes <= prepared.metrics.budget.estimated_working_bytes);
+        assert!(PreparedDocument::with_budget(
+            e.document.clone(),
+            IndexBudget::for_test(reservation.estimated_working_bytes - 1)
+        )
+        .is_err());
+        let empty = Document {
+            objects: Vec::new(),
+            selected: None,
+            ..Document::default()
+        };
+        assert_eq!(budget.document(&empty).unwrap().estimated_working_bytes, 0);
+        let once = budget.meshes([&shared]).unwrap();
+        let duplicate = budget.meshes([&shared, &shared]).unwrap();
+        assert_eq!(
+            once.estimated_working_bytes,
+            duplicate.estimated_working_bytes
+        );
+        assert_eq!(once.shapes, 1);
+    }
+    #[test]
+    fn prepared_document_keeps_first_gesture_off_the_full_scene_scan() {
+        use crate::gizmo::MoveSnap;
+        let mut e = mesh_scene(4, 9999);
+        e.document.objects[1].mirror = true;
+        e.document.objects[1].position = [3., 0., 0.];
+        e.document.objects[1].scale = [-1.2, 0.6, 1.4];
+        e.document.objects[1].shear = [0.2, -0.4, 0.3];
+        e.document.objects[2].visible = false;
+        e.invalidate_document();
+        let old = VertexIndex::new(&e, [1280., 860.], false);
+        let old_scene = e.vertex_cache.borrow().scene.clone();
+        let loaded: Document = serde_json::from_slice(&e.document.file_bytes().unwrap()).unwrap();
+        let prepared = std::thread::spawn(move || PreparedDocument::new(loaded).unwrap())
+            .join()
+            .unwrap();
+        assert_eq!(prepared.metrics.memory.instances, 10000);
+        assert_eq!(prepared.scene.instances.len(), 10000); // hidden excluded, mirror added
+        let scene = prepared.scene.clone();
+        assert_eq!(prepared.metrics.memory.ready_surface_shapes, 2);
+        e.replace_prepared_document(prepared, Some("scene.u3d".into()), false);
+        let stamp = e.stamp();
+        let before = e.vertex_cache.borrow().work;
+        assert_eq!(before.prepared_instances, 10000);
+        let index = VertexIndex::new(&e, [1280., 860.], false);
+        assert!(Arc::ptr_eq(&scene, &e.vertex_cache.borrow().scene));
+        assert!(!Arc::ptr_eq(&scene, &old_scene));
+        let object = e.document.objects[1].clone();
+        let projection = Projection::new(&e, [1280., 860.]);
+        for mirrored in [false, true] {
+            let instance = &scene.instances[&(object.id, mirrored)];
+            assert_eq!(instance.matrix, model_matrix(&object, mirrored));
+            for (mode, local) in [
+                (MoveSnap::Edge, [1., 0., 0.]),
+                (MoveSnap::Face, [0.2, 0.3, 0.]),
+            ] {
+                let point = projection
+                    .project(world_point(instance.matrix, local))
+                    .unwrap()
+                    .0;
+                assert!(index.nearest_mode(point, mode).is_some());
+            }
+        }
+        assert!(index.nearest([640., 430.]).is_some());
+        e.yaw += 0.1;
+        VertexIndex::new(&e, [800., 600.], false);
+        assert!(Arc::ptr_eq(&scene, &e.vertex_cache.borrow().scene));
+        let after = e.vertex_cache.borrow().work;
+        assert_eq!(after.objects_visited, before.objects_visited);
+        assert_eq!(after.full_syncs, before.full_syncs);
+        assert_eq!(after.geometries_built, before.geometries_built);
+        assert_eq!(e.stamp(), stamp);
+        assert!(!e.dirty && e.undo.is_empty() && e.redo.is_empty());
+        assert_eq!(e.path.as_deref(), Some(std::path::Path::new("scene.u3d")));
+        assert!(old.nearest([640., 430.]).is_some());
+        drop(index);
+        drop(scene);
+        let mut object = e.document.objects[1].clone();
+        object.position[0] += 0.25;
+        e.execute(crate::editor::Command::Update { object })
+            .unwrap();
+        VertexIndex::new(&e, [1280., 860.], false);
+        let changed = e.vertex_cache.borrow().work;
+        assert_eq!(changed.objects_visited, after.objects_visited + 1);
+        assert_eq!(changed.full_syncs, after.full_syncs);
+        e.undo();
+        VertexIndex::new(&e, [1280., 860.], false);
+        e.redo();
+        VertexIndex::new(&e, [1280., 860.], false);
+        assert_eq!(e.vertex_cache.borrow().work.full_syncs, after.full_syncs);
+    }
+    #[test]
+    fn prepared_document_owns_validated_input_and_recovery_remains_unsaved() {
+        let mut e = mesh_scene(4, 1);
+        e.document.objects[1].visible = false;
+        let orphan = Arc::new((*e.document.meshes["shared"]).clone());
+        e.document.meshes.insert("orphan".into(), orphan.clone());
+        let prepared = PreparedDocument::new(e.document.clone()).unwrap();
+        assert_eq!(prepared.geometries.len(), 2); // hidden referenced mesh + visible cube
+        assert_eq!(prepared.scene.instances.len(), 1);
+        assert!(prepared
+            .geometries
+            .values()
+            .all(|g| g._asset.as_ref().is_none_or(|a| !Arc::ptr_eq(a, &orphan))));
+        e.replace_prepared_document(prepared, None, true);
+        assert!(e.dirty && e.path.is_none() && e.undo.is_empty());
+        let stamp = e.stamp();
+        let mut invalid = e.document.clone();
+        invalid.objects[1].id = invalid.objects[0].id;
+        assert!(PreparedDocument::new(invalid).is_err());
+        assert_eq!(e.stamp(), stamp);
+        let empty = PreparedDocument::new(Document {
+            objects: Vec::new(),
+            selected: None,
+            ..Document::default()
+        })
+        .unwrap();
+        e.replace_prepared_document(empty, None, false);
+        assert!(VertexIndex::new(&e, [800., 600.], false)
+            .nearest([400., 300.])
+            .is_none());
+        assert_eq!(e.vertex_cache.borrow().work.full_syncs, 0);
+    }
+    #[test]
     fn worker_prepares_shared_referenced_assets_and_first_gesture_reuses_them() {
         let mut e = mesh_scene(80, 144);
         e.document.objects[1].visible = false;
@@ -1902,21 +2280,48 @@ mod tests {
         };
         let before_rss = rss();
         let started = Instant::now();
-        let document = &e.document;
-        let prepared = std::thread::scope(|scope| {
-            scope
-                .spawn(|| PreparedVertices::document(document))
-                .join()
-                .unwrap()
-        })
-        .unwrap();
+        let scene_prewarmed =
+            std::env::var("U3D_SNAP_PREWARM_SCENE").is_ok_and(|value| value == "1");
+        let (prepared, prepared_document) = if scene_prewarmed {
+            let document = std::mem::take(&mut e.document);
+            (
+                None,
+                Some(
+                    std::thread::spawn(move || PreparedDocument::new(document))
+                        .join()
+                        .unwrap()
+                        .unwrap(),
+                ),
+            )
+        } else {
+            let document = &e.document;
+            (
+                Some(
+                    std::thread::scope(|scope| {
+                        scope
+                            .spawn(|| PreparedVertices::document(document))
+                            .join()
+                            .unwrap()
+                    })
+                    .unwrap(),
+                ),
+                None,
+            )
+        };
         let prepare_us = started.elapsed().as_micros();
-        let prepared_memory = prepared.memory();
+        let prepared_memory = prepared_document
+            .as_ref()
+            .map_or_else(|| prepared.as_ref().unwrap().memory(), |p| p.metrics.memory);
         let prepared_rss = rss();
         let started = Instant::now();
-        e.install_prepared_vertices(prepared);
+        if let Some(prepared) = prepared_document {
+            e.replace_prepared_document(prepared, None, false);
+        } else {
+            e.install_prepared_vertices(prepared.unwrap());
+        }
         let install_us = started.elapsed().as_micros();
         let mut queries = Vec::new();
+        let mut scene_build_us = 0;
         let projection = Projection::new(&e, [1280., 860.]);
         for (mode, world) in [
             (MoveSnap::Edge, [1., 0., 0.]),
@@ -1925,9 +2330,29 @@ mod tests {
             let point = projection.project(world).unwrap().0;
             let started = Instant::now();
             let index = VertexIndex::new(&e, [1280., 860.], false);
+            if queries.is_empty() {
+                scene_build_us = started.elapsed().as_micros();
+            }
             assert!(index.nearest_mode(point, mode).is_some());
             queries.push(started.elapsed().as_micros());
         }
+        let point = projection.project([1., 0., 0.]).unwrap().0;
+        let started = Instant::now();
+        assert!(VertexIndex::new(&e, [1280., 860.], false)
+            .nearest_mode(point, MoveSnap::Edge)
+            .is_some());
+        let warm_edge_us = started.elapsed().as_micros();
+        let scene = e.vertex_cache.borrow().scene.clone();
+        let instance = &scene.instances[&(2, false)];
+        let geometry = &instance.geometry;
+        let (_, edge_work) = geometry.surfaces.get().unwrap().query_with_work(
+            &geometry.points,
+            geometry.faces(),
+            instance.matrix,
+            &projection,
+            point,
+            false,
+        );
         let report = diagnostics(&e);
         let mesh = &e.document.meshes["shared"];
         let source_bytes = mesh.triangles.capacity() * std::mem::size_of::<crate::mesh::Face>()
@@ -1935,9 +2360,11 @@ mod tests {
         println!(
             "SNAP_METRICS {}",
             serde_json::json!({
-                "case":case,"profile":"debug","grid":grid,"instances":instances,
+                "case":case,"profile":"debug","grid":grid,"instances":instances,"scene_prewarmed":scene_prewarmed,
                 "prepare_us":prepare_us,"install_us":install_us,
                 "first_edge_us":queries[0],"first_face_us":queries[1],
+                "scene_build_us":scene_build_us,"warm_edge_us":warm_edge_us,
+                "edge_candidates":edge_work.candidates,"edge_nodes":edge_work.nodes,
                 "prepared_memory":prepared_memory,"diagnostics":report,
                 "source_buffer_bytes":source_bytes,
                 "rss_kib":{"before":before_rss,"prepared":prepared_rss,"queried":rss()}

@@ -1194,7 +1194,7 @@ pub(crate) fn object_geometry<'a>(editor: &'a Editor, object: &Object) -> &'a [F
         geometry(&object.kind)
     }
 }
-fn geometry(kind: &str) -> &'static [Face] {
+pub(crate) fn geometry(kind: &str) -> &'static [Face] {
     static CUBE: OnceLock<Vec<Face>> = OnceLock::new();
     static SPHERE: OnceLock<Vec<Face>> = OnceLock::new();
     static PLANE: OnceLock<Vec<Face>> = OnceLock::new();

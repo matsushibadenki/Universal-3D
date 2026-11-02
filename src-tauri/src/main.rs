@@ -6,6 +6,7 @@ mod gizmo;
 mod mesh;
 mod persistence;
 mod renderer;
+mod snap_budget;
 mod snapping;
 mod spatial;
 mod surface_snap;
@@ -167,14 +168,13 @@ async fn restore_recovery(
         let mut recovery = state.recovery.lock().unwrap();
         let store = recovery.store.as_mut().ok_or("Recovery unavailable")?;
         let recovered = store.recover(&id)?;
-        let prepared = snapping::PreparedVertices::document(&recovered.document)?;
+        let prepared = snapping::PreparedDocument::new(recovered.document)?;
         let mut editor = state.editor.lock().unwrap();
         editor.ensure_unchanged(stamp)?;
         // Publish a self-contained checkpoint before replacing the document or consuming the source.
         // Restore as an unsaved copy; Save As cannot silently overwrite the original document.
-        store.write(&recovered.document, &None, stamp, std::time::Instant::now())?;
-        editor.replace_document(recovered.document, None, true);
-        editor.install_prepared_vertices(prepared);
+        store.write(prepared.document(), &None, stamp, std::time::Instant::now())?;
+        editor.replace_prepared_document(prepared, None, true);
         recovery.error = store.consumed(&id).err();
         Ok(())
     })
@@ -379,13 +379,12 @@ async fn open_document(
     let handle = app.clone();
     tauri::async_runtime::spawn_blocking(move || -> Result<(), String> {
         let doc = persistence::read_document(file.path())?;
-        let prepared = snapping::PreparedVertices::document(&doc)?;
+        let prepared = snapping::PreparedDocument::new(doc)?;
         let state = handle.state::<State>();
         let mut recovery = state.recovery.lock().unwrap();
         let mut e = state.editor.lock().unwrap();
         e.ensure_unchanged(stamp)?;
-        e.replace_document(doc, Some(file.path().to_owned()), false);
-        e.install_prepared_vertices(prepared);
+        e.replace_prepared_document(prepared, Some(file.path().to_owned()), false);
         recovery.clear();
         Ok(())
     })

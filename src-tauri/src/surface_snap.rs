@@ -68,25 +68,6 @@ impl Tree {
         self.items.capacity() * std::mem::size_of::<usize>()
             + self.nodes.capacity() * std::mem::size_of::<Node>()
     }
-    fn query(&self, planes: &[[f64; 4]; 6], mut visit: impl FnMut(usize)) {
-        let mut stack = Vec::new();
-        if !self.nodes.is_empty() {
-            stack.push(0);
-        }
-        while let Some(i) = stack.pop() {
-            let n = &self.nodes[i];
-            if !n.bounds.intersects(planes) {
-                continue;
-            }
-            if let Some(children) = n.children {
-                stack.extend(children);
-            } else {
-                for i in &self.items[n.range.clone()] {
-                    visit(*i);
-                }
-            }
-        }
-    }
 }
 pub struct SurfaceIndex {
     edges: Vec<[usize; 2]>,
@@ -103,6 +84,11 @@ pub struct SurfaceMemory {
     pub edge_vec_bytes: usize,
     pub edge_tree_vec_bytes: usize,
     pub face_tree_vec_bytes: usize,
+}
+#[derive(Default, Debug)]
+pub struct QueryWork {
+    pub nodes: usize,
+    pub candidates: usize,
 }
 #[derive(Clone, Copy)]
 pub struct Hit {
@@ -250,61 +236,113 @@ impl SurfaceIndex {
         pointer: [f32; 2],
         face: bool,
     ) -> Option<Hit> {
+        self.query_with_work(points, faces, matrix, projection, pointer, face)
+            .0
+    }
+    pub fn query_with_work(
+        &self,
+        points: &[[f32; 3]],
+        faces: &[Face],
+        matrix: [[f32; 4]; 4],
+        projection: &Projection,
+        pointer: [f32; 2],
+        face: bool,
+    ) -> (Option<Hit>, QueryWork) {
         let planes = projection.surface_planes(pointer, face);
-        let local = planes.map(|p| {
-            std::array::from_fn(|j| {
-                (0..3).map(|i| p[i] * f64::from(matrix[j][i])).sum::<f64>()
-                    + if j == 3 { p[3] } else { 0. }
+        let to_local = |planes: [[f64; 4]; 6]| {
+            planes.map(|p| {
+                std::array::from_fn(|j| {
+                    (0..3).map(|i| p[i] * f64::from(matrix[j][i])).sum::<f64>()
+                        + if j == 3 { p[3] } else { 0. }
+                })
             })
-        });
+        };
+        let mut local = to_local(planes);
+        let mut work = QueryWork::default();
         let mut best: Option<(f32, [u32; 3], Hit)> = None;
         let tree = if face {
             &self.face_tree
         } else {
             &self.edge_tree
         };
-        tree.query(&local, |index| {
-            let world = if face {
-                triangle_hit(
-                    faces[index].map(|p| world_point(matrix, p)),
-                    projection,
-                    pointer,
-                )
-            } else {
-                let edge = self.edges[index].map(|i| world_point(matrix, points[i]));
-                segment_hit(edge, projection, pointer)
-            };
-            let Some(world) = world else {
-                return;
-            };
-            let Some((screen, depth)) = projection.project(world) else {
-                return;
-            };
-            if !projection.on_screen(screen, if face { 0.01 } else { 14. }) {
-                return;
+        let priority = |i: usize| {
+            let b = tree.nodes[i].bounds;
+            let center = std::array::from_fn(|j| b.min[j] * 0.5 + b.max[j] * 0.5);
+            projection
+                .project(world_point(matrix, center))
+                .map_or(f32::INFINITY, |(p, _)| {
+                    (p[0] - pointer[0]).powi(2) + (p[1] - pointer[1]).powi(2)
+                })
+        };
+        let mut stack = Vec::new();
+        if !tree.nodes.is_empty() {
+            stack.push(0);
+        }
+        while let Some(i) = stack.pop() {
+            work.nodes += 1;
+            let node = &tree.nodes[i];
+            if !node.bounds.intersects(&local) {
+                continue;
             }
-            let distance = if face {
-                0.
-            } else {
-                (screen[0] - pointer[0]).powi(2) + (screen[1] - pointer[1]).powi(2)
-            };
-            if !face && distance > 14. * 14. {
-                return;
+            if let Some([a, b]) = node.children {
+                // Ordering is heuristic only. Culling always uses conservative bounds.
+                if !face && priority(a) > priority(b) {
+                    stack.extend([a, b]);
+                } else {
+                    stack.extend([b, a]);
+                }
+                continue;
             }
-            let rank = bits(world);
-            let hit = Hit {
-                world,
-                screen,
-                depth,
-            };
-            if best.is_none_or(|(d, old, h)| {
-                distance < d
-                    || (distance == d && (depth < h.depth || (depth == h.depth && rank < old)))
-            }) {
-                best = Some((distance, rank, hit));
+            for &index in &tree.items[node.range.clone()] {
+                work.candidates += 1;
+                let world = if face {
+                    triangle_hit(
+                        faces[index].map(|p| world_point(matrix, p)),
+                        projection,
+                        pointer,
+                    )
+                } else {
+                    let edge = self.edges[index].map(|i| world_point(matrix, points[i]));
+                    segment_hit(edge, projection, pointer)
+                };
+                let Some(world) = world else {
+                    continue;
+                };
+                let Some((screen, depth)) = projection.project(world) else {
+                    continue;
+                };
+                if !projection.on_screen(screen, if face { 0.01 } else { 14. }) {
+                    continue;
+                }
+                let distance = if face {
+                    0.
+                } else {
+                    (screen[0] - pointer[0]).powi(2) + (screen[1] - pointer[1]).powi(2)
+                };
+                if !face && distance > 14. * 14. {
+                    continue;
+                }
+                let rank = bits(world);
+                let hit = Hit {
+                    world,
+                    screen,
+                    depth,
+                };
+                if best.is_none_or(|(d, old, h)| {
+                    distance < d
+                        || (distance == d && (depth < h.depth || (depth == h.depth && rank < old)))
+                }) {
+                    best = Some((distance, rank, hit));
+                    if !face {
+                        // Retain ties and f32 projection roundoff at the new cone boundary.
+                        local = to_local(
+                            projection.planes_with_radius(pointer, distance.sqrt() + 0.001),
+                        );
+                    }
+                }
             }
-        });
-        best.map(|(_, _, hit)| hit)
+        }
+        (best.map(|(_, _, hit)| hit), work)
     }
 }
 fn triangle_hit(face: Face, projection: &Projection, pointer: [f32; 2]) -> Option<[f32; 3]> {
@@ -394,6 +432,68 @@ mod tests {
     fn close(a: [f32; 3], b: [f32; 3]) {
         for i in 0..3 {
             assert!((a[i] - b[i]).abs() < 0.0001, "{a:?} != {b:?}");
+        }
+    }
+    #[test]
+    fn dense_edge_search_prunes_candidates_and_preserves_brute_force_ties() {
+        let grid = 64;
+        let mut points = Vec::new();
+        for y in 0..=grid {
+            for x in 0..=grid {
+                points.push([x as f32 / 32. - 1., y as f32 / 32. - 1., 0.]);
+            }
+        }
+        let mut faces = Vec::new();
+        for y in 0..grid {
+            for x in 0..grid {
+                let a = y * (grid + 1) + x;
+                let [a, b, c, d] = [
+                    points[a],
+                    points[a + 1],
+                    points[a + grid + 2],
+                    points[a + grid + 1],
+                ];
+                faces.extend([[a, b, c], [a, c, d]]);
+            }
+        }
+        let index = SurfaceIndex::new(&points, &faces, Some(&"36".repeat(grid * grid)));
+        let p = projection();
+        let matrix = [
+            [1., 0., 0., 0.],
+            [0., 1., 0., 0.],
+            [0., 0., 1., 0.],
+            [0., 0., 0., 1.],
+        ];
+        for pointer in [
+            [400., 300.],
+            [401.25, 303.5],
+            [430., 320.],
+            [475., 320.],
+            [480., 300.],
+        ] {
+            let (hit, work) = index.query_with_work(&points, &faces, matrix, &p, pointer, false);
+            let expected = index
+                .edges
+                .iter()
+                .filter_map(|edge| {
+                    let world = segment_hit(edge.map(|i| points[i]), &p, pointer)?;
+                    let (screen, depth) = p.project(world)?;
+                    let distance =
+                        (screen[0] - pointer[0]).powi(2) + (screen[1] - pointer[1]).powi(2);
+                    (p.on_screen(screen, 14.) && distance <= 196.).then_some((
+                        distance,
+                        depth,
+                        bits(world),
+                        world,
+                    ))
+                })
+                .min_by(|a, b| {
+                    a.0.total_cmp(&b.0)
+                        .then(a.1.total_cmp(&b.1))
+                        .then(a.2.cmp(&b.2))
+                });
+            assert_eq!(hit.map(|h| h.world), expected.map(|(_, _, _, w)| w));
+            assert!(work.candidates < index.edges.len() / 10, "{work:?}");
         }
     }
     #[test]

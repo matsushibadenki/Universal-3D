@@ -84,6 +84,58 @@ impl<K> Default for BoundsTree<K> {
     }
 }
 impl<K: Copy + Eq + Hash> BoundsTree<K> {
+    /// Balanced initial tree; subsequent edits continue to use local insert/remove repairs.
+    pub fn from_leaves(mut leaves: Vec<(K, Bounds)>) -> Self {
+        let mut tree = Self {
+            nodes: Vec::with_capacity(leaves.len().saturating_mul(2).saturating_sub(1)),
+            leaves: HashMap::with_capacity(leaves.len()),
+            ..Self::default()
+        };
+        if !leaves.is_empty() {
+            tree.root = Some(tree.build_leaves(&mut leaves, None));
+        }
+        tree
+    }
+    fn build_leaves(&mut self, leaves: &mut [(K, Bounds)], parent: Option<usize>) -> usize {
+        let bounds = leaves
+            .iter()
+            .map(|(_, b)| *b)
+            .reduce(Bounds::union)
+            .unwrap();
+        let index = self.nodes.len();
+        self.nodes.push(Node {
+            bounds,
+            parent,
+            children: None,
+            key: None,
+            height: 0,
+        });
+        if leaves.len() == 1 {
+            let key = leaves[0].0;
+            self.nodes[index].key = Some(key);
+            assert!(
+                self.leaves.insert(key, index).is_none(),
+                "Duplicate bounds-tree key"
+            );
+        } else {
+            let axis = (0..3)
+                .max_by(|&a, &b| {
+                    (bounds.max[a] - bounds.min[a]).total_cmp(&(bounds.max[b] - bounds.min[b]))
+                })
+                .unwrap();
+            let middle = leaves.len() / 2;
+            leaves.select_nth_unstable_by(middle, |(_, a), (_, b)| {
+                let center = |v: &Bounds| v.min[axis] * 0.5 + v.max[axis] * 0.5;
+                center(a).total_cmp(&center(b))
+            });
+            let (left, right) = leaves.split_at_mut(middle);
+            let a = self.build_leaves(left, Some(index));
+            let b = self.build_leaves(right, Some(index));
+            self.nodes[index].children = Some([a, b]);
+            self.refresh(index);
+        }
+        index
+    }
     fn allocate(&mut self, node: Node<K>) -> usize {
         if let Some(i) = self.free.pop() {
             self.nodes[i] = node;
@@ -282,6 +334,45 @@ mod tests {
         assert_eq!(n.height, 1 + ha.max(hb));
         assert_eq!(n.bounds, ba.union(bb));
         (n.bounds, n.height, na + nb)
+    }
+    #[test]
+    fn bulk_tree_matches_linear_search_and_remains_editable() {
+        for count in [0, 1, 1024] {
+            let mut oracle: HashMap<u64, Bounds> = (0..count)
+                .map(|id| (id, Bounds::point([(id % 37) as f32, (id % 11) as f32, 0.])))
+                .collect();
+            let mut tree = BoundsTree::from_leaves(oracle.iter().map(|(k, b)| (*k, *b)).collect());
+            for step in 0..300 {
+                let id = step % 71;
+                if step % 3 == 0 {
+                    tree.remove(id);
+                    oracle.remove(&id);
+                } else {
+                    let bounds = Bounds::point([step as f32 / 10., 3., 0.]);
+                    tree.insert(id, bounds);
+                    oracle.insert(id, bounds);
+                }
+                if let Some(root) = tree.root {
+                    assert_eq!(check(&tree, root, None).2, oracle.len());
+                } else {
+                    assert!(oracle.is_empty());
+                }
+                let planes = box_planes([5., 2., -1.], [23., 8., 1.]);
+                let mut found = Vec::new();
+                tree.query(&planes, |k| found.push(k));
+                found.sort();
+                let mut expected: Vec<_> = oracle
+                    .iter()
+                    .filter(|(_, b)| b.intersects(&planes))
+                    .map(|(k, _)| *k)
+                    .collect();
+                expected.sort();
+                assert_eq!(found, expected);
+            }
+        }
+        let coincident =
+            BoundsTree::from_leaves((0..1000).map(|id| (id, Bounds::point([0.; 3]))).collect());
+        assert_eq!(check(&coincident, coincident.root.unwrap(), None).2, 1000);
     }
     #[test]
     fn dynamic_tree_handles_sorted_inserts_moves_removals_and_slot_reuse() {

@@ -1,0 +1,117 @@
+{
+  "platform": "macOS-27.2-arm64-arm-64bit-Mach-O",
+  "machine": "arm64",
+  "rustc": "rustc 1.99.1 (58cf8f9c3 2026-10-13) (Homebrew)",
+  "summary": {
+    "shared": {
+      "prepare_us": 88202,
+      "install_us": 81,
+      "first_edge_us": 257,
+      "first_face_us": 109,
+      "scene_build_us": 1,
+      "warm_edge_us": 190,
+      "max_peak_rss_bytes": 17088512,
+      "retained_buffer_bytes": 581176
+    }
+  },
+  "runs": [
+    {
+      "case": "shared",
+      "diagnostics": {
+        "buffer_bytes": 581176,
+        "cache_epoch": 1,
+        "document_epoch": 1,
+        "indexed_revision": 3,
+        "last_preparation": {
+          "budget": {
+            "estimated_working_bytes": 13276160,
+            "instances": 145,
+            "limit_bytes": 16777216,
+            "shapes": 2,
+            "triangles": 12812
+          },
+          "buffer_bytes": 581176,
+          "elapsed_us": 88085,
+          "memory": {
+            "edge_nodes": 130,
+            "edge_tree_vec_bytes": 11104,
+            "edge_vec_bytes": 8448,
+            "edges": 332,
+            "face_nodes": 4098,
+            "face_tree_vec_bytes": 364896,
+            "instances": 145,
+            "primitive_face_bytes": 432,
+            "ready_surface_shapes": 2,
+            "scene_entry_payload_bytes": 29000,
+            "scene_tree_vec_bytes": 25432,
+            "shapes": 2,
+            "triangles": 12812,
+            "vertex_nodes": 822,
+            "vertex_tree_vec_bytes": 65792,
+            "vertex_vec_bytes": 105072,
+            "vertices": 6569
+          }
+        },
+        "memory": {
+          "edge_nodes": 130,
+          "edge_tree_vec_bytes": 11104,
+          "edge_vec_bytes": 8448,
+          "edges": 332,
+          "face_nodes": 4098,
+          "face_tree_vec_bytes": 364896,
+          "instances": 145,
+          "primitive_face_bytes": 432,
+          "ready_surface_shapes": 2,
+          "scene_entry_payload_bytes": 29000,
+          "scene_tree_vec_bytes": 25432,
+          "shapes": 2,
+          "triangles": 12812,
+          "vertex_nodes": 822,
+          "vertex_tree_vec_bytes": 65792,
+          "vertex_vec_bytes": 105072,
+          "vertices": 6569
+        },
+        "render_revision": 3
+      },
+      "edge_candidates": 10,
+      "edge_nodes": 23,
+      "first_edge_us": 257,
+      "first_face_us": 109,
+      "grid": 80,
+      "install_us": 81,
+      "instances": 144,
+      "prepare_us": 88202,
+      "prepared_memory": {
+        "edge_nodes": 130,
+        "edge_tree_vec_bytes": 11104,
+        "edge_vec_bytes": 8448,
+        "edges": 332,
+        "face_nodes": 4098,
+        "face_tree_vec_bytes": 364896,
+        "instances": 145,
+        "primitive_face_bytes": 432,
+        "ready_surface_shapes": 2,
+        "scene_entry_payload_bytes": 29000,
+        "scene_tree_vec_bytes": 25432,
+        "shapes": 2,
+        "triangles": 12812,
+        "vertex_nodes": 822,
+        "vertex_tree_vec_bytes": 65792,
+        "vertex_vec_bytes": 105072,
+        "vertices": 6569
+      },
+      "profile": "debug",
+      "rss_kib": {
+        "before": 11088,
+        "prepared": 16416,
+        "queried": 16560
+      },
+      "scene_build_us": 1,
+      "scene_prewarmed": true,
+      "source_buffer_bytes": 589824,
+      "warm_edge_us": 190,
+      "run": 1,
+      "peak_rss_bytes": 17088512
+    }
+  ]
+}

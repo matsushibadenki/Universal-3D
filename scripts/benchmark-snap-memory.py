@@ -19,6 +19,8 @@ def main():
     parser.add_argument('--cases', nargs='+', choices=['shared', 'dense', 'masked', 'many'],
                         default=['shared', 'dense', 'masked', 'many'])
     parser.add_argument('--output', type=Path)
+    parser.add_argument('--prewarm-scene', action='store_true',
+                        help='Prepare and adopt the complete document scene on a worker')
     args = parser.parse_args()
     if platform.system() not in ("Darwin", "Linux"):
         parser.error("RSS measurement supports macOS and Linux")
@@ -48,7 +50,8 @@ def main():
                 "sys.exit(p.returncode)"
             )
             result = subprocess.run([sys.executable, '-c', supervisor] + command, cwd=ROOT,
-                                    env={**os.environ, 'U3D_SNAP_MEMORY_CASE': case},
+                                    env={**os.environ, 'U3D_SNAP_MEMORY_CASE': case,
+                                         'U3D_SNAP_PREWARM_SCENE': '1' if args.prewarm_scene else '0'},
                                     text=True, capture_output=True)
             if result.returncode:
                 raise RuntimeError(result.stdout + result.stderr)
@@ -67,7 +70,7 @@ def main():
     for case in args.cases:
         rows = [r for r in runs if r['case'] == case]
         summary[case] = {key: statistics.median(r[key] for r in rows)
-                         for key in ['prepare_us', 'install_us', 'first_edge_us', 'first_face_us']}
+                         for key in ['prepare_us', 'install_us', 'first_edge_us', 'first_face_us', 'scene_build_us', 'warm_edge_us']}
         peaks = [r['peak_rss_bytes'] for r in rows if r['peak_rss_bytes'] is not None]
         summary[case]['max_peak_rss_bytes'] = max(peaks) if peaks else None
         summary[case]['retained_buffer_bytes'] = rows[0]['diagnostics']['buffer_bytes']
@@ -78,8 +81,9 @@ def main():
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(json.dumps(report, indent=2) + '\n')
         with args.output.with_suffix('.csv').open('w', newline='') as stream:
-            fields = ['case', 'run', 'prepare_us', 'install_us', 'first_edge_us', 'first_face_us', 'peak_rss_bytes', 'retained_buffer_bytes',
-                      'source_buffer_bytes', 'scene_entry_payload_bytes', 'edges', 'triangles']
+            fields = ['case', 'run', 'scene_prewarmed', 'prepare_us', 'install_us', 'first_edge_us', 'first_face_us', 'peak_rss_bytes', 'retained_buffer_bytes',
+                      'source_buffer_bytes', 'scene_entry_payload_bytes', 'edges', 'triangles',
+                      'scene_build_us', 'warm_edge_us', 'edge_candidates', 'edge_nodes']
             writer = csv.DictWriter(stream, fieldnames=fields, extrasaction='ignore')
             writer.writeheader()
             writer.writerows({**row,
