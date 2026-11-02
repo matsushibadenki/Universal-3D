@@ -2,6 +2,7 @@ export type SceneObject = {
   id: number;
   name: string;
   kind: string;
+  mesh_id?: string;
   position: number[];
   rotation: number[];
   scale: number[];
@@ -30,6 +31,7 @@ export type Snapshot = {
     rotate_space: "world" | "local";
     scale_space: "world" | "local";
     snap: boolean;
+    move_snap: "relative" | "grid" | "vertex" | "edge" | "face";
     move_step: number;
     rotate_step: number;
     scale_step: number;
@@ -70,6 +72,7 @@ export const preview: Snapshot = {
     rotate_space: "local",
     scale_space: "local",
     snap: false,
+    move_snap: "relative",
     move_step: 1,
     rotate_step: 15,
     scale_step: 0.1,

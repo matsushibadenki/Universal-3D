@@ -47,6 +47,14 @@ function sendLayout(rect: Rect) {
   });
 }
 
+const snapLabels = {
+  relative: "stepSnap",
+  grid: "gridSnap",
+  vertex: "vertexSnap",
+  edge: "edgeSnap",
+  face: "faceSnap",
+} as const;
+
 export function Viewport({ p }: { p: PanelProps }) {
   const canvas = useRef<HTMLDivElement>(null);
   const [ready, setReady] = useState(false);
@@ -55,6 +63,9 @@ export function Viewport({ p }: { p: PanelProps }) {
   const [dragging, setDragging] = useState(false);
   const [snapHeld, setSnapHeld] = useState(false);
   const snapKey = useRef(false);
+  const vertexKey = useRef(false);
+  const [vertexHeld, setVertexHeld] = useState(false);
+  const vertexKeyRef = useRef<(held: boolean) => void>(() => {});
   const snapKeyRef = useRef<(held: boolean) => void>(() => {});
   const settings = p.s.transform_settings;
   const tool = p.s.tool === "select" ? "move" : p.s.tool;
@@ -127,6 +138,7 @@ export function Viewport({ p }: { p: PanelProps }) {
       last?.type === "transform_update" &&
       last.token === command.token &&
       last.snap_toggle === command.snap_toggle &&
+      last.vertex_snap === command.vertex_snap &&
       (last.points as number[][]).length +
         (command.points as number[][]).length <=
         256
@@ -147,6 +159,21 @@ export function Viewport({ p }: { p: PanelProps }) {
         token: g.token,
         points: [[g.x - g.left, g.y - g.top]],
         snap_toggle: held,
+        vertex_snap: vertexKey.current,
+      });
+  };
+  vertexKeyRef.current = (held) => {
+    if (vertexKey.current === held) return;
+    vertexKey.current = held;
+    setVertexHeld(held);
+    const g = gesture.current;
+    if (g?.token && g.travel >= 4)
+      send({
+        type: "transform_update",
+        token: g.token,
+        points: [[g.x - g.left, g.y - g.top]],
+        snap_toggle: snapKey.current,
+        vertex_snap: held,
       });
   };
   function cancelGesture() {
@@ -176,11 +203,13 @@ export function Viewport({ p }: { p: PanelProps }) {
     const cancel = () => {
       snapKey.current = false;
       setSnapHeld(false);
+      vertexKey.current = false;
+      setVertexHeld(false);
       cancelRef.current();
     };
     const keyDown = (e: KeyboardEvent) => {
       if (
-        e.key.toLowerCase() !== "j" ||
+        !["j", "v"].includes(e.key.toLowerCase()) ||
         e.repeat ||
         e.isComposing ||
         e.altKey ||
@@ -192,10 +221,12 @@ export function Viewport({ p }: { p: PanelProps }) {
       )
         return;
       e.preventDefault();
-      snapKeyRef.current(true);
+      if (e.key.toLowerCase() === "v") vertexKeyRef.current(true);
+      else snapKeyRef.current(true);
     };
     const keyUp = (e: KeyboardEvent) => {
       if (e.key.toLowerCase() === "j") snapKeyRef.current(false);
+      if (e.key.toLowerCase() === "v") vertexKeyRef.current(false);
     };
     const hidden = () => {
       if (document.hidden) cancel();
@@ -350,19 +381,46 @@ export function Viewport({ p }: { p: PanelProps }) {
         </select>
         <IconButton
           icon={Magnet}
-          label={`${p.t("stepSnap")} (J)`}
-          aria-pressed={settings.snap !== snapHeld}
+          label={`${p.t(tool === "move" ? snapLabels[settings.move_snap] : "stepSnap")} (J)`}
+          aria-pressed={
+            (tool === "move" && vertexHeld) || settings.snap !== snapHeld
+          }
           disabled={!ready || p.s.dragging}
           onClick={() =>
             void p.execute({ type: "set_snap", enabled: !settings.snap })
           }
         />
+        {tool === "move" && (
+          <select
+            className="transform-setting"
+            aria-label={p.t("moveSnapMode")}
+            title={p.t("moveSnapMode")}
+            value={settings.move_snap}
+            disabled={!ready || p.s.dragging}
+            onChange={(e) =>
+              void p.execute({ type: "set_move_snap", mode: e.target.value })
+            }
+          >
+            <option value="relative">{p.t("relativeSnap")}</option>
+            <option value="grid" disabled={space !== "world"}>
+              {p.t("absoluteGrid")}
+            </option>
+            <option value="vertex">{p.t("vertexSnap")}</option>
+            <option value="edge">{p.t("edgeSnap")}</option>
+            <option value="face">{p.t("faceSnap")}</option>
+          </select>
+        )}
         <select
           className="transform-setting"
           aria-label={p.t("snapStep")}
           title={p.t("snapStep")}
           value={step}
-          disabled={!ready || p.s.dragging}
+          disabled={
+            !ready ||
+            p.s.dragging ||
+            (tool === "move" &&
+              ["vertex", "edge", "face"].includes(settings.move_snap))
+          }
           onChange={(e) =>
             void p.execute({
               type: "set_snap_step",
@@ -384,7 +442,14 @@ export function Viewport({ p }: { p: PanelProps }) {
             </option>
           ))}
         </select>
-        <InfoTip label={p.t("snapInfo")} text={p.t("snapHelp")} />
+        <InfoTip
+          label={p.t("snapInfo")}
+          text={p.t(
+            tool === "move" && ["edge", "face"].includes(settings.move_snap)
+              ? "surfaceSnapHelp"
+              : "snapHelp",
+          )}
+        />
         <span>{p.t(ready ? "embedded" : "notConnected")}</span>
         <InfoTip label={p.t("info")} text={p.t("viewportHelp")} />
       </div>
@@ -394,7 +459,7 @@ export function Viewport({ p }: { p: PanelProps }) {
         tabIndex={0}
         role="region"
         aria-label={p.t("viewport")}
-        aria-keyshortcuts="Q W E R J F Escape Shift+Space"
+        aria-keyshortcuts="Q W E R J V F Escape Shift+Space"
         onContextMenu={(e) => {
           if (ready) e.preventDefault();
         }}
@@ -444,6 +509,7 @@ export function Viewport({ p }: { p: PanelProps }) {
               y: e.clientY - bounds.top,
               width: bounds.width,
               height: bounds.height,
+              vertex_snap: vertexKey.current,
             });
           }
           gesture.current = {
@@ -472,6 +538,7 @@ export function Viewport({ p }: { p: PanelProps }) {
               token: g.token,
               points: [[e.clientX - g.left, e.clientY - g.top]],
               snap_toggle: snapKey.current,
+              vertex_snap: vertexKey.current,
             });
           if (g.mode && (dx || dy))
             send({
@@ -492,6 +559,7 @@ export function Viewport({ p }: { p: PanelProps }) {
                 token: g.token,
                 points: [[e.clientX - g.left, e.clientY - g.top]],
                 snap_toggle: snapKey.current,
+                vertex_snap: vertexKey.current,
               });
             send({ type: "transform_end", token: g.token, cancel: false });
           }

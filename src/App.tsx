@@ -26,6 +26,9 @@ import { dictionaries, type Language, type Key } from "./i18n";
 import { Scene, Inspector, Timeline, type PanelProps } from "./panels";
 import { IconButton, InfoTip, Menu } from "./EditorChrome";
 import { Viewport } from "./Viewport";
+import { RecoveryControl } from "./RecoveryControl";
+import { UsdImport } from "./UsdImport";
+import { HardwareSlider } from "./HardwareSlider";
 function Camera({ p }: { p: PanelProps }) {
   const [camera, setCamera] = useState({
     yaw: p.s.camera[0],
@@ -51,8 +54,7 @@ function Camera({ p }: { p: PanelProps }) {
       {fields.map(([key, label, min, max]) => (
         <label key={key}>
           <span>{p.t(label)}</span>
-          <input
-            type="range"
+          <HardwareSlider
             min={Math.min(min, camera[key])}
             max={Math.max(max, camera[key])}
             step="0.05"
@@ -91,6 +93,7 @@ export default function App() {
   const [shelf, setShelf] = useState<"polygon" | "view">("polygon");
   const [hidden, setHidden] = useState<string[]>([]);
   const [focused, setFocused] = useState(false);
+  const [usdImport, setUsdImport] = useState(false);
   const t = (k: Key) => dictionaries[language][k];
   const p: PanelProps = {
     s,
@@ -233,10 +236,12 @@ export default function App() {
     );
   return (
     <div className="app" aria-busy={busy}>
+      {usdImport && <UsdImport t={t} close={() => setUsdImport(false)} />}
       <header className="app-header">
         <strong className="brand">Universal 3D</strong>
         <nav aria-label={t("modeling")}>
           <Menu label={t("file")}>
+            <button disabled={p.disabled} onClick={() => setUsdImport(true)}><FolderOpen size={15} />{t("usdImport")}</button>
             <button
               disabled={p.disabled}
               onClick={() => void call("open_document")}
@@ -518,6 +523,7 @@ export default function App() {
       <footer className="statusbar">
         <span>
           {t(busy ? "busy" : desktop ? "ready" : "preview")}
+          <RecoveryControl t={t} />
           {!desktop && <InfoTip label={t("info")} text={t("browser")} />}
         </span>
         <span>

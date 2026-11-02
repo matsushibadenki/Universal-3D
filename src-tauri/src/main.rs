@@ -3,7 +3,13 @@ mod affine;
 mod document;
 mod editor;
 mod gizmo;
+mod mesh;
+mod persistence;
 mod renderer;
+mod snapping;
+mod spatial;
+mod surface_snap;
+mod usd;
 mod viewport;
 mod workspace;
 use document::{Document, DocumentPatch, Editor};
@@ -21,6 +27,10 @@ struct State {
     renderer: Mutex<Option<renderer::Renderer>>,
     workspace_write: Mutex<()>,
     viewport_visible: AtomicBool,
+    usd_busy: AtomicBool,
+    file_busy: AtomicBool,
+    recovery: Mutex<persistence::RecoveryService>,
+    usd_cancel: std::sync::Arc<AtomicBool>,
 }
 fn save_workspace(app: &tauri::AppHandle) -> Result<(), String> {
     let state = app.state::<State>();
@@ -60,39 +70,122 @@ fn create_panel(app: &tauri::AppHandle, panel: &str) -> Result<(), String> {
     Ok(())
 }
 fn request_quit(app: &tauri::AppHandle) {
-    let state = app.state::<State>();
-    if let Err(error) = save_workspace(app) {
-        eprintln!("Workspace save failed: {error}");
-    }
-    state.editor.lock().unwrap().finish_transform(true);
-    let _ = broadcast(app, &state);
-    if !state.editor.lock().unwrap().dirty {
-        state.quit_approved.store(true, Ordering::SeqCst);
-        app.exit(0);
-        return;
-    }
-    if state.quitting.swap(true, Ordering::SeqCst) {
-        return;
-    }
     let handle = app.clone();
     tauri::async_runtime::spawn(async move {
-        let dialog=rfd::AsyncMessageDialog::new().set_title("Universal 3D")
+        let state = handle.state::<State>();
+        if state.quitting.swap(true, Ordering::SeqCst) {
+            return;
+        }
+        let result = quit_document(&handle, &state).await;
+        state.quitting.store(false, Ordering::SeqCst);
+        if let Err(error) = result {
+            rfd::AsyncMessageDialog::new()
+                .set_title("Universal 3D")
+                .set_description(&error)
+                .show()
+                .await;
+        }
+    });
+}
+async fn quit_document(app: &tauri::AppHandle, state: &State) -> Result<(), String> {
+    let _operation = persistence::FileOperation::begin(&state.file_busy)?;
+    let dirty = {
+        let mut e = state.editor.lock().map_err(|e| e.to_string())?;
+        e.finish_transform(true);
+        e.dirty
+    };
+    broadcast(app, state)?;
+    if dirty {
+        let dialog = rfd::AsyncMessageDialog::new().set_title("Universal 3D")
             .set_description("Unsaved changes / 未保存の変更 / 未保存的更改\nDiscard and quit? / 破棄して終了しますか？ / 放弃并退出？")
             .set_buttons(rfd::MessageButtons::YesNo);
-        let dialog = if let Some(window) = handle.get_window("main") {
+        let dialog = if let Some(window) = app.get_window("main") {
             dialog.set_parent(&window)
         } else {
             dialog
         };
-        let answer = dialog.show().await;
-        let state = handle.state::<State>();
-        if answer == rfd::MessageDialogResult::Yes {
-            state.quit_approved.store(true, Ordering::SeqCst);
-            handle.exit(0);
-        } else {
-            state.quitting.store(false, Ordering::SeqCst);
+        if dialog.show().await != rfd::MessageDialogResult::Yes {
+            return Ok(());
+        }
+    }
+    save_workspace(app)?;
+    // Lock order is always recovery -> editor. No checkpoint can reappear after exit cleanup.
+    state.recovery.lock().map_err(|e| e.to_string())?.clear();
+    state.quit_approved.store(true, Ordering::SeqCst);
+    app.exit(0);
+    Ok(())
+}
+fn start_recovery_worker(app: tauri::AppHandle) {
+    std::thread::spawn(move || loop {
+        std::thread::sleep(std::time::Duration::from_secs(5));
+        let state = app.state::<State>();
+        let mut recovery = state.recovery.lock().unwrap();
+        if state.quitting.load(Ordering::SeqCst) || state.quit_approved.load(Ordering::SeqCst) {
+            continue;
+        }
+        let Some(store) = &mut recovery.store else {
+            continue;
+        };
+        let now = std::time::Instant::now();
+        let captured = {
+            let editor = state.editor.lock().unwrap();
+            store
+                .due(&editor, now)
+                .then(|| (editor.document.clone(), editor.path.clone(), editor.stamp()))
+        };
+        if let Some((doc, path, stamp)) = captured {
+            recovery.error = store.write(&doc, &path, stamp, now).err();
         }
     });
+}
+#[tauri::command]
+async fn get_recovery_state(app: tauri::AppHandle) -> Result<persistence::RecoveryView, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        app.state::<State>().recovery.lock().unwrap().view()
+    })
+    .await
+    .map_err(|e| e.to_string())
+}
+#[tauri::command]
+async fn restore_recovery(
+    app: tauri::AppHandle,
+    state: tauri::State<'_, State>,
+    id: String,
+) -> Result<(), String> {
+    let _operation = persistence::FileOperation::begin(&state.file_busy)?;
+    let stamp = {
+        let e = state.editor.lock().unwrap();
+        e.ensure_not_dragging()?;
+        e.stamp()
+    };
+    if state.editor.lock().unwrap().dirty && !confirm_replace().await {
+        return Ok(());
+    }
+    let handle = app.clone();
+    tauri::async_runtime::spawn_blocking(move || -> Result<(), String> {
+        let state = handle.state::<State>();
+        let mut recovery = state.recovery.lock().unwrap();
+        let store = recovery.store.as_mut().ok_or("Recovery unavailable")?;
+        let recovered = store.recover(&id)?;
+        let prepared = snapping::PreparedVertices::document(&recovered.document)?;
+        let mut editor = state.editor.lock().unwrap();
+        editor.ensure_unchanged(stamp)?;
+        // Publish a self-contained checkpoint before replacing the document or consuming the source.
+        // Restore as an unsaved copy; Save As cannot silently overwrite the original document.
+        store.write(&recovered.document, &None, stamp, std::time::Instant::now())?;
+        editor.replace_document(recovered.document, None, true);
+        editor.install_prepared_vertices(prepared);
+        recovery.error = store.consumed(&id).err();
+        Ok(())
+    })
+    .await
+    .map_err(|e| e.to_string())??;
+    notify(&app, &state, true)
+}
+async fn confirm_replace() -> bool {
+    rfd::AsyncMessageDialog::new().set_title("Universal 3D")
+        .set_description("Unsaved changes / 未保存の変更 / 未保存的更改\nDiscard and open? / 破棄して開きますか？ / 放弃并打开？")
+        .set_buttons(rfd::MessageButtons::YesNo).show().await == rfd::MessageDialogResult::Yes
 }
 #[derive(Clone, Serialize)]
 struct Metadata {
@@ -195,6 +288,11 @@ fn draw(s: &State) -> Result<(), String> {
     Ok(())
 }
 #[tauri::command]
+fn get_snap_diagnostics(state: tauri::State<State>) -> Result<snapping::SnapDiagnostics, String> {
+    let editor = state.editor.lock().map_err(|e| e.to_string())?;
+    Ok(snapping::diagnostics(&editor))
+}
+#[tauri::command]
 fn get_snapshot(state: tauri::State<State>) -> Snapshot {
     snapshot(&state)
 }
@@ -210,6 +308,9 @@ fn execute(
     }
     {
         let mut e = state.editor.lock().map_err(|e| e.to_string())?;
+        if state.quitting.load(Ordering::SeqCst) {
+            return Err("Closing document / 終了確認中です / 正在关闭文档".into());
+        }
         e.execute(command)?;
     }
     broadcast(&app, &state)
@@ -219,10 +320,11 @@ async fn save_document(
     app: tauri::AppHandle,
     state: tauri::State<'_, State>,
 ) -> Result<(), String> {
-    let (doc, path) = {
+    let _operation = persistence::FileOperation::begin(&state.file_busy)?;
+    let (doc, path, stamp) = {
         let e = state.editor.lock().unwrap();
         e.ensure_not_dragging()?;
-        (e.document.clone(), e.path.clone())
+        (e.document.clone(), e.path.clone(), e.stamp())
     };
     let path = match path {
         Some(p) => p,
@@ -236,31 +338,36 @@ async fn save_document(
             None => return Ok(()),
         },
     };
-    let bytes = doc.file_bytes().map_err(|e| e.to_string())?;
-    let temporary = path.with_extension("u3d.tmp");
-    std::fs::write(&temporary, bytes).map_err(|e| e.to_string())?;
-    std::fs::rename(&temporary, &path).map_err(|e| e.to_string())?;
-    {
+    let handle = app.clone();
+    tauri::async_runtime::spawn_blocking(move || -> Result<(), String> {
+        let bytes = doc.file_bytes().map_err(|e| e.to_string())?;
+        persistence::atomic_write(&path, &bytes)?;
+        let state = handle.state::<State>();
+        let mut recovery = state.recovery.lock().unwrap();
         let mut e = state.editor.lock().unwrap();
-        if e.document == doc && e.transform_drag.is_none() {
-            e.dirty = false;
+        e.saved(stamp, path)?;
+        if !e.dirty {
+            recovery.clear();
         }
-        e.path = Some(path);
-    }
-    broadcast(&app, &state)?;
-    Ok(())
+        Ok(())
+    })
+    .await
+    .map_err(|e| e.to_string())??;
+    broadcast(&app, &state)
 }
 #[tauri::command]
 async fn open_document(
     app: tauri::AppHandle,
     state: tauri::State<'_, State>,
 ) -> Result<(), String> {
-    state.editor.lock().unwrap().ensure_not_dragging()?;
-    if state.editor.lock().unwrap().dirty {
-        let answer=rfd::AsyncMessageDialog::new().set_title("Universal 3D").set_description("Unsaved changes / 未保存の変更 / 未保存的更改\nDiscard and open? / 破棄して開きますか？ / 放弃并打开？").set_buttons(rfd::MessageButtons::YesNo).show().await;
-        if answer != rfd::MessageDialogResult::Yes {
-            return Ok(());
-        }
+    let _operation = persistence::FileOperation::begin(&state.file_busy)?;
+    let (stamp, dirty) = {
+        let e = state.editor.lock().unwrap();
+        e.ensure_not_dragging()?;
+        (e.stamp(), e.dirty)
+    };
+    if dirty && !confirm_replace().await {
+        return Ok(());
     }
     let Some(file) = rfd::AsyncFileDialog::new()
         .add_filter("Universal 3D", &["u3d"])
@@ -269,31 +376,107 @@ async fn open_document(
     else {
         return Ok(());
     };
-    if std::fs::metadata(file.path())
-        .map_err(|e| e.to_string())?
-        .len()
-        > 10_000_000
-    {
-        return Err("Document exceeds 10 MB".into());
-    }
-    let doc: Document =
-        serde_json::from_slice(&std::fs::read(file.path()).map_err(|e| e.to_string())?)
-            .map_err(|e| e.to_string())?;
-    doc.validate()?;
-    {
+    let handle = app.clone();
+    tauri::async_runtime::spawn_blocking(move || -> Result<(), String> {
+        let doc = persistence::read_document(file.path())?;
+        let prepared = snapping::PreparedVertices::document(&doc)?;
+        let state = handle.state::<State>();
+        let mut recovery = state.recovery.lock().unwrap();
         let mut e = state.editor.lock().unwrap();
-        e.ensure_not_dragging()?;
-        e.document = doc;
-        e.invalidate_document();
-        e.pending.clear();
-        e.pending_reset = true;
-        e.undo.clear();
-        e.redo.clear();
-        e.dirty = false;
-        e.path = Some(file.path().to_owned());
+        e.ensure_unchanged(stamp)?;
+        e.replace_document(doc, Some(file.path().to_owned()), false);
+        e.install_prepared_vertices(prepared);
+        recovery.clear();
+        Ok(())
+    })
+    .await
+    .map_err(|e| e.to_string())??;
+    notify(&app, &state, true)
+}
+#[tauri::command]
+fn cancel_usd_import(state: tauri::State<State>) {
+    state.usd_cancel.store(true, Ordering::Relaxed);
+}
+#[tauri::command]
+fn browse_simready() -> Result<(), String> {
+    let url = "https://huggingface.co/spaces/nvidia/simready-central";
+    #[cfg(target_os = "macos")]
+    let result = std::process::Command::new("open").arg(url).spawn();
+    #[cfg(target_os = "windows")]
+    let result = std::process::Command::new("rundll32")
+        .args(["url.dll,FileProtocolHandler", url])
+        .spawn();
+    #[cfg(all(not(target_os = "macos"), not(target_os = "windows")))]
+    let result = std::process::Command::new("xdg-open").arg(url).spawn();
+    result.map(|_| ()).map_err(|e| e.to_string())
+}
+#[tauri::command]
+async fn import_usd(
+    app: tauri::AppHandle,
+    state: tauri::State<'_, State>,
+    source: Option<String>,
+) -> Result<Option<usd::Report>, String> {
+    let _operation = persistence::FileOperation::begin(&state.file_busy)?;
+    if state.usd_busy.swap(true, Ordering::SeqCst) {
+        return Err("USD import already running".into());
     }
-    notify(&app, &state, true)?;
-    Ok(())
+    struct BusyGuard<'a>(&'a AtomicBool);
+    impl Drop for BusyGuard<'_> {
+        fn drop(&mut self) {
+            self.0.store(false, Ordering::SeqCst);
+        }
+    }
+    let _guard = BusyGuard(&state.usd_busy);
+    state.usd_cancel.store(false, Ordering::Relaxed);
+    state
+        .editor
+        .lock()
+        .map_err(|e| e.to_string())?
+        .ensure_not_dragging()?;
+    let source = match source {
+        Some(source)
+            if source.len() <= 8192 && source.starts_with("https://huggingface.co/datasets/") =>
+        {
+            source
+        }
+        Some(_) => return Err("Invalid Hugging Face package URL".into()),
+        None => match rfd::AsyncFileDialog::new()
+            .add_filter("OpenUSD", &["usd", "usda", "usdc", "usdz"])
+            .pick_file()
+            .await
+        {
+            Some(file) => file.path().to_string_lossy().into_owned(),
+            None => return Ok(None),
+        },
+    };
+    let cache = app
+        .path()
+        .app_cache_dir()
+        .map_err(|e| e.to_string())?
+        .join("openusd");
+    let cancel = state.usd_cancel.clone();
+    let (imported, prepared) =
+        tauri::async_runtime::spawn_blocking(move || -> Result<_, String> {
+            let imported = usd::load(source, cache, cancel.clone())?;
+            let prepared = snapping::PreparedVertices::meshes(
+                imported.meshes.iter().map(|(_, _, mesh)| mesh),
+                Some(&cancel),
+            )?;
+            Ok((imported, prepared))
+        })
+        .await
+        .map_err(|e| e.to_string())??;
+    let report = {
+        let mut editor = state.editor.lock().map_err(|e| e.to_string())?;
+        if state.usd_cancel.load(Ordering::Relaxed) {
+            return Err("USD_IMPORT_CANCELLED_OR_TIMED_OUT".into());
+        }
+        let report = editor.import_usd(imported)?;
+        editor.install_prepared_vertices(prepared);
+        report
+    };
+    broadcast(&app, &state)?;
+    Ok(Some(report))
 }
 #[tauri::command]
 async fn float_panel(
@@ -469,9 +652,17 @@ fn main() {
             editor: Mutex::new(Editor::new()),
             renderer: Mutex::new(None),
             workspace_write: Mutex::new(()),
+            usd_busy: AtomicBool::new(false),
+            file_busy: AtomicBool::new(false),
+            recovery: Mutex::new(persistence::RecoveryService::default()),
+            usd_cancel: std::sync::Arc::new(AtomicBool::new(false)),
             viewport_visible: AtomicBool::new(true),
         })
         .setup(|app| {
+            let recovery_root = app.path().app_data_dir()?.join("recovery");
+            *app.state::<State>().recovery.lock().unwrap() =
+                persistence::RecoveryService::start(&recovery_root);
+            start_recovery_worker(app.handle().clone());
             let path = app.path().app_config_dir()?.join("workspace.json");
             let layout = workspace::Workspace::load(&path);
             for panel in layout.floating {
@@ -484,9 +675,15 @@ fn main() {
         })
         .invoke_handler(tauri::generate_handler![
             get_snapshot,
+            get_snap_diagnostics,
+            get_recovery_state,
+            restore_recovery,
             execute,
             save_document,
             open_document,
+            import_usd,
+            cancel_usd_import,
+            browse_simready,
             float_panel,
             dock_panel,
             open_viewport,
@@ -549,13 +746,9 @@ fn main() {
     application.run(|app, event| {
         if let tauri::RunEvent::ExitRequested { api, .. } = event {
             let state = app.state::<State>();
-            if !state.quit_approved.load(Ordering::SeqCst) && state.editor.lock().unwrap().dirty {
+            if !state.quit_approved.load(Ordering::SeqCst) {
                 api.prevent_exit();
                 request_quit(app);
-            } else if !state.quit_approved.swap(true, Ordering::SeqCst) {
-                if let Err(error) = save_workspace(app) {
-                    eprintln!("Workspace save failed: {error}");
-                }
             }
         }
     });
@@ -572,6 +765,10 @@ mod sync_tests {
             renderer: Mutex::new(None),
             workspace_write: Mutex::new(()),
             viewport_visible: AtomicBool::new(true),
+            usd_busy: AtomicBool::new(false),
+            file_busy: AtomicBool::new(false),
+            recovery: Mutex::new(persistence::RecoveryService::default()),
+            usd_cancel: std::sync::Arc::new(AtomicBool::new(false)),
         }
     }
     #[test]

@@ -135,3 +135,31 @@ test("coordinate and snap settings synchronize without copying objects; shear su
   assert.deepEqual(changed.document.objects[0].shear,sheared.shear);
   assert.deepEqual(changed.transform_settings,settings);
 });
+
+
+test("absolute grid mode and plane previews synchronize without full document copies", () => {
+  const settings = {...preview.transform_settings, move_space: "world", move_snap: "grid", snap: true};
+  const configured = applyChange(preview, event(1, [], {transform_settings: settings}));
+  assert.equal(configured.transform_settings.move_snap, "grid");
+  assert.equal(configured.document.objects, preview.document.objects);
+  const object = {...preview.document.objects[0], position: [2, 0.3, -1]};
+  const moving = applyChange(configured, event(2, [{start: 0, remove: 1, objects: [object]}], {transform_settings: settings, dragging: true}));
+  assert.deepEqual(moving.document.objects[0].position, [2, 0.3, -1]);
+  const cancelled = applyChange(moving, event(3, [{start: 0, remove: 1, objects: [preview.document.objects[0]]}], {transform_settings: settings, dragging: false}));
+  assert.deepEqual(cancelled.document, preview.document);
+  assert.equal(cancelled.transform_settings.move_snap, "grid");
+});
+
+test("vertex mode and two-axis scale cancellation remain authoritative across panels", () => {
+  const settings = {...preview.transform_settings, move_snap: "vertex", move_space: "local", snap: true};
+  const configured = applyChange(preview, event(1, [], {transform_settings: settings}));
+  assert.equal(configured.document.objects, preview.document.objects);
+  assert.equal(configured.transform_settings.move_snap, "vertex");
+  const object = {...preview.document.objects[0], scale: [2, 2, 1], shear: [0.2, 0.3, 0.1]};
+  const moving = applyChange(configured, event(2, [{start: 0, remove: 1, objects: [object]}], {transform_settings: settings, tool: "scale", dragging: true}));
+  assert.deepEqual(moving.document.objects[0].scale, [2, 2, 1]);
+  const cancelled = applyChange(moving, event(3, [{start: 0, remove: 1, objects: [preview.document.objects[0]]}], {transform_settings: settings, dragging: false, can_redo: true}));
+  assert.deepEqual(cancelled.document, preview.document);
+  assert.equal(cancelled.can_redo, true);
+  assert.equal(cancelled.transform_settings.move_snap, "vertex");
+});

@@ -5,6 +5,8 @@ pub struct Object {
     pub id: u64,
     pub name: String,
     pub kind: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub mesh_id: Option<String>,
     pub position: [f32; 3],
     pub rotation: [f32; 3],
     pub scale: [f32; 3],
@@ -18,6 +20,8 @@ pub struct Document {
     pub version: u32,
     pub objects: Vec<Object>,
     pub selected: Option<u64>,
+    #[serde(default, skip_serializing)]
+    pub meshes: std::collections::BTreeMap<String, std::sync::Arc<crate::mesh::Mesh>>,
 }
 impl Default for Document {
     fn default() -> Self {
@@ -27,6 +31,7 @@ impl Default for Document {
                 id: 1,
                 name: "Cube".into(),
                 kind: "cube".into(),
+                mesh_id: None,
                 position: [0.; 3],
                 rotation: [0.; 3],
                 scale: [1.; 3],
@@ -35,31 +40,55 @@ impl Default for Document {
                 mirror: false,
             }],
             selected: Some(1),
+            meshes: Default::default(),
         }
     }
 }
+#[derive(Serialize)]
+pub struct DocumentFile<'a> {
+    version: u32,
+    objects: &'a [Object],
+    selected: Option<u64>,
+    meshes: &'a std::collections::BTreeMap<String, std::sync::Arc<crate::mesh::Mesh>>,
+}
 impl Document {
-    // Version 2 prevents older readers silently dropping shear. Version 1 remains readable.
-    pub fn file_bytes(&self) -> Result<Vec<u8>, serde_json::Error> {
-        #[derive(Serialize)]
-        struct File<'a> {
-            version: u32,
-            objects: &'a [Object],
-            selected: Option<u64>,
-        }
-        serde_json::to_vec_pretty(&File {
-            version: 2,
+    pub fn file(&self) -> DocumentFile<'_> {
+        DocumentFile {
+            version: if self.meshes.is_empty() { 2 } else { 3 },
             objects: &self.objects,
             selected: self.selected,
-        })
+            meshes: &self.meshes,
+        }
     }
+    // Mesh documents use version 3. Legacy primitive/shear documents remain readable.
+    pub fn file_bytes(&self) -> Result<Vec<u8>, serde_json::Error> {
+        serde_json::to_vec(&self.file())
+    }
+
     pub fn validate(&self) -> Result<(), String> {
-        if !matches!(self.version, 1 | 2) || self.objects.len() > 10000 {
+        if !matches!(self.version, 1..=3) || self.objects.len() > 10000 {
             return Err("Unsupported document version or too many objects".into());
+        }
+        if self.meshes.len() > 1000
+            || self
+                .meshes
+                .values()
+                .map(|m| m.triangles.len())
+                .sum::<usize>()
+                > crate::mesh::MAX_TRIANGLES
+        {
+            return Err("Document exceeds mesh budget".into());
+        }
+        for (id, mesh) in &self.meshes {
+            if id.len() > 128 {
+                return Err("Invalid mesh ID".into());
+            }
+            mesh.validate()?;
         }
         let mut ids = std::collections::HashSet::new();
         for o in &self.objects {
             o.validate()?;
+            self.validate_mesh_reference(o)?;
             if !ids.insert(o.id) {
                 return Err("Duplicate object ID".into());
             }
@@ -70,11 +99,28 @@ impl Document {
         Ok(())
     }
 }
+impl Document {
+    pub fn validate_mesh_reference(&self, object: &Object) -> Result<(), String> {
+        if object
+            .mesh_id
+            .as_ref()
+            .is_some_and(|id| !self.meshes.contains_key(id))
+        {
+            return Err("Missing mesh asset".into());
+        }
+        Ok(())
+    }
+}
 impl Object {
     pub fn validate(&self) -> Result<(), String> {
         if self.id == 0
             || self.id > 9_007_199_254_740_991
-            || !["cube", "sphere", "plane"].contains(&self.kind.as_str())
+            || !["cube", "sphere", "plane", "mesh"].contains(&self.kind.as_str())
+            || (self.kind == "mesh") != self.mesh_id.is_some()
+            || self
+                .mesh_id
+                .as_ref()
+                .is_some_and(|id| id.is_empty() || id.len() > 128)
             || self.name.len() > 256
             || self
                 .position
@@ -152,6 +198,8 @@ pub struct Editor {
     pub undo: Vec<HistoryEntry>,
     pub redo: Vec<HistoryEntry>,
     pub dirty: bool,
+    pub document_epoch: u64,
+    pub content_revision: u64,
     pub path: Option<std::path::PathBuf>,
     pub floating: Vec<String>,
     pub yaw: f32,
@@ -161,6 +209,7 @@ pub struct Editor {
     pub tool: crate::gizmo::Tool,
     pub transform_settings: crate::gizmo::Settings,
     pub transform_drag: Option<crate::gizmo::TransformDrag>,
+    pub vertex_cache: std::cell::RefCell<crate::snapping::VertexCache>,
     pub frame: u32,
     pub revision: u64,
     pub pending: Vec<DocumentPatch>,
@@ -291,6 +340,7 @@ impl Editor {
         }
         for object in &objects {
             object.validate()?;
+            self.document.validate_mesh_reference(object)?;
         }
         if self.indexed_len != self.document.objects.len() {
             self.reindex();
@@ -384,6 +434,7 @@ impl Editor {
         true
     }
     fn record(&mut self, entry: HistoryEntry) {
+        self.content_revision += 1;
         self.undo.push(entry);
         if self.undo.len() > 100 {
             self.undo.remove(0);
@@ -409,6 +460,7 @@ impl Editor {
     }
     pub fn undo(&mut self) {
         if let Some(mut entry) = self.undo.pop() {
+            self.content_revision += 1;
             // Selection is UI state and can change between history operations.
             entry.after_selected = self.document.selected;
             self.apply_entry(&entry, false);
@@ -423,6 +475,7 @@ impl Editor {
     }
     pub fn redo(&mut self) {
         if let Some(mut entry) = self.redo.pop() {
+            self.content_revision += 1;
             entry.before_selected = self.document.selected;
             self.apply_entry(&entry, true);
             self.pending.push(DocumentPatch {

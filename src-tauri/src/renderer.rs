@@ -38,6 +38,8 @@ struct GpuScene {
     grid: wgpu::Buffer,
     batches: [Batch; 3],
     instance_cache: IncrementalInstances,
+    meshes: HashMap<u64, (std::sync::Arc<crate::mesh::Mesh>, Batch)>,
+    mesh_revision: Option<u64>,
 }
 pub struct Renderer {
     surface: wgpu::Surface<'static>,
@@ -290,6 +292,8 @@ impl GpuScene {
             grid: static_buffer(&grid),
             batches,
             instance_cache: IncrementalInstances::default(),
+            meshes: HashMap::new(),
+            mesh_revision: None,
         }
     }
     fn update(&mut self, device: &wgpu::Device, queue: &wgpu::Queue, editor: &Editor, aspect: f32) {
@@ -298,6 +302,7 @@ impl GpuScene {
             queue.write_buffer(&self.camera, 0, bytemuck::bytes_of(&camera));
             self.previous_camera = Some(camera);
         }
+        self.update_meshes(device, queue, editor);
         let update = self.instance_cache.update(editor);
         for (index, batch) in self.batches.iter_mut().enumerate() {
             let instances = &self.instance_cache.groups[index];
@@ -323,6 +328,96 @@ impl GpuScene {
                 }
             }
         }
+    }
+    fn update_meshes(&mut self, device: &wgpu::Device, queue: &wgpu::Queue, editor: &Editor) {
+        if self.mesh_revision == Some(editor.render_revision) {
+            return;
+        }
+        let full = self.mesh_revision.is_none_or(|r| {
+            r > editor.render_revision
+                || editor
+                    .render_changes
+                    .front()
+                    .is_none_or(|(first, _)| r + 1 < *first)
+                || editor
+                    .render_changes
+                    .iter()
+                    .any(|(v, c)| *v > r && matches!(c, RenderChange::Reset))
+        });
+        let ids: HashSet<u64> = if full {
+            self.meshes.clear();
+            editor
+                .document
+                .objects
+                .iter()
+                .filter(|o| o.mesh_id.is_some())
+                .map(|o| o.id)
+                .collect()
+        } else {
+            editor
+                .render_changes
+                .iter()
+                .filter(|(r, _)| *r > self.mesh_revision.unwrap())
+                .flat_map(|(_, c)| match c {
+                    RenderChange::Objects(ids) => ids.clone(),
+                    _ => vec![],
+                })
+                .collect()
+        };
+        for id in ids {
+            let object = editor.indexed_object(id).map(|(_, o)| o);
+            let asset = object
+                .filter(|o| o.visible)
+                .and_then(|o| o.mesh_id.as_ref())
+                .and_then(|id| editor.document.meshes.get(id));
+            let (Some(object), Some(asset)) = (object, asset) else {
+                self.meshes.remove(&id);
+                continue;
+            };
+            if self
+                .meshes
+                .get(&id)
+                .is_none_or(|(previous, _)| !std::sync::Arc::ptr_eq(previous, asset))
+            {
+                let vertices: Vec<Vertex> = asset
+                    .triangles
+                    .iter()
+                    .flat_map(|face| {
+                        face.map(|position| Vertex {
+                            position,
+                            edge_a: sub(face[1], face[0]),
+                            edge_b: sub(face[2], face[0]),
+                        })
+                    })
+                    .collect();
+                let batch = Batch {
+                    vertices: device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                        label: Some("Imported USD mesh"),
+                        contents: bytemuck::cast_slice(&vertices),
+                        usage: wgpu::BufferUsages::VERTEX,
+                    }),
+                    vertex_count: vertices.len() as u32,
+                    instances: VertexBuffer::new(device, 256),
+                    instance_count: 0,
+                };
+                self.meshes.insert(id, (asset.clone(), batch));
+            }
+            let (_, batch) = self.meshes.get_mut(&id).unwrap();
+            let color = if editor.document.selected == Some(id) {
+                [0.65, 0.79, 0.45, 1.]
+            } else {
+                [asset.color[0], asset.color[1], asset.color[2], 1.]
+            };
+            let instances: Vec<Instance> = (0..=usize::from(object.mirror))
+                .map(|mirror| Instance {
+                    model: model_matrix(object, mirror != 0),
+                    color,
+                })
+                .collect();
+            batch.instances.upload(device, queue, &instances);
+            batch.instance_count = instances.len() as u32;
+        }
+        self.mesh_revision = Some(editor.render_revision);
     }
     fn update_gizmo(&mut self, queue: &wgpu::Queue, editor: &Editor, size: [f32; 2]) {
         let vertices = gizmo_geometry(editor, size);
@@ -369,7 +464,11 @@ impl GpuScene {
         pass.set_vertex_buffer(0, self.grid.slice(..));
         pass.draw(0..164, 0..1);
         pass.set_pipeline(&self.triangles);
-        for batch in &self.batches {
+        for batch in self
+            .batches
+            .iter()
+            .chain(self.meshes.values().map(|(_, batch)| batch))
+        {
             if batch.instance_count == 0 {
                 continue;
             }
@@ -484,13 +583,11 @@ impl Renderer {
 
 fn gizmo_geometry(editor: &Editor, size: [f32; 2]) -> Vec<Vertex> {
     use crate::gizmo::{handles, Handle, Tool};
-    let Some(handles) = handles(editor, size) else {
-        return vec![];
-    };
-    let mut vertices = Vec::with_capacity(if handles.tool == Tool::Rotate {
+    let handles = handles(editor, size);
+    let mut vertices = Vec::with_capacity(if editor.tool == Tool::Rotate {
         1536
     } else {
-        42
+        128
     });
     let mut triangle = |points: [[f32; 2]; 3], color| {
         vertices.extend(points.map(|p| Vertex {
@@ -505,74 +602,126 @@ fn gizmo_geometry(editor: &Editor, size: [f32; 2]) -> Vec<Vertex> {
             [1., 0.8, 0.08]
         } else {
             match handle {
-                Handle::Axis(0) => [0.9, 0.07, 0.05],
-                Handle::Axis(1) => [0.12, 0.8, 0.12],
-                Handle::Axis(_) => [0.08, 0.32, 1.],
+                Handle::Axis(0) | Handle::Plane(0) => [0.9, 0.07, 0.05],
+                Handle::Axis(1) | Handle::Plane(1) => [0.12, 0.8, 0.12],
+                Handle::Axis(_) | Handle::Plane(_) => [0.08, 0.32, 1.],
                 Handle::Screen => [0.9; 3],
             }
         }
     };
-    if handles.tool == Tool::Rotate {
-        for ring in &handles.rings {
-            for segment in ring.points.windows(2) {
-                let (Some(a), Some(b)) = (segment[0], segment[1]) else {
+    if let Some(handles) = handles {
+        if handles.tool == Tool::Rotate {
+            for ring in &handles.rings {
+                for segment in ring.points.windows(2) {
+                    let (Some(a), Some(b)) = (segment[0], segment[1]) else {
+                        continue;
+                    };
+                    let d = [b[0] - a[0], b[1] - a[1]];
+                    let length = d[0].hypot(d[1]);
+                    if length < 0.1 {
+                        continue;
+                    }
+                    let side = [-d[1] / length, d[0] / length];
+                    let offset =
+                        |p: [f32; 2], sign: f32| std::array::from_fn(|i| p[i] + side[i] * sign);
+                    triangle(
+                        [offset(a, -1.), offset(b, -1.), offset(b, 1.)],
+                        color(ring.handle),
+                    );
+                    triangle(
+                        [offset(a, -1.), offset(b, 1.), offset(a, 1.)],
+                        color(ring.handle),
+                    );
+                }
+            }
+        } else {
+            for plane in &handles.planes {
+                let [a, b, c, d] = plane.corners;
+                let handle = Handle::Plane(plane.normal);
+                let color = color(handle).map(|v| {
+                    if active == Some(handle) {
+                        v
+                    } else {
+                        v * 0.65 + 0.12
+                    }
+                });
+                triangle([a, b, c], color);
+                triangle([a, c, d], color);
+            }
+            for i in 0..3 {
+                let Some(tip) = handles.tips[i] else {
                     continue;
                 };
-                let d = [b[0] - a[0], b[1] - a[1]];
-                let length = d[0].hypot(d[1]);
-                if length < 0.1 {
-                    continue;
+                let o = handles.origin;
+                let delta = [tip[0] - o[0], tip[1] - o[1]];
+                let length = delta[0].hypot(delta[1]);
+                let dir = delta.map(|v| v / length);
+                let side = [-dir[1], dir[0]];
+                let at = |distance: f32, offset: f32| {
+                    std::array::from_fn(|j| o[j] + dir[j] * distance + side[j] * offset)
+                };
+                let end = length - if handles.tool == Tool::Scale { 4. } else { 11. };
+                let c = color(Handle::Axis(i));
+                triangle([at(7., -1.5), at(end, -1.5), at(end, 1.5)], c);
+                triangle([at(7., -1.5), at(end, 1.5), at(7., 1.5)], c);
+                if handles.tool == Tool::Scale {
+                    let [x, y] = tip;
+                    triangle([[x - 4., y - 4.], [x + 4., y - 4.], [x + 4., y + 4.]], c);
+                    triangle([[x - 4., y - 4.], [x + 4., y + 4.], [x - 4., y + 4.]], c);
+                } else {
+                    triangle([tip, at(length - 13., -5.5), at(length - 13., 5.5)], c);
                 }
-                let side = [-d[1] / length, d[0] / length];
-                let offset =
-                    |p: [f32; 2], sign: f32| std::array::from_fn(|i| p[i] + side[i] * sign);
-                triangle(
-                    [offset(a, -1.), offset(b, -1.), offset(b, 1.)],
-                    color(ring.handle),
-                );
-                triangle(
-                    [offset(a, -1.), offset(b, 1.), offset(a, 1.)],
-                    color(ring.handle),
-                );
             }
+            let [x, y] = handles.origin;
+            let c = color(Handle::Screen);
+            triangle([[x - 5., y - 5.], [x + 5., y - 5.], [x + 5., y + 5.]], c);
+            triangle([[x - 5., y - 5.], [x + 5., y + 5.], [x - 5., y + 5.]], c);
         }
-    } else {
-        for i in 0..3 {
-            let Some(tip) = handles.tips[i] else {
-                continue;
-            };
-            let o = handles.origin;
-            let delta = [tip[0] - o[0], tip[1] - o[1]];
-            let length = delta[0].hypot(delta[1]);
-            let dir = delta.map(|v| v / length);
-            let side = [-dir[1], dir[0]];
-            let at = |distance: f32, offset: f32| {
-                std::array::from_fn(|j| o[j] + dir[j] * distance + side[j] * offset)
-            };
-            let end = length - if handles.tool == Tool::Scale { 4. } else { 11. };
-            let c = color(Handle::Axis(i));
-            triangle([at(7., -1.5), at(end, -1.5), at(end, 1.5)], c);
-            triangle([at(7., -1.5), at(end, 1.5), at(7., 1.5)], c);
-            if handles.tool == Tool::Scale {
-                let [x, y] = tip;
-                triangle([[x - 4., y - 4.], [x + 4., y - 4.], [x + 4., y + 4.]], c);
-                triangle([[x - 4., y - 4.], [x + 4., y + 4.], [x - 4., y + 4.]], c);
+    }
+    if let Some((source, target)) = editor
+        .transform_drag
+        .as_ref()
+        .and_then(|d| d.vertex_markers)
+    {
+        // A cyan source square and yellow target diamond remain legible over shaded meshes.
+        for (point, radius, c, diamond) in [(source, 5., [0.1, 1., 1.], false)]
+            .into_iter()
+            .chain(target.map(|p| (p, 8., [1., 0.8, 0.08], true)))
+        {
+            let corners = if diamond {
+                [
+                    [point[0], point[1] - radius],
+                    [point[0] + radius, point[1]],
+                    [point[0], point[1] + radius],
+                    [point[0] - radius, point[1]],
+                ]
             } else {
-                triangle([tip, at(length - 13., -5.5), at(length - 13., 5.5)], c);
+                [
+                    [point[0] - radius, point[1] - radius],
+                    [point[0] + radius, point[1] - radius],
+                    [point[0] + radius, point[1] + radius],
+                    [point[0] - radius, point[1] + radius],
+                ]
+            };
+            for i in 0..4 {
+                let a = corners[i];
+                let b = corners[(i + 1) % 4];
+                let delta = [b[0] - a[0], b[1] - a[1]];
+                let length = delta[0].hypot(delta[1]);
+                let side = [-delta[1] / length, delta[0] / length];
+                let at = |p: [f32; 2], sign: f32| std::array::from_fn(|j| p[j] + side[j] * sign);
+                triangle([at(a, -1.), at(b, -1.), at(b, 1.)], c);
+                triangle([at(a, -1.), at(b, 1.), at(a, 1.)], c);
             }
         }
-        let [x, y] = handles.origin;
-        let c = color(Handle::Screen);
-        triangle([[x - 5., y - 5.], [x + 5., y - 5.], [x + 5., y + 5.]], c);
-        triangle([[x - 5., y - 5.], [x + 5., y + 5.], [x - 5., y + 5.]], c);
     }
     vertices
 }
 
-fn world_point(matrix: Matrix, point: [f32; 3]) -> [f32; 3] {
+pub(crate) fn world_point(matrix: Matrix, point: [f32; 3]) -> [f32; 3] {
     std::array::from_fn(|i| matrix[3][i] + (0..3).map(|j| matrix[j][i] * point[j]).sum::<f32>())
 }
-fn object_bounds(object: &Object) -> ([f32; 3], [f32; 3]) {
+fn object_bounds(editor: &Editor, object: &Object) -> ([f32; 3], [f32; 3]) {
     let mut min = [f32::INFINITY; 3];
     let mut max = [f32::NEG_INFINITY; 3];
     for mirrored in [false, true]
@@ -580,7 +729,7 @@ fn object_bounds(object: &Object) -> ([f32; 3], [f32; 3]) {
         .take(if object.mirror { 2 } else { 1 })
     {
         let matrix = model_matrix(object, mirrored);
-        for point in geometry(&object.kind).iter().flatten() {
+        for point in object_geometry(editor, object).iter().flatten() {
             let point = world_point(matrix, *point);
             for i in 0..3 {
                 min[i] = min[i].min(point[i]);
@@ -599,7 +748,7 @@ pub fn frame_selection(editor: &mut Editor, aspect: f32) -> Result<(), String> {
         .selected
         .and_then(|id| editor.indexed_object(id).map(|(_, o)| o))
     {
-        let (min, max) = object_bounds(object);
+        let (min, max) = object_bounds(editor, object);
         let target = std::array::from_fn(|i| (min[i] + max[i]) * 0.5);
         let radius = (dot(sub(max, min), sub(max, min)).sqrt() * 0.5).max(0.01);
         let half_fov = (aspect.min(1.) / 1.8).atan();
@@ -651,13 +800,14 @@ pub fn pick(editor: &Editor, x: f32, y: f32, aspect: f32) -> Result<Option<u64>,
                 };
             let to_center = sub(center, eye);
             let projection = dot(to_center, ray);
-            if projection + radius < 0.
-                || dot(to_center, to_center) - projection * projection > radius * radius
+            if object.mesh_id.is_none()
+                && (projection + radius < 0.
+                    || dot(to_center, to_center) - projection * projection > radius * radius)
             {
                 continue;
             }
             let matrix = model_matrix(object, mirrored);
-            for face in geometry(&object.kind) {
+            for face in object_geometry(editor, object) {
                 let [a, b, c] = face.map(|p| world_point(matrix, p));
                 let ab = sub(b, a);
                 let ac = sub(c, a);
@@ -693,7 +843,7 @@ pub fn pick(editor: &Editor, x: f32, y: f32, aspect: f32) -> Result<Option<u64>,
 }
 // Preserve the existing degree-based X, then Y, then Z rotation contract.
 // ThreeX's Euler composition is not imported: its contract differs for compound rotations.
-fn model_matrix(object: &Object, mirrored: bool) -> Matrix {
+pub(crate) fn model_matrix(object: &Object, mirrored: bool) -> Matrix {
     let mut matrix = [[0.; 4]; 4];
     let basis = crate::affine::linear_basis(object);
     for (axis, column) in matrix.iter_mut().take(3).enumerate() {
@@ -777,7 +927,12 @@ impl InstanceCache {
         self.transforms.retain(|id, _| ids.contains(id));
         let mut rebuilt = 0;
         let mut groups: [Vec<Instance>; 3] = Default::default();
-        for object in editor.document.objects.iter().filter(|o| o.visible) {
+        for object in editor
+            .document
+            .objects
+            .iter()
+            .filter(|o| o.visible && o.mesh_id.is_none())
+        {
             let key = TransformKey::from(object);
             let cached = self.transforms.entry(object.id).or_insert_with(|| {
                 rebuilt += 1;
@@ -869,7 +1024,7 @@ impl IncrementalInstances {
             let mut offsets = [0; 3];
             for object in &editor.document.objects {
                 update.visited += 1;
-                if !object.visible {
+                if !object.visible || object.mesh_id.is_some() {
                     continue;
                 }
                 let batch = match object.kind.as_str() {
@@ -898,7 +1053,9 @@ impl IncrementalInstances {
             let mut structural_start: [Option<usize>; 3] = [None; 3];
             for &id in &ids {
                 if let Some(&(batch, start, count)) = self.slots.get(id) {
-                    let desired = editor.indexed_object(*id).filter(|(_, o)| o.visible);
+                    let desired = editor
+                        .indexed_object(*id)
+                        .filter(|(_, o)| o.visible && o.mesh_id.is_none());
                     let same = desired.is_some_and(|(index, o)| {
                         let left = start.checked_sub(1).map(|i| self.owners[batch][i]);
                         let right = self.owners[batch].get(start + count).copied();
@@ -926,7 +1083,7 @@ impl IncrementalInstances {
                     self.base.transforms.remove(id);
                     continue;
                 };
-                if !object.visible {
+                if !object.visible || object.mesh_id.is_some() {
                     continue;
                 }
                 let key = TransformKey::from(object);
@@ -1025,6 +1182,18 @@ fn normalize(a: [f32; 3]) -> [f32; 3] {
     a.map(|v| v / l)
 }
 type Face = [[f32; 3]; 3];
+pub(crate) fn object_geometry<'a>(editor: &'a Editor, object: &Object) -> &'a [Face] {
+    if let Some(id) = &object.mesh_id {
+        editor
+            .document
+            .meshes
+            .get(id)
+            .map(|m| m.triangles.as_slice())
+            .unwrap_or(&[])
+    } else {
+        geometry(&object.kind)
+    }
+}
 fn geometry(kind: &str) -> &'static [Face] {
     static CUBE: OnceLock<Vec<Face>> = OnceLock::new();
     static SPHERE: OnceLock<Vec<Face>> = OnceLock::new();
@@ -1499,6 +1668,119 @@ mod tests {
     }
 
     #[test]
+    fn snap_markers_render_even_when_the_moving_pivot_is_outside_the_view() {
+        let mut e = Editor::new();
+        e.tool = crate::gizmo::Tool::Move;
+        let h = crate::gizmo::handles(&e, [800., 600.]).unwrap();
+        let mut drag =
+            crate::gizmo::TransformDrag::begin(&e, "markers".into(), h.origin, [800., 600.], true)
+                .unwrap();
+        drag.vertex_markers = Some(([300., 200.], Some([400., 300.])));
+        e.transform_drag = Some(drag);
+        e.document.objects[0].position = [1000., 0., 0.];
+        assert!(crate::gizmo::handles(&e, [800., 600.]).is_none());
+        assert_eq!(gizmo_geometry(&e, [800., 600.]).len(), 48);
+    }
+    #[test]
+    #[ignore = "Requires Metal and U3D_USD_FIXTURE downloaded from SimReady"]
+    fn gpu_real_simready_mesh() {
+        pollster::block_on(async {
+            let adapter = wgpu::Instance::default()
+                .request_adapter(&Default::default())
+                .await
+                .unwrap();
+            let (device, queue) = adapter.request_device(&Default::default()).await.unwrap();
+            device.push_error_scope(wgpu::ErrorFilter::Validation);
+            let mut scene = GpuScene::new(&device, wgpu::TextureFormat::Rgba8Unorm);
+            let mut e = Editor::new();
+            e.document.objects.clear();
+            e.invalidate_document();
+            let imported = crate::usd::tests::real_fixture();
+            let expected = imported.report.triangles;
+            e.import_usd(imported).unwrap();
+            e.select(None);
+            scene.update(&device, &queue, &e, 1.);
+            assert_eq!(
+                scene
+                    .meshes
+                    .values()
+                    .map(|(_, b)| b.vertex_count as usize / 3)
+                    .sum::<usize>(),
+                expected
+            );
+            assert!(scene.instance_cache.groups.iter().all(|g| g.is_empty()));
+            let target = device.create_texture(&wgpu::TextureDescriptor {
+                label: Some("SimReady preview"),
+                size: wgpu::Extent3d {
+                    width: 512,
+                    height: 512,
+                    depth_or_array_layers: 1,
+                },
+                mip_level_count: 1,
+                sample_count: 1,
+                dimension: wgpu::TextureDimension::D2,
+                format: wgpu::TextureFormat::Rgba8Unorm,
+                usage: wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::COPY_SRC,
+                view_formats: &[],
+            });
+            let readback = device.create_buffer(&wgpu::BufferDescriptor {
+                label: None,
+                size: 512 * 512 * 4,
+                usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::MAP_READ,
+                mapped_at_creation: false,
+            });
+            let mut encoder = device.create_command_encoder(&Default::default());
+            scene.encode(
+                &mut encoder,
+                &target.create_view(&Default::default()),
+                &depth_view(&device, 512, 512),
+            );
+            encoder.copy_texture_to_buffer(
+                target.as_image_copy(),
+                wgpu::TexelCopyBufferInfo {
+                    buffer: &readback,
+                    layout: wgpu::TexelCopyBufferLayout {
+                        offset: 0,
+                        bytes_per_row: Some(512 * 4),
+                        rows_per_image: Some(512),
+                    },
+                },
+                wgpu::Extent3d {
+                    width: 512,
+                    height: 512,
+                    depth_or_array_layers: 1,
+                },
+            );
+            queue.submit([encoder.finish()]);
+            let (tx, rx) = std::sync::mpsc::channel();
+            readback
+                .slice(..)
+                .map_async(wgpu::MapMode::Read, move |result| tx.send(result).unwrap());
+            device.poll(wgpu::PollType::wait_indefinitely()).unwrap();
+            rx.recv().unwrap().unwrap();
+            let pixels = readback.slice(..).get_mapped_range();
+            assert!(
+                pixels
+                    .as_chunks::<4>()
+                    .0
+                    .iter()
+                    .filter(|p| p[0] > 100 && p[1] > 100 && p[2] > 100)
+                    .count()
+                    > 100
+            );
+            if let Ok(path) = std::env::var("U3D_USD_RENDER") {
+                let mut image = b"P6\n512 512\n255\n".to_vec();
+                for rgba in pixels.as_chunks::<4>().0 {
+                    image.extend_from_slice(&rgba[..3]);
+                }
+                std::fs::write(path, image).unwrap();
+            }
+            drop(pixels);
+            readback.unmap();
+            assert!(device.pop_error_scope().await.is_none());
+        });
+    }
+    #[test]
     #[ignore = "Requires a GPU adapter; run explicitly on a GPU-enabled host"]
     fn gpu_offscreen_instanced_scene() {
         pollster::block_on(async {
@@ -1561,6 +1843,18 @@ mod tests {
                 o.mirror = true;
                 e.document.objects.push(o);
             }
+            e.invalidate_document();
+            e.import_usd(crate::usd::tests::fixture()).unwrap();
+            let imported_id = e.document.selected.unwrap();
+            scene.update(&device, &queue, &e, 1.);
+            assert_eq!(scene.meshes.len(), 1);
+            assert_eq!(scene.meshes[&imported_id].1.vertex_count, 9);
+            e.execute(crate::editor::Command::Undo).unwrap();
+            scene.update(&device, &queue, &e, 1.);
+            assert!(scene.meshes.is_empty());
+            e.execute(crate::editor::Command::Redo).unwrap();
+            scene.update(&device, &queue, &e, 1.);
+            assert_eq!(scene.meshes.len(), 1);
             for size in [64, 128] {
                 let target = device.create_texture(&wgpu::TextureDescriptor {
                     label: None,
@@ -1589,6 +1883,20 @@ mod tests {
                     crate::gizmo::Tool::Scale,
                 ] {
                     e.tool = tool;
+                    if tool == crate::gizmo::Tool::Move {
+                        let h = crate::gizmo::handles(&e, [size as f32; 2]).unwrap();
+                        let mut drag = crate::gizmo::TransformDrag::begin(
+                            &e,
+                            "gpu-vertex".into(),
+                            h.origin,
+                            [size as f32; 2],
+                            true,
+                        )
+                        .unwrap();
+                        drag.vertex_markers =
+                            Some(([size as f32 * 0.4; 2], Some([size as f32 * 0.6; 2])));
+                        e.transform_drag = Some(drag);
+                    }
                     scene.update_gizmo(&queue, &e, [size as f32; 2]);
                     assert!(scene.gizmo_count >= 6 && scene.gizmo_count <= 2048);
                     let mut encoder = device.create_command_encoder(&Default::default());
@@ -1599,6 +1907,7 @@ mod tests {
                     );
                     queue.submit([encoder.finish()]);
                     device.poll(wgpu::PollType::wait_indefinitely()).unwrap();
+                    e.transform_drag = None;
                 }
             }
             for step in 0..18 {
@@ -1699,6 +2008,22 @@ mod interaction_tests {
         assert_eq!(pick(&e, 0., 0., 1.).unwrap(), Some(2));
     }
     #[test]
+    fn imported_mesh_picking_focus_and_no_primitive_placeholder() {
+        let mut e = Editor::new();
+        e.import_usd(crate::usd::tests::fixture()).unwrap();
+        let id = e.document.selected.unwrap();
+        e.document.objects[0].visible = false;
+        e.invalidate_document();
+        e.yaw = 0.;
+        e.pitch = 0.;
+        e.camera_target = [0.3, 1.5, 0.];
+        e.distance = 4.;
+        assert_eq!(pick(&e, 0., 0., 1.).unwrap(), Some(id));
+        frame_selection(&mut e, 0.5).unwrap();
+        assert_eq!(e.camera_target, [1., 1., 0.]);
+        assert!(scene_instances(&e).iter().all(|g| g.is_empty()));
+    }
+    #[test]
     fn frame_selection_fits_rotated_mirrored_bounds_at_narrow_aspect() {
         let mut e = Editor::new();
         let mut object = e.document.objects[0].clone();
@@ -1716,7 +2041,7 @@ mod interaction_tests {
         assert_eq!(e.camera_target[0], 0.);
         let matrix = camera_matrix(&e, 0.5);
         for mirrored in [false, true] {
-            for point in geometry(&object.kind).iter().flatten() {
+            for point in object_geometry(&e, &object).iter().flatten() {
                 let world = world_point(model_matrix(&object, mirrored), *point);
                 let clip: [f32; 4] = std::array::from_fn(|i| {
                     matrix[3][i] + (0..3).map(|j| matrix[j][i] * world[j]).sum::<f32>()

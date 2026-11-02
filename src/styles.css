@@ -1205,56 +1205,116 @@ button[aria-pressed="true"] {
     min-width: 190px;
   }
 }
-/* Functional frame ticks, aligned with the native range input endpoints. */
+/* Ongaku's dark hardware finish: metal cap, three grip grooves, recessed rail. */
+.hardware-slider {
+  --slider-signal: #ff8a1c;
+  --slider-well: #000;
+  --slider-metal: linear-gradient(135deg, #a8a8a8 0%, #666 60%, #8f8f8f 100%);
+  --slider-grip: linear-gradient(#0009, #0009);
+  --slider-cap: var(--slider-grip) calc(50% - 1.5px) center / 0.5px 4px no-repeat,
+    var(--slider-grip) center / 0.5px 4px no-repeat,
+    var(--slider-grip) calc(50% + 1.5px) center / 0.5px 4px no-repeat,
+    var(--slider-metal);
+  position: relative;
+  display: block;
+  flex: 1;
+  min-width: 44px;
+  height: 44px;
+}
+.hardware-slider::before {
+  content: "";
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  top: 20.5px;
+  height: 3px;
+  border-radius: 2px;
+  background: linear-gradient(to right, var(--slider-signal) var(--slider-progress), var(--slider-well) var(--slider-progress));
+  box-shadow: 0 1px 0 #ffffff12;
+  pointer-events: none;
+}
+.hardware-slider-ticks {
+  position: absolute;
+  left: 14px;
+  top: 34px;
+  width: calc(100% - 28px);
+  height: 7px;
+  overflow: visible;
+  pointer-events: none;
+  stroke: rgb(166 166 166 / 45%);
+  stroke-width: 0.5px;
+}
+.hardware-slider-ticks line {
+  vector-effect: non-scaling-stroke;
+}
+.hardware-slider input[type="range"] {
+  position: relative;
+  display: block;
+  appearance: none;
+  -webkit-appearance: none;
+  width: calc(100% - 17px);
+  min-width: 0;
+  height: 44px;
+  padding: 0;
+  margin: 0 8.5px;
+  border: 0;
+  border-radius: 3px;
+  background: transparent;
+  cursor: ew-resize;
+}
+.hardware-slider input:focus-visible {
+  outline-color: var(--slider-signal);
+  outline-offset: 0;
+}
+.hardware-slider input::-webkit-slider-runnable-track {
+  height: 3px;
+  background: transparent;
+}
+.hardware-slider input::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  box-sizing: border-box;
+  width: 11px;
+  height: 11px;
+  margin-top: -4px;
+  border: 0.5px solid #ffffff80;
+  border-radius: 50%;
+  background: var(--slider-cap);
+  box-shadow: 0.5px 1px 1.5px #000a;
+}
+.hardware-slider input::-moz-range-track {
+  height: 3px;
+  background: transparent;
+}
+.hardware-slider input::-moz-range-progress {
+  background: transparent;
+}
+.hardware-slider input::-moz-range-thumb {
+  box-sizing: border-box;
+  width: 11px;
+  height: 11px;
+  border: 0.5px solid #ffffff80;
+  border-radius: 50%;
+  background: var(--slider-cap);
+  box-shadow: 0.5px 1px 1.5px #000a;
+}
+.hardware-slider[data-disabled] {
+  opacity: 0.4;
+}
+.hardware-slider input:disabled {
+  cursor: default;
+}
+.camera-controls label {
+  min-width: 0;
+}
 .track {
   margin: 0 12px;
   padding: 0;
-  background: repeating-linear-gradient(
-    to right,
-    var(--color-rule) 0 1px,
-    var(--color-transparent) 1px calc(100% / 119)
-  );
-}
-.track input {
-  appearance: none;
-  -webkit-appearance: none;
-  background: var(--color-transparent);
-  border: 0;
-  border-radius: 0;
-  height: 18px;
-  display: block;
-  cursor: ew-resize;
-}
-.track input:disabled {
-  cursor: default;
-}
-.track input::-webkit-slider-runnable-track {
-  height: 18px;
-  background: var(--color-transparent);
-}
-.track input::-webkit-slider-thumb {
-  appearance: none;
-  -webkit-appearance: none;
-  height: 18px;
-  width: 3px;
-  border: 0;
-  border-radius: 0;
-  background: var(--color-accent);
-}
-.track input::-moz-range-track {
-  height: 18px;
-  background: var(--color-transparent);
-}
-.track input::-moz-range-thumb {
-  height: 18px;
-  width: 3px;
-  border: 0;
-  border-radius: 0;
-  background: var(--color-accent);
+  background: transparent;
 }
 .timeline-ruler {
   position: relative;
-  margin: 0 12px;
+  margin: 0 26px;
   padding: 0;
 }
 .timeline-ruler span {
@@ -1362,3 +1422,36 @@ html.gpu-embedded,
   padding: 1px 3px;
   font-size: 10px;
 }
+
+.usd-dialog {
+  width: min(620px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  padding: 0;
+  border: 1px solid var(--color-rule);
+  background: var(--color-panel);
+  color: var(--color-text);
+  overflow: auto;
+}
+.usd-dialog::backdrop { background: #0009; }
+.usd-dialog header { display: flex; align-items: center; gap: 6px; padding: 8px 16px; border-bottom: 1px solid var(--color-border); }
+.usd-dialog header > button:last-child { margin-left: auto; }
+.usd-dialog form { padding: 16px; }
+.usd-dialog label { display: block; margin-bottom: 6px; }
+.usd-dialog input { width: 100%; }
+.usd-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 12px; }
+.usd-actions button { padding: 6px 8px; border: 1px solid var(--color-rule); }
+.usd-result, .usd-error { margin-top: 16px; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.6; }
+.usd-error { color: var(--color-error); }
+.usd-result code { font-size: 11px; }
+
+.recovery-status { display: inline-flex; align-items: center; gap: 4px; padding: 2px 5px; margin-left: 8px; border: 0; background: transparent; color: var(--muted, #aaa); }
+.recovery-status.has-error { color: #eda562; }
+.recovery-body { display: grid; gap: 12px; padding: 16px; }
+.recovery-body p { margin: 0; line-height: 1.6; overflow-wrap: anywhere; }
+.recovery-body select { width: 100%; min-width: 0; }
+.recovery-body .usd-actions { justify-content: flex-end; }
+
+.recovery-dialog header { position: relative; }
+.recovery-dialog .info-tip { position: static; }
+.recovery-dialog .info-tip [role="tooltip"] { top: calc(100% + 4px); bottom: auto; left: 16px; right: 16px; width: auto; max-width: none; max-height: 130px; overflow: auto; }
+.recovery-body time { color: var(--color-muted); font-size: 11px; }

@@ -5,6 +5,7 @@ import {
   useState,
   type ButtonHTMLAttributes,
   type ReactNode,
+  type CSSProperties,
 } from "react";
 import { Info, type LucideIcon } from "lucide-react";
 
@@ -33,11 +34,51 @@ export function IconButton({
 export function InfoTip({ text, label }: { text: string; label: string }) {
   const id = useId();
   const [dismissed, setDismissed] = useState(false);
+  const root = useRef<HTMLSpanElement>(null);
+  const tip = useRef<HTMLSpanElement>(null);
+  const [position, setPosition] = useState<CSSProperties>();
+  function positionTooltip() {
+    const toolbar = root.current?.closest(".viewport-toolbar");
+    if (!toolbar || !root.current || !tip.current) return;
+    const anchor = root.current.getBoundingClientRect();
+    const panel = toolbar.closest(".panel")?.getBoundingClientRect();
+    const bounds = toolbar.getBoundingClientRect();
+    const minLeft = Math.max(16, bounds.left + 8);
+    const maxRight = Math.min(innerWidth - 16, bounds.right - 8);
+    const width = Math.max(1, Math.min(270, maxRight - minLeft));
+    const left = Math.max(
+      minLeft,
+      Math.min(anchor.right - width, maxRight - width),
+    );
+    setPosition({
+      left: left - anchor.left,
+      right: "auto",
+      width,
+      maxHeight: Math.max(
+        60,
+        Math.min(innerHeight - 16, panel?.bottom ?? innerHeight) -
+          anchor.bottom -
+          12,
+      ),
+      overflowY: "auto",
+    });
+  }
+  useEffect(() => {
+    window.addEventListener("resize", positionTooltip);
+    return () => window.removeEventListener("resize", positionTooltip);
+  }, []);
   return (
     <span
+      ref={root}
       className={`info-tip ${dismissed ? "dismissed" : ""}`}
-      onMouseEnter={() => setDismissed(false)}
-      onFocus={() => setDismissed(false)}
+      onMouseEnter={() => {
+        setDismissed(false);
+        positionTooltip();
+      }}
+      onFocus={() => {
+        setDismissed(false);
+        positionTooltip();
+      }}
     >
       <button
         type="button"
@@ -51,7 +92,7 @@ export function InfoTip({ text, label }: { text: string; label: string }) {
       >
         <Info size={14} />
       </button>
-      <span id={id} role="tooltip">
+      <span ref={tip} id={id} role="tooltip" style={position}>
         {text}
       </span>
     </span>

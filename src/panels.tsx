@@ -18,6 +18,7 @@ import {
   ChevronLeft,
 } from "lucide-react";
 import { IconButton, InfoTip } from "./EditorChrome";
+import { HardwareSlider } from "./HardwareSlider";
 import { desktop } from "./store";
 import type { Snapshot, SceneObject, Command } from "./types";
 import type { Key } from "./i18n";
@@ -261,7 +262,9 @@ export function Inspector(p: PanelProps) {
               {p.t(
                 o.kind === "sphere"
                   ? "sphereLabel"
-                  : o.kind === "plane"
+                  : o.kind === "mesh"
+                    ? "meshLabel"
+                    : o.kind === "plane"
                     ? "planeLabel"
                     : "cubeLabel",
               )}
@@ -306,12 +309,12 @@ export function Timeline(p: PanelProps) {
         ))}
       </div>
       <div className="track">
-        <input
+        <HardwareSlider
           aria-label={p.t("frame")}
-          type="range"
+          ticks="frames"
           disabled={p.disabled}
-          min="1"
-          max="120"
+          min={1}
+          max={120}
           value={frame}
           onChange={(e) => setDraftFrame(+e.target.value)}
           onPointerUp={() => setFrame(frame)}

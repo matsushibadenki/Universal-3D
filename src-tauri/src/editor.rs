@@ -12,6 +12,9 @@ pub enum Command {
     SetSnap {
         enabled: bool,
     },
+    SetMoveSnap {
+        mode: crate::gizmo::MoveSnap,
+    },
     SetSnapStep {
         tool: crate::gizmo::Tool,
         step: f32,
@@ -22,12 +25,16 @@ pub enum Command {
         y: f32,
         width: f32,
         height: f32,
+        #[serde(default)]
+        vertex_snap: bool,
     },
     TransformUpdate {
         token: String,
         points: Vec<[f32; 2]>,
         #[serde(default)]
         snap_toggle: bool,
+        #[serde(default)]
+        vertex_snap: bool,
     },
     TransformEnd {
         token: String,
@@ -95,6 +102,7 @@ impl Editor {
                 | Command::SetTool { .. }
                 | Command::SetSpace { .. }
                 | Command::SetSnap { .. }
+                | Command::SetMoveSnap { .. }
                 | Command::SetSnapStep { .. }
         ) {
             self.ensure_not_dragging()?;
@@ -112,6 +120,12 @@ impl Editor {
                 self.finish_transform(true);
                 self.transform_settings.snap = enabled;
             }
+            Command::SetMoveSnap { mode } => {
+                let mut settings = self.transform_settings;
+                settings.set_move_snap(mode)?;
+                self.finish_transform(true);
+                self.transform_settings = settings;
+            }
             Command::SetSnapStep { tool, step } => {
                 let mut settings = self.transform_settings;
                 settings.set_step(tool, step)?;
@@ -124,13 +138,19 @@ impl Editor {
                 y,
                 width,
                 height,
+                vertex_snap,
             } => {
                 crate::gizmo::valid_pointer(x, y, [width, height])?;
                 if token.is_empty() || token.len() > 80 {
                     return Err("Invalid transform token".into());
                 }
-                self.transform_drag =
-                    crate::gizmo::TransformDrag::begin(self, token, [x, y], [width, height]);
+                self.transform_drag = crate::gizmo::TransformDrag::begin(
+                    self,
+                    token,
+                    [x, y],
+                    [width, height],
+                    vertex_snap,
+                );
                 if self.transform_drag.is_none() {
                     let selected = crate::renderer::pick(
                         self,
@@ -145,6 +165,7 @@ impl Editor {
                 token,
                 points,
                 snap_toggle,
+                vertex_snap,
             } => {
                 if let Some(mut drag) = self
                     .transform_drag
@@ -157,9 +178,12 @@ impl Editor {
                     }
                     // Keep angular crossings, but publish only the final object. A rejected
                     // sample leaves both the document and the accumulated gesture unchanged.
+                    if drag.vertex_enabled(snap_toggle, vertex_snap) {
+                        drag.prepare_vertices(self);
+                    }
                     let mut object = drag.before.clone();
                     for [x, y] in points {
-                        object = drag.object_at(x, y, snap_toggle)?;
+                        object = drag.object_at(x, y, snap_toggle, vertex_snap)?;
                     }
                     self.preview_transform(object);
                     self.transform_drag = Some(drag);
@@ -226,6 +250,7 @@ impl Editor {
                 let object = Object {
                     id,
                     name: format!("{} {}", kind, id),
+                    mesh_id: None,
                     kind,
                     position: [0.; 3],
                     rotation: [0.; 3],

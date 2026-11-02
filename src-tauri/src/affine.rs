@@ -11,13 +11,15 @@ pub fn linear_basis(object: &Object) -> [[f32; 3]; 3] {
         std::array::from_fn(|i| (r[0][i] * xz + r[1][i] * yz + r[2][i]) * object.scale[2]),
     ]
 }
-fn world_scaled(before: &Object, axis: usize, factor: f32) -> Option<Object> {
-    if factor == 1. {
+fn world_scaled(before: &Object, factors: [f32; 3]) -> Option<Object> {
+    if factors == [1.; 3] {
         return Some(before.clone());
     }
     let mut m = linear_basis(before).map(|column| column.map(f64::from));
     for column in &mut m {
-        column[axis] *= f64::from(factor);
+        for axis in 0..3 {
+            column[axis] *= f64::from(factors[axis]);
+        }
     }
     // Modified Gram-Schmidt QR, with original signed scale diagonals. Positive
     // world multipliers preserve handedness, so Q remains a proper rotation.
@@ -50,17 +52,23 @@ fn world_scaled(before: &Object, axis: usize, factor: f32) -> Option<Object> {
     Some(result)
 }
 pub fn world_scaled_bounded(before: &Object, axis: usize, factor: f32) -> Object {
-    if let Some(result) = world_scaled(before, axis, factor) {
+    world_scaled_axes_bounded(
+        before,
+        std::array::from_fn(|i| if i == axis { factor } else { 1. }),
+    )
+}
+pub fn world_scaled_axes_bounded(before: &Object, factors: [f32; 3]) -> Object {
+    if let Some(result) = world_scaled(before, factors) {
         return result;
     }
-    // Stay at the closest valid factor if a scale/shear channel hits its limit.
-    // Interpolate in log space so tiny and huge requested factors behave alike.
+    // Approach the requested multi-axis transform as one operation, preserving its ratio.
     let mut valid = 0.;
-    let mut invalid = factor.ln();
+    let mut invalid = 1.;
+    let logs = factors.map(f32::ln);
     let mut result = before.clone();
     for _ in 0..24 {
         let middle = (valid + invalid) * 0.5;
-        if let Some(candidate) = world_scaled(before, axis, middle.exp()) {
+        if let Some(candidate) = world_scaled(before, logs.map(|v| (v * middle).exp())) {
             valid = middle;
             result = candidate;
         } else {
@@ -130,5 +138,26 @@ mod tests {
         assert_eq!(saved.objects, loaded.objects);
         loaded.objects[0].shear[0] = f32::NAN;
         assert!(loaded.validate().is_err());
+    }
+    #[test]
+    fn plane_world_scale_limits_are_bounded_as_one_transform() {
+        let mut before = Document::default().objects[0].clone();
+        before.rotation = [28., -37., 53.];
+        before.scale = [-0.001, 3., 10000.];
+        before.shear = [0.2, -0.4, 0.3];
+        for normal in 0..3 {
+            for factor in [0.000001, 0.4, 1., 2.7, 1000000.] {
+                let factors = std::array::from_fn(|i| if i == normal { 1. } else { factor });
+                let result = world_scaled_axes_bounded(&before, factors);
+                result.validate().unwrap();
+                let a = linear_basis(&before);
+                let b = linear_basis(&result);
+                for i in 0..3 {
+                    assert!((a[i][normal] - b[i][normal]).abs() < 0.01);
+                }
+                assert_eq!(result.scale.map(f32::signum), before.scale.map(f32::signum));
+                assert_eq!(result.position, before.position);
+            }
+        }
     }
 }
