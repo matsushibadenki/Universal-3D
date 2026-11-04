@@ -1455,3 +1455,13 @@ html.gpu-embedded,
 .recovery-dialog .info-tip { position: static; }
 .recovery-dialog .info-tip [role="tooltip"] { top: calc(100% + 4px); bottom: auto; left: 16px; right: 16px; width: auto; max-width: none; max-height: 130px; overflow: auto; }
 .recovery-body time { color: var(--color-muted); font-size: 11px; }
+
+.load-progress { display: flex; align-items: center; gap: 6px; min-width: 0; max-width: 100%; padding: 4px 0; font-size: 11px; }
+.load-phase { white-space: nowrap; }
+.load-progress progress { flex: 1 1 80px; width: 80px; min-width: 24px; max-width: 160px; height: 5px; accent-color: var(--color-accent, #65b8bf); }
+.load-progress small { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.load-progress > button { flex: 0 0 auto; }
+.statusbar:has(.load-progress) { flex-wrap: wrap; height: auto; min-height: 28px; }
+.statusbar > .load-progress { flex: 1 1 200px; }
+@media (max-width: 600px) { .statusbar > .load-progress { flex-basis: 100%; } }
+.statusbar:has(.load-progress) { position: sticky; bottom: 0; z-index: 25; background: var(--color-panel, #292929); }

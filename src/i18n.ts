@@ -1,4 +1,16 @@
 const en = {
+  loadShapes: "Shapes",
+  loadRead: "Reading",
+  loadConvert: "Converting",
+  loadValidate: "Checking",
+  loadVertices: "Vertices",
+  loadSurfaces: "Edges / surfaces",
+  loadInstances: "Instances",
+  loadCommit: "Finishing",
+  loadCancelling: "Cancelling…",
+  loadCancel: "Cancel load",
+  loadCancelled: "Load cancelled",
+
   moveSnapMode: "Move snap mode",
   relativeSnap: "Relative",
   absoluteGrid: "Grid",
@@ -139,6 +151,18 @@ const en = {
 export type Key = keyof typeof en;
 export type Language = "en" | "ja" | "zh";
 const ja: Record<Key, string> = {
+  loadShapes: "形状",
+  loadRead: "読込中",
+  loadConvert: "変換中",
+  loadValidate: "検証中",
+  loadVertices: "頂点の準備",
+  loadSurfaces: "エッジ・面の準備",
+  loadInstances: "配置の準備",
+  loadCommit: "確定中",
+  loadCancelling: "取消中…",
+  loadCancel: "読込を取り消す",
+  loadCancelled: "読込を取り消しました",
+
   moveSnapMode: "移動スナップ方式",
   relativeSnap: "相対",
   absoluteGrid: "グリッド",
@@ -277,6 +301,18 @@ const ja: Record<Key, string> = {
   notConnected: "ビューポート未接続",
 };
 const zh: Record<Key, string> = {
+  loadShapes: "形状",
+  loadRead: "正在读取",
+  loadConvert: "正在转换",
+  loadValidate: "正在检查",
+  loadVertices: "准备顶点",
+  loadSurfaces: "准备边和表面",
+  loadInstances: "准备实例",
+  loadCommit: "正在完成",
+  loadCancelling: "正在取消…",
+  loadCancel: "取消加载",
+  loadCancelled: "已取消加载",
+
   moveSnapMode: "移动吸附方式",
   relativeSnap: "相对",
   absoluteGrid: "网格",

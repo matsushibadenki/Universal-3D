@@ -79,7 +79,13 @@ export function useEditor() {
     try {
       await invoke(name, args);
     } catch (e) {
-      setError(String(e));
+      const message = String(e);
+      setError(
+        message.includes("LOAD_CANCELLED") ||
+          message.includes("USD_IMPORT_CANCELLED")
+          ? ""
+          : message,
+      );
     } finally {
       setBusy(false);
     }

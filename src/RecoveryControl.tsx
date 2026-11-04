@@ -3,6 +3,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { History, ShieldCheck, TriangleAlert } from "lucide-react";
 import { InfoTip } from "./EditorChrome";
 import { desktop } from "./store";
+import { LoadProgress, cancelCurrentLoad } from "./LoadProgress";
 import type { Key } from "./i18n";
 
 type RecoveryState = {
@@ -70,7 +71,12 @@ export function RecoveryControl({ t }: { t: (key: Key) => string }) {
       setState(await invoke<RecoveryState>("get_recovery_state"));
       setOpen(false);
     } catch (e) {
-      setError(String(e));
+      setError(
+        String(e).includes("LOAD_CANCELLED") ||
+          String(e).includes("USD_IMPORT_CANCELLED")
+          ? t("loadCancelled")
+          : String(e),
+      );
     } finally {
       setBusy(false);
     }
@@ -109,6 +115,10 @@ export function RecoveryControl({ t }: { t: (key: Key) => string }) {
         onCancel={(e) => {
           e.preventDefault();
           if (!busy) setOpen(false);
+          else
+            void cancelCurrentLoad("recovery").catch((e) =>
+              setError(String(e)),
+            );
         }}
       >
         <header>
@@ -144,6 +154,7 @@ export function RecoveryControl({ t }: { t: (key: Key) => string }) {
           ) : (
             <p>{status}</p>
           )}
+          {busy && <LoadProgress t={t} kind="recovery" />}
           {(error || state.error) && (
             <p className="usd-error" role="alert">
               {error || state.error}

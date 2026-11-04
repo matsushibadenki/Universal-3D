@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { Download, ExternalLink, FolderOpen, X } from "lucide-react";
 import { IconButton, InfoTip } from "./EditorChrome";
+import { LoadProgress, cancelCurrentLoad } from "./LoadProgress";
 import type { Key } from "./i18n";
 
 type Report = {
@@ -37,7 +38,8 @@ export function UsdImport({
       setError(
         message.includes("USD_RUNTIME_MISSING")
           ? t("usdRuntime")
-          : message.includes("USD_IMPORT_CANCELLED")
+          : message.includes("USD_IMPORT_CANCELLED") ||
+              message.includes("LOAD_CANCELLED")
             ? t("usdCancelled")
             : `${t("usdFailed")}\n${message}`,
       );
@@ -47,7 +49,7 @@ export function UsdImport({
   }
   async function cancel() {
     try {
-      await invoke("cancel_usd_import");
+      await cancelCurrentLoad("usd");
     } catch (e) {
       setError(String(e));
     }
@@ -113,14 +115,7 @@ export function UsdImport({
             SimReady Central
           </button>
         </div>
-        {busy && (
-          <div className="usd-actions" role="status">
-            <span>{t("usdLoading")}</span>
-            <button type="button" onClick={() => void cancel()}>
-              {t("usdCancel")}
-            </button>
-          </div>
-        )}
+        {busy && <LoadProgress t={t} kind="usd" />}
         {error && (
           <p className="usd-error" role="alert">
             {error}

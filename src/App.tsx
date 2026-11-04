@@ -26,6 +26,7 @@ import { dictionaries, type Language, type Key } from "./i18n";
 import { Scene, Inspector, Timeline, type PanelProps } from "./panels";
 import { IconButton, InfoTip, Menu } from "./EditorChrome";
 import { Viewport } from "./Viewport";
+import { LoadProgress } from "./LoadProgress";
 import { RecoveryControl } from "./RecoveryControl";
 import { UsdImport } from "./UsdImport";
 import { HardwareSlider } from "./HardwareSlider";
@@ -241,7 +242,10 @@ export default function App() {
         <strong className="brand">Universal 3D</strong>
         <nav aria-label={t("modeling")}>
           <Menu label={t("file")}>
-            <button disabled={p.disabled} onClick={() => setUsdImport(true)}><FolderOpen size={15} />{t("usdImport")}</button>
+            <button disabled={p.disabled} onClick={() => setUsdImport(true)}>
+              <FolderOpen size={15} />
+              {t("usdImport")}
+            </button>
             <button
               disabled={p.disabled}
               onClick={() => void call("open_document")}
@@ -521,6 +525,7 @@ export default function App() {
       </main>
       {shown("timeline") && <Timeline {...p} />}
       <footer className="statusbar">
+        <LoadProgress t={t} />
         <span>
           {t(busy ? "busy" : desktop ? "ready" : "preview")}
           <RecoveryControl t={t} />

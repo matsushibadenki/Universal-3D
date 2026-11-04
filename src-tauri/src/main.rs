@@ -3,6 +3,7 @@ mod affine;
 mod document;
 mod editor;
 mod gizmo;
+mod load_task;
 mod mesh;
 mod persistence;
 mod renderer;
@@ -31,7 +32,7 @@ struct State {
     usd_busy: AtomicBool,
     file_busy: AtomicBool,
     recovery: Mutex<persistence::RecoveryService>,
-    usd_cancel: std::sync::Arc<AtomicBool>,
+    load_tasks: load_task::Tasks,
 }
 fn save_workspace(app: &tauri::AppHandle) -> Result<(), String> {
     let state = app.state::<State>();
@@ -162,15 +163,18 @@ async fn restore_recovery(
     if state.editor.lock().unwrap().dirty && !confirm_replace().await {
         return Ok(());
     }
+    let task_guard = state.load_tasks.begin(load_task::Kind::Recovery)?;
+    let task = task_guard.task.clone();
     let handle = app.clone();
     tauri::async_runtime::spawn_blocking(move || -> Result<(), String> {
         let state = handle.state::<State>();
         let mut recovery = state.recovery.lock().unwrap();
         let store = recovery.store.as_mut().ok_or("Recovery unavailable")?;
         let recovered = store.recover(&id)?;
-        let prepared = snapping::PreparedDocument::new(recovered.document)?;
+        let prepared = snapping::PreparedDocument::with_task(recovered.document, &task)?;
         let mut editor = state.editor.lock().unwrap();
         editor.ensure_unchanged(stamp)?;
+        task.commit()?;
         // Publish a self-contained checkpoint before replacing the document or consuming the source.
         // Restore as an unsaved copy; Save As cannot silently overwrite the original document.
         store.write(prepared.document(), &None, stamp, std::time::Instant::now())?;
@@ -288,6 +292,24 @@ fn draw(s: &State) -> Result<(), String> {
     Ok(())
 }
 #[tauri::command]
+fn trim_snap_cache(
+    state: tauri::State<State>,
+    purge_idle: Option<bool>,
+) -> Result<snapping::SnapDiagnostics, String> {
+    let editor = state.editor.lock().map_err(|e| e.to_string())?;
+    editor.trim_snap_cache(purge_idle.unwrap_or(false));
+    Ok(snapping::diagnostics(&editor))
+}
+#[tauri::command]
+fn set_snap_cache_budget(
+    state: tauri::State<State>,
+    mib: u32,
+) -> Result<snapping::SnapDiagnostics, String> {
+    let editor = state.editor.lock().map_err(|e| e.to_string())?;
+    editor.set_snap_cache_budget(mib)?;
+    Ok(snapping::diagnostics(&editor))
+}
+#[tauri::command]
 fn get_snap_diagnostics(state: tauri::State<State>) -> Result<snapping::SnapDiagnostics, String> {
     let editor = state.editor.lock().map_err(|e| e.to_string())?;
     Ok(snapping::diagnostics(&editor))
@@ -376,14 +398,18 @@ async fn open_document(
     else {
         return Ok(());
     };
+    let task_guard = state.load_tasks.begin(load_task::Kind::Open)?;
+    let task = task_guard.task.clone();
     let handle = app.clone();
     tauri::async_runtime::spawn_blocking(move || -> Result<(), String> {
+        task.check()?;
         let doc = persistence::read_document(file.path())?;
-        let prepared = snapping::PreparedDocument::new(doc)?;
+        let prepared = snapping::PreparedDocument::with_task(doc, &task)?;
         let state = handle.state::<State>();
         let mut recovery = state.recovery.lock().unwrap();
         let mut e = state.editor.lock().unwrap();
         e.ensure_unchanged(stamp)?;
+        task.commit()?;
         e.replace_prepared_document(prepared, Some(file.path().to_owned()), false);
         recovery.clear();
         Ok(())
@@ -393,8 +419,12 @@ async fn open_document(
     notify(&app, &state, true)
 }
 #[tauri::command]
-fn cancel_usd_import(state: tauri::State<State>) {
-    state.usd_cancel.store(true, Ordering::Relaxed);
+fn get_load_progress(state: tauri::State<State>) -> Option<load_task::Snapshot> {
+    state.load_tasks.snapshot()
+}
+#[tauri::command]
+fn cancel_load(state: tauri::State<State>, id: String) -> bool {
+    state.load_tasks.cancel(&id)
 }
 #[tauri::command]
 fn browse_simready() -> Result<(), String> {
@@ -426,7 +456,6 @@ async fn import_usd(
         }
     }
     let _guard = BusyGuard(&state.usd_busy);
-    state.usd_cancel.store(false, Ordering::Relaxed);
     state
         .editor
         .lock()
@@ -453,13 +482,17 @@ async fn import_usd(
         .app_cache_dir()
         .map_err(|e| e.to_string())?
         .join("openusd");
-    let cancel = state.usd_cancel.clone();
+    let task_guard = state.load_tasks.begin(load_task::Kind::Usd)?;
+    let task = task_guard.task.clone();
+    let worker_task = task.clone();
+    let cancel = task.cancel_arc();
     let (imported, prepared) =
         tauri::async_runtime::spawn_blocking(move || -> Result<_, String> {
+            worker_task.progress(load_task::Phase::Convert, 0, 0)?;
             let imported = usd::load(source, cache, cancel.clone())?;
-            let prepared = snapping::PreparedVertices::meshes(
+            let prepared = snapping::PreparedVertices::meshes_with_task(
                 imported.meshes.iter().map(|(_, _, mesh)| mesh),
-                Some(&cancel),
+                &worker_task,
             )?;
             Ok((imported, prepared))
         })
@@ -467,9 +500,8 @@ async fn import_usd(
         .map_err(|e| e.to_string())??;
     let report = {
         let mut editor = state.editor.lock().map_err(|e| e.to_string())?;
-        if state.usd_cancel.load(Ordering::Relaxed) {
-            return Err("USD_IMPORT_CANCELLED_OR_TIMED_OUT".into());
-        }
+        editor.ensure_not_dragging()?;
+        task.commit()?;
         let report = editor.import_usd(imported)?;
         editor.install_prepared_vertices(prepared);
         report
@@ -654,7 +686,7 @@ fn main() {
             usd_busy: AtomicBool::new(false),
             file_busy: AtomicBool::new(false),
             recovery: Mutex::new(persistence::RecoveryService::default()),
-            usd_cancel: std::sync::Arc::new(AtomicBool::new(false)),
+            load_tasks: load_task::Tasks::default(),
             viewport_visible: AtomicBool::new(true),
         })
         .setup(|app| {
@@ -675,13 +707,16 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             get_snapshot,
             get_snap_diagnostics,
+            trim_snap_cache,
+            set_snap_cache_budget,
             get_recovery_state,
             restore_recovery,
             execute,
             save_document,
             open_document,
             import_usd,
-            cancel_usd_import,
+            get_load_progress,
+            cancel_load,
             browse_simready,
             float_panel,
             dock_panel,
@@ -767,7 +802,7 @@ mod sync_tests {
             usd_busy: AtomicBool::new(false),
             file_busy: AtomicBool::new(false),
             recovery: Mutex::new(persistence::RecoveryService::default()),
-            usd_cancel: std::sync::Arc::new(AtomicBool::new(false)),
+            load_tasks: load_task::Tasks::default(),
         }
     }
     #[test]

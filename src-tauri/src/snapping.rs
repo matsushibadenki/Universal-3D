@@ -54,7 +54,7 @@ pub struct Candidate {
     pub screen: [f32; 2],
     depth: f32,
 }
-#[derive(Clone, Copy, Hash, Eq, PartialEq)]
+#[derive(Clone, Copy, Hash, Eq, PartialEq, Ord, PartialOrd)]
 enum GeometryKey {
     Primitive(u8),
     Mesh(usize),
@@ -151,6 +151,11 @@ impl Geometry {
             let _ = self.surfaces.set(Arc::new(index));
         }
         check_cancel(cancel)
+    }
+    fn buffer_bytes(&self) -> usize {
+        let mut memory = IndexMemory::default();
+        memory.add(self);
+        memory.buffer_bytes()
     }
     fn order_points(points: &mut Vec<[f32; 3]>, cancel: Option<&AtomicBool>) -> Result<(), String> {
         check_cancel(cancel)?;
@@ -329,6 +334,7 @@ pub struct SnapDiagnostics {
     pub memory: IndexMemory,
     pub buffer_bytes: usize,
     pub last_preparation: Option<PreparationMetrics>,
+    pub retention: RetentionDiagnostics,
 }
 pub fn diagnostics(editor: &Editor) -> SnapDiagnostics {
     let cache = editor.vertex_cache.borrow();
@@ -339,6 +345,7 @@ pub fn diagnostics(editor: &Editor) -> SnapDiagnostics {
         render_revision: editor.render_revision,
         indexed_revision: cache.revision,
         buffer_bytes: memory.buffer_bytes(),
+        retention: cache.retention_diagnostics(memory.buffer_bytes()),
         memory,
         last_preparation: (cache.epoch == editor.document_epoch)
             .then_some(cache.last_preparation)
@@ -353,6 +360,7 @@ impl PreparedVertices {
         }
         memory
     }
+    #[cfg(test)]
     pub fn meshes<'a>(
         assets: impl IntoIterator<Item = &'a Arc<crate::mesh::Mesh>>,
         cancel: Option<&AtomicBool>,
@@ -363,10 +371,19 @@ impl PreparedVertices {
             crate::snap_budget::IndexBudget::configured()?,
         )
     }
+    #[cfg(test)]
     fn meshes_with_budget<'a>(
         assets: impl IntoIterator<Item = &'a Arc<crate::mesh::Mesh>>,
         cancel: Option<&AtomicBool>,
         budget: crate::snap_budget::IndexBudget,
+    ) -> Result<Self, String> {
+        Self::meshes_context(assets, cancel, budget, None)
+    }
+    fn meshes_context<'a>(
+        assets: impl IntoIterator<Item = &'a Arc<crate::mesh::Mesh>>,
+        cancel: Option<&AtomicBool>,
+        budget: crate::snap_budget::IndexBudget,
+        task: Option<&crate::load_task::Task>,
     ) -> Result<Self, String> {
         let started = std::time::Instant::now();
         check_cancel(cancel)?;
@@ -378,14 +395,29 @@ impl PreparedVertices {
         let reservation = budget.meshes(collected.iter().copied())?;
         let mut prepared = Self::default();
         let mut retained_bytes = 0usize;
+        let total = reservation.shapes;
         for asset in collected {
             check_cancel(cancel)?;
             let key = GeometryKey::Mesh(Arc::as_ptr(asset) as usize);
             if prepared.geometries.contains_key(&key) {
                 continue;
             }
+            if let Some(task) = task {
+                task.progress(
+                    crate::load_task::Phase::Vertices,
+                    prepared.geometries.len(),
+                    total,
+                )?;
+            }
             asset.validate()?;
             let geometry = Geometry::from_faces(&asset.triangles, Some(asset.clone()), cancel)?;
+            if let Some(task) = task {
+                task.progress(
+                    crate::load_task::Phase::Surfaces,
+                    prepared.geometries.len(),
+                    total,
+                )?;
+            }
             geometry.prepare_surfaces(cancel)?;
             let mut memory = IndexMemory::default();
             memory.add(&geometry);
@@ -394,6 +426,9 @@ impl PreparedVertices {
                 .ok_or("SNAP_INDEX_BUDGET_EXCEEDED")?;
             budget.check_capacity(retained_bytes)?;
             prepared.geometries.insert(key, Arc::new(geometry));
+        }
+        if let Some(task) = task {
+            task.progress(crate::load_task::Phase::Surfaces, total, total)?;
         }
         check_cancel(cancel)?;
         let memory = prepared.memory();
@@ -405,10 +440,22 @@ impl PreparedVertices {
         };
         Ok(prepared)
     }
+    pub fn meshes_with_task<'a>(
+        assets: impl IntoIterator<Item = &'a Arc<crate::mesh::Mesh>>,
+        task: &crate::load_task::Task,
+    ) -> Result<Self, String> {
+        Self::meshes_context(
+            assets,
+            Some(task.cancel_flag()),
+            crate::snap_budget::IndexBudget::configured()?,
+            Some(task),
+        )
+    }
     #[cfg(test)]
     pub fn document(document: &Document) -> Result<Self, String> {
         Self::document_with_budget(document, crate::snap_budget::IndexBudget::configured()?)
     }
+    #[cfg(test)]
     fn document_with_budget(
         document: &Document,
         budget: crate::snap_budget::IndexBudget,
@@ -434,20 +481,67 @@ pub struct PreparedDocument {
     metrics: PreparationMetrics,
 }
 impl PreparedDocument {
+    #[cfg(test)]
     pub fn new(document: Document) -> Result<Self, String> {
         Self::with_budget(document, crate::snap_budget::IndexBudget::configured()?)
     }
+    #[cfg(test)]
     fn with_budget(
         document: Document,
         budget: crate::snap_budget::IndexBudget,
     ) -> Result<Self, String> {
+        Self::context(document, budget, None)
+    }
+    pub fn with_task(document: Document, task: &crate::load_task::Task) -> Result<Self, String> {
+        Self::context(
+            document,
+            crate::snap_budget::IndexBudget::configured()?,
+            Some(task),
+        )
+    }
+    fn context(
+        document: Document,
+        budget: crate::snap_budget::IndexBudget,
+        task: Option<&crate::load_task::Task>,
+    ) -> Result<Self, String> {
         let started = std::time::Instant::now();
+        let cancel = task.map(|t| t.cancel_flag());
+        if let Some(task) = task {
+            task.progress(crate::load_task::Phase::Validate, 0, 0)?;
+        }
         document.validate()?;
+        check_cancel(cancel)?;
         let reservation = budget.document(&document)?;
-        let mut prepared = PreparedVertices::document_with_budget(&document, budget)?;
+        let ids: BTreeSet<_> = document
+            .objects
+            .iter()
+            .filter_map(|o| o.mesh_id.as_ref())
+            .collect();
+        let mut prepared = PreparedVertices::meshes_context(
+            ids.into_iter().filter_map(|id| document.meshes.get(id)),
+            cancel,
+            budget,
+            task,
+        )?;
         let mut scene = SceneIndex::default();
         let mut leaves = Vec::new();
-        for object in &document.objects {
+        if let Some(task) = task {
+            task.progress(
+                crate::load_task::Phase::Instances,
+                0,
+                document.objects.len(),
+            )?;
+        }
+        for (position, object) in document.objects.iter().enumerate() {
+            if position.is_multiple_of(128) {
+                if let Some(task) = task {
+                    task.progress(
+                        crate::load_task::Phase::Instances,
+                        position,
+                        document.objects.len(),
+                    )?;
+                }
+            }
             if !object.visible {
                 continue;
             }
@@ -458,9 +552,12 @@ impl PreparedDocument {
                 std::collections::hash_map::Entry::Occupied(entry) => entry.get().clone(),
                 std::collections::hash_map::Entry::Vacant(entry) => {
                     // All referenced mesh assets are prepared above. Only built-in shapes remain.
-                    let geometry =
-                        Geometry::from_faces(crate::renderer::geometry(&object.kind), None, None)?;
-                    geometry.prepare_surfaces(None)?;
+                    let geometry = Geometry::from_faces(
+                        crate::renderer::geometry(&object.kind),
+                        None,
+                        cancel,
+                    )?;
+                    geometry.prepare_surfaces(cancel)?;
                     entry.insert(Arc::new(geometry)).clone()
                 }
             };
@@ -486,7 +583,14 @@ impl PreparedDocument {
                 leaves.push((key, bounds));
             }
         }
-        scene.tree = BoundsTree::from_leaves(leaves);
+        scene.tree = BoundsTree::from_leaves_cancellable(leaves, cancel)?;
+        if let Some(task) = task {
+            task.progress(
+                crate::load_task::Phase::Instances,
+                document.objects.len(),
+                document.objects.len(),
+            )?;
+        }
         let mut memory = prepared.memory();
         scene.add_memory(&mut memory);
         budget.check_capacity(memory.buffer_bytes())?;
@@ -522,21 +626,42 @@ impl Editor {
         work.prepared_vertices += prepared.metrics.memory.vertices;
         work.prepared_surface_indices += prepared.metrics.memory.ready_surface_shapes;
         work.prepared_instances += prepared.scene.instances.len();
+        let retention = std::mem::take(&mut cache.retention);
         *cache = VertexCache {
+            retention,
             revision: Some(self.render_revision),
             epoch: self.document_epoch,
             geometries: prepared.geometries,
             scene: prepared.scene,
             work,
             last_preparation: Some(prepared.metrics),
+            ..VertexCache::default()
         };
+        cache.trim(false);
     }
 }
 impl Editor {
+    pub fn trim_snap_cache(&self, purge_idle: bool) -> TrimResult {
+        self.vertex_cache.borrow_mut().trim(purge_idle)
+    }
+    pub fn set_snap_cache_budget(&self, mib: u32) -> Result<TrimResult, String> {
+        if !(1..=4096).contains(&mib) {
+            return Err("SNAP_CACHE_INVALID_BUDGET: 1..4096 MiB".into());
+        }
+        let bytes = (mib as usize)
+            .checked_mul(1024 * 1024)
+            .ok_or("SNAP_CACHE_INVALID_BUDGET")?;
+        let mut cache = self.vertex_cache.borrow_mut();
+        cache.retention.limit_bytes = bytes;
+        Ok(cache.trim(false))
+    }
     pub fn install_prepared_vertices(&self, prepared: PreparedVertices) {
         let mut cache = self.vertex_cache.borrow_mut();
         if cache.epoch != self.document_epoch {
             cache.geometries.clear();
+            cache.access_order.clear();
+            cache.retention.last_trim = None;
+            cache.retention.last_check = None;
             cache.scene = Arc::new(SceneIndex::default());
             cache.revision = None;
             cache.epoch = self.document_epoch;
@@ -555,6 +680,7 @@ impl Editor {
             if !live.contains(&key) {
                 continue;
             }
+            cache.touch(key);
             if let Some(existing) = cache.geometries.get(&key) {
                 // Same immutable asset and deterministic vertex ordering: share the ready
                 // surface index into existing snapshots without copying vertex arrays.
@@ -573,6 +699,7 @@ impl Editor {
                 cache.geometries.insert(key, geometry);
             }
         }
+        cache.trim(false);
     }
 }
 #[derive(Clone, Copy, PartialEq)]
@@ -631,6 +758,43 @@ pub struct CacheWork {
     pub prepared_surface_indices: usize,
     pub prepared_instances: usize,
 }
+const DEFAULT_CACHE_BYTES: usize = 128 * 1024 * 1024;
+#[derive(Default, Clone, Copy, Debug, serde::Serialize)]
+pub struct TrimResult {
+    pub before_buffer_bytes: usize,
+    pub after_buffer_bytes: usize,
+    pub evicted_shapes: usize,
+    pub evicted_buffer_bytes: usize,
+}
+#[derive(serde::Serialize)]
+pub struct RetentionDiagnostics {
+    pub limit_bytes: usize,
+    pub current_buffer_bytes: usize,
+    pub referenced_buffer_bytes: usize,
+    pub idle_buffer_bytes: usize,
+    pub over_budget_bytes: usize,
+    pub evictions_total: usize,
+    pub evicted_buffer_bytes_total: usize,
+    pub last_trim: Option<TrimResult>,
+}
+struct Retention {
+    limit_bytes: usize,
+    evictions_total: usize,
+    evicted_buffer_bytes_total: usize,
+    last_trim: Option<TrimResult>,
+    last_check: Option<std::time::Instant>,
+}
+impl Default for Retention {
+    fn default() -> Self {
+        Self {
+            limit_bytes: DEFAULT_CACHE_BYTES,
+            evictions_total: 0,
+            evicted_buffer_bytes_total: 0,
+            last_trim: None,
+            last_check: None,
+        }
+    }
+}
 #[derive(Default)]
 pub struct VertexCache {
     revision: Option<u64>,
@@ -639,8 +803,88 @@ pub struct VertexCache {
     scene: Arc<SceneIndex>,
     pub work: CacheWork,
     last_preparation: Option<PreparationMetrics>,
+    retention: Retention,
+    access_order: HashMap<GeometryKey, u64>,
+    access_clock: u64,
 }
 impl VertexCache {
+    fn touch(&mut self, key: GeometryKey) {
+        self.access_clock = self.access_clock.saturating_add(1);
+        self.access_order.insert(key, self.access_clock);
+    }
+    fn retention_diagnostics(&self, current: usize) -> RetentionDiagnostics {
+        let referenced = self.scene.tree.vec_bytes()
+            + self
+                .geometries
+                .values()
+                .filter(|g| Arc::strong_count(g) > 1)
+                .map(|g| g.buffer_bytes())
+                .sum::<usize>();
+        RetentionDiagnostics {
+            limit_bytes: self.retention.limit_bytes,
+            current_buffer_bytes: current,
+            referenced_buffer_bytes: referenced,
+            idle_buffer_bytes: current.saturating_sub(referenced),
+            over_budget_bytes: current.saturating_sub(self.retention.limit_bytes),
+            evictions_total: self.retention.evictions_total,
+            evicted_buffer_bytes_total: self.retention.evicted_buffer_bytes_total,
+            last_trim: self.retention.last_trim,
+        }
+    }
+    fn trim(&mut self, purge_idle: bool) -> TrimResult {
+        let before = self.memory().buffer_bytes();
+        let target = if purge_idle {
+            0
+        } else {
+            self.retention.limit_bytes
+        };
+        let mut result = TrimResult {
+            before_buffer_bytes: before,
+            after_buffer_bytes: before,
+            ..TrimResult::default()
+        };
+        if purge_idle || before > target {
+            let mut idle: Vec<_> = self
+                .geometries
+                .iter()
+                .filter(|(_, g)| Arc::strong_count(g) == 1)
+                .map(|(key, g)| {
+                    (
+                        self.access_order.get(key).copied().unwrap_or(0),
+                        *key,
+                        g.buffer_bytes(),
+                    )
+                })
+                .collect();
+            idle.sort_unstable_by_key(|(order, key, _)| (*order, *key));
+            for (_, key, bytes) in idle {
+                if !purge_idle && result.after_buffer_bytes <= target {
+                    break;
+                }
+                self.geometries.remove(&key);
+                self.access_order.remove(&key);
+                result.evicted_shapes += 1;
+                result.evicted_buffer_bytes += bytes;
+                result.after_buffer_bytes = result.after_buffer_bytes.saturating_sub(bytes);
+            }
+        }
+        self.access_order
+            .retain(|key, _| self.geometries.contains_key(key));
+        self.retention.evictions_total += result.evicted_shapes;
+        self.retention.evicted_buffer_bytes_total += result.evicted_buffer_bytes;
+        self.retention.last_trim = Some(result);
+        self.retention.last_check = Some(std::time::Instant::now());
+        result
+    }
+    fn retry_trim(&mut self) {
+        if self
+            .retention
+            .last_check
+            .is_none_or(|t| t.elapsed() >= std::time::Duration::from_millis(500))
+        {
+            self.trim(false);
+        }
+    }
     pub fn memory(&self) -> IndexMemory {
         let mut memory = IndexMemory::default();
         for geometry in self.geometries.values() {
@@ -650,19 +894,22 @@ impl VertexCache {
         memory
     }
     fn geometry(&mut self, editor: &Editor, object: &Object, key: GeometryKey) -> Arc<Geometry> {
-        self.geometries
-            .entry(key)
-            .or_insert_with(|| {
-                let geometry = Arc::new(Geometry::build(editor, object));
-                self.work.geometries_built += 1;
-                self.work.unique_vertices += geometry.points.len();
-                geometry
-            })
-            .clone()
+        self.touch(key);
+        if let Some(geometry) = self.geometries.get(&key) {
+            return geometry.clone();
+        }
+        let geometry = Arc::new(Geometry::build(editor, object));
+        self.work.geometries_built += 1;
+        self.work.unique_vertices += geometry.points.len();
+        self.geometries.insert(key, geometry.clone());
+        geometry
     }
     fn source(&mut self, editor: &Editor) -> Option<Instance> {
         if self.epoch != editor.document_epoch {
             self.geometries.clear();
+            self.access_order.clear();
+            self.retention.last_trim = None;
+            self.retention.last_check = None;
             self.last_preparation = None;
             self.scene = Arc::new(SceneIndex::default());
             self.revision = None;
@@ -673,6 +920,7 @@ impl VertexCache {
             return None;
         }
         let revision = InstanceRevision::new(editor, object)?;
+        self.touch(revision.geometry);
         // Source lookup is O(1) in object count and never synchronizes the target scene.
         if let Some(instance) = self
             .scene
@@ -685,12 +933,14 @@ impl VertexCache {
         let geometry = self.geometry(editor, object, revision.geometry);
         let matrix = model_matrix(object, false);
         let bounds = geometry.nodes.first()?.bounds.transformed(matrix);
-        Some(Instance {
+        let instance = Instance {
             revision,
             geometry,
             matrix,
             bounds,
-        })
+        };
+        self.retry_trim();
+        Some(instance)
     }
     fn scene_mut(&mut self) -> &mut SceneIndex {
         if Arc::strong_count(&self.scene) > 1 {
@@ -770,6 +1020,8 @@ impl VertexCache {
                 scene.instances.insert(key, instance);
                 self.work.instances_updated += 1;
             } else if self.scene.instances.contains_key(&key) {
+                let geometry_key = self.scene.instances[&key].revision.geometry;
+                self.touch(geometry_key);
                 let scene = self.scene_mut();
                 scene.tree.remove(key);
                 scene.instances.remove(&key);
@@ -779,6 +1031,13 @@ impl VertexCache {
     }
     fn snapshot(&mut self, editor: &Editor) -> Arc<SceneIndex> {
         if self.revision == Some(editor.render_revision) && self.epoch == editor.document_epoch {
+            if self
+                .retention
+                .last_trim
+                .is_some_and(|r| r.after_buffer_bytes > self.retention.limit_bytes)
+            {
+                self.retry_trim();
+            }
             return self.scene.clone();
         }
         let reset = self.epoch != editor.document_epoch
@@ -801,6 +1060,9 @@ impl VertexCache {
             self.work.full_syncs += 1;
             if self.epoch != editor.document_epoch {
                 self.geometries.clear();
+                self.access_order.clear();
+                self.retention.last_trim = None;
+                self.retention.last_check = None;
                 self.last_preparation = None;
             }
             self.rebuild_scene(editor);
@@ -830,6 +1092,7 @@ impl VertexCache {
             .retain(|key, _| matches!(key, GeometryKey::Primitive(_)) || live.contains(key));
         self.revision = Some(editor.render_revision);
         self.epoch = editor.document_epoch;
+        self.trim(false);
         self.scene.clone()
     }
 }
@@ -1865,6 +2128,149 @@ mod tests {
         assert_eq!(work.snapshot_copies, 0);
     }
     #[test]
+    fn cache_retention_evicts_oldest_idle_shape_to_the_exact_target() {
+        let e = Editor::new();
+        let mut cache = VertexCache::default();
+        let cube = e.document.objects[0].clone();
+        let mut sphere = cube.clone();
+        sphere.kind = "sphere".into();
+        let mut plane = cube.clone();
+        plane.kind = "plane".into();
+        let cube_key = GeometryKey::in_document(&e.document, &cube).unwrap();
+        let sphere_key = GeometryKey::in_document(&e.document, &sphere).unwrap();
+        let plane_key = GeometryKey::in_document(&e.document, &plane).unwrap();
+        drop(cache.geometry(&e, &cube, cube_key));
+        let sphere_bytes = cache.geometry(&e, &sphere, sphere_key).buffer_bytes();
+        drop(cache.geometry(&e, &plane, plane_key));
+        drop(cache.geometry(&e, &cube, cube_key)); // cube used more recently than sphere/plane
+        let before = cache.memory().buffer_bytes();
+        cache.retention.limit_bytes = before - sphere_bytes;
+        let result = cache.trim(false);
+        assert_eq!(result.evicted_shapes, 1);
+        assert_eq!(result.evicted_buffer_bytes, sphere_bytes);
+        assert_eq!(result.after_buffer_bytes, before - sphere_bytes);
+        assert!(!cache.geometries.contains_key(&sphere_key));
+        assert!(
+            cache.geometries.contains_key(&cube_key) && cache.geometries.contains_key(&plane_key)
+        );
+        assert_eq!(cache.trim(false).evicted_shapes, 0);
+        assert_eq!(cache.trim(true).evicted_shapes, 2);
+        assert_eq!(cache.memory().buffer_bytes(), 0);
+        assert!(cache.access_order.is_empty());
+    }
+    #[test]
+    fn retention_protects_old_gestures_and_rebuilds_evicted_assets_after_undo() {
+        use crate::gizmo::MoveSnap;
+        let mut e = mesh_scene(160, 1);
+        e.document.objects[1].position = [3., 0., 0.];
+        let prepared = PreparedDocument::new(e.document.clone()).unwrap();
+        e.replace_prepared_document(prepared, None, false);
+        e.set_snap_cache_budget(1).unwrap();
+        assert!(diagnostics(&e).retention.over_budget_bytes > 0);
+        let old = VertexIndex::new(&e, [1280., 860.], false);
+        let object = e.document.objects[1].clone();
+        let key = GeometryKey::in_document(&e.document, &object).unwrap();
+        let weak = Arc::downgrade(&e.vertex_cache.borrow().geometries[&key]);
+        let projection = Projection::new(&e, [1280., 860.]);
+        let point = projection.project([4., 0., 0.]).unwrap().0;
+        e.select(Some(object.id));
+        e.execute(crate::editor::Command::Delete).unwrap();
+        let current = VertexIndex::new(&e, [1280., 860.], false);
+        assert!(current.nearest_mode(point, MoveSnap::Edge).is_none());
+        drop(current);
+        let stamp = e.stamp();
+        let redo = e.redo.len();
+        let dirty = e.dirty;
+        assert_eq!(e.trim_snap_cache(true).evicted_shapes, 0);
+        for mode in [MoveSnap::Vertex, MoveSnap::Edge, MoveSnap::Face] {
+            assert!(old.nearest_mode(point, mode).is_some());
+        }
+        assert!(weak.upgrade().is_some());
+        drop(old);
+        let result = e.trim_snap_cache(true);
+        assert_eq!(result.evicted_shapes, 1);
+        assert!(result.evicted_buffer_bytes > 1024 * 1024);
+        assert!(weak.upgrade().is_none()); // index really lost its last owner
+        assert!(e.document.meshes.contains_key("shared"));
+        assert_eq!(e.stamp(), stamp);
+        assert_eq!(e.redo.len(), redo);
+        assert_eq!(e.dirty, dirty);
+        assert!(e.set_snap_cache_budget(0).is_err());
+        assert!(e.set_snap_cache_budget(4097).is_err());
+        assert_eq!(diagnostics(&e).retention.limit_bytes, 1024 * 1024);
+        let builds = e.vertex_cache.borrow().work.geometries_built;
+        e.undo();
+        e.select(Some(1));
+        let restored = VertexIndex::new(&e, [1280., 860.], false);
+        assert!(restored.nearest_mode(point, MoveSnap::Edge).is_some());
+        assert_eq!(e.vertex_cache.borrow().work.geometries_built, builds + 1);
+        drop(restored);
+        e.redo();
+        VertexIndex::new(&e, [1280., 860.], false);
+        assert!(!e.vertex_cache.borrow().geometries.contains_key(&key));
+        assert!(diagnostics(&e).retention.evictions_total >= 2);
+    }
+    #[test]
+    fn retention_budget_survives_document_replacement_and_trims_hidden_prewarm() {
+        let mut e = mesh_scene(160, 2);
+        e.document.objects[1].visible = false;
+        e.document.objects[2].visible = false;
+        e.set_snap_cache_budget(1).unwrap();
+        let prepared = PreparedDocument::new(e.document.clone()).unwrap();
+        assert_eq!(prepared.geometries.len(), 2);
+        e.replace_prepared_document(prepared, None, true);
+        let d = diagnostics(&e);
+        assert_eq!(d.retention.limit_bytes, 1024 * 1024);
+        assert_eq!(d.retention.evictions_total, 1);
+        assert_eq!(d.memory.shapes, 1);
+        assert!(d.last_preparation.unwrap().buffer_bytes > d.buffer_bytes);
+        assert!(e.dirty && e.path.is_none());
+        let before = e.vertex_cache.borrow().work;
+        for _ in 0..3 {
+            VertexIndex::new(&e, [800., 600.], false);
+        }
+        assert_eq!(
+            e.vertex_cache.borrow().work.objects_visited,
+            before.objects_visited
+        );
+        assert_eq!(e.vertex_cache.borrow().work.full_syncs, before.full_syncs);
+        let encoded = serde_json::to_value(diagnostics(&e)).unwrap();
+        assert_eq!(encoded["retention"]["over_budget_bytes"], 0);
+    }
+    #[test]
+    fn cancelled_completed_load_cannot_publish_or_replace_current_cache() {
+        let mut e = mesh_scene(4, 2);
+        let mut object = e.document.objects[1].clone();
+        object.position[0] += 0.1;
+        e.execute(crate::editor::Command::Update { object })
+            .unwrap();
+        e.undo();
+        VertexIndex::new(&e, [800., 600.], false);
+        let scene = e.vertex_cache.borrow().scene.clone();
+        let stamp = e.stamp();
+        let dirty = e.dirty;
+        let redo = e.redo.len();
+        let tasks = crate::load_task::Tasks::default();
+        let guard = tasks.begin(crate::load_task::Kind::Recovery).unwrap();
+        let prepared = PreparedDocument::with_task(e.document.clone(), &guard.task).unwrap();
+        let progress = tasks.snapshot().unwrap();
+        assert_eq!(progress.phase, crate::load_task::Phase::Instances);
+        assert_eq!(progress.completed, e.document.objects.len());
+        assert_eq!(progress.completed, progress.total);
+        assert!(tasks.cancel(&progress.id));
+        assert!(guard.task.commit().is_err());
+        drop(prepared);
+        drop(guard);
+        assert!(tasks.snapshot().is_none());
+        assert_eq!(e.stamp(), stamp);
+        assert_eq!(e.dirty, dirty);
+        assert_eq!(e.redo.len(), redo);
+        assert!(Arc::ptr_eq(&scene, &e.vertex_cache.borrow().scene));
+        let guard = tasks.begin(crate::load_task::Kind::Open).unwrap();
+        assert!(tasks.cancel(&tasks.snapshot().unwrap().id));
+        assert!(PreparedDocument::with_task(e.document.clone(), &guard.task).is_err());
+    }
+    #[test]
     fn budget_rejection_precedes_geometry_build_and_preserves_editor_state() {
         use crate::snap_budget::IndexBudget;
         let mut e = mesh_scene(40, 2);
@@ -2249,6 +2655,69 @@ mod tests {
         .is_err());
         e.document_epoch += 1;
         assert!(diagnostics(&e).last_preparation.is_none());
+    }
+
+    #[test]
+    #[ignore = "Large synthetic cache retention measurement; run explicitly with --ignored --nocapture"]
+    fn cache_retention_memory_measurement() {
+        use crate::gizmo::MoveSnap;
+        let mut e = mesh_scene(480, 1);
+        e.document.objects[1].position = [3., 0., 0.];
+        let mut asset = (*e.document.meshes["shared"]).clone();
+        asset.edge_mask = Some("36".repeat(480 * 480));
+        e.document.meshes.insert("shared".into(), Arc::new(asset));
+        let prepared = PreparedDocument::new(e.document.clone()).unwrap();
+        e.replace_prepared_document(prepared, None, false);
+        e.set_snap_cache_budget(1).unwrap();
+        let rss = || -> Option<u64> {
+            let output = std::process::Command::new("/bin/ps")
+                .args(["-o", "rss=", "-p", &std::process::id().to_string()])
+                .output()
+                .ok()?;
+            String::from_utf8(output.stdout).ok()?.trim().parse().ok()
+        };
+        let old = VertexIndex::new(&e, [1280., 860.], false);
+        let point = Projection::new(&e, [1280., 860.])
+            .project([4., 0., 0.])
+            .unwrap()
+            .0;
+        let before = diagnostics(&e);
+        let rss_before = rss();
+        let source = e.document.meshes["shared"].clone();
+        let mut object = e.document.objects[1].clone();
+        object.visible = false;
+        e.execute(crate::editor::Command::Update { object })
+            .unwrap();
+        VertexIndex::new(&e, [1280., 860.], false);
+        let blocked = e.trim_snap_cache(true);
+        assert_eq!(blocked.evicted_shapes, 0);
+        assert!(old.nearest_mode(point, MoveSnap::Edge).is_some());
+        let deferred = diagnostics(&e);
+        drop(old);
+        let started = std::time::Instant::now();
+        let trimmed = e.trim_snap_cache(false);
+        let trim_us = started.elapsed().as_micros();
+        let after = diagnostics(&e);
+        let rss_after = rss();
+        assert!(trimmed.evicted_buffer_bytes > 30 * 1024 * 1024);
+        assert!(after.buffer_bytes < 1024 * 1024);
+        e.undo();
+        let started = std::time::Instant::now();
+        assert!(VertexIndex::new(&e, [1280., 860.], false)
+            .nearest_mode(point, MoveSnap::Edge)
+            .is_some());
+        let rebuild_us = started.elapsed().as_micros();
+        assert!(Arc::ptr_eq(&source, &e.document.meshes["shared"]));
+        println!(
+            "SNAP_CACHE_METRICS {}",
+            serde_json::json!({
+                "profile":"debug","triangles":460800,"vertices":231361,"edges":461760,
+                "before":before,"deferred":deferred,"trimmed":trimmed,"after":after,
+                "trim_us":trim_us,"undo_first_edge_us":rebuild_us,
+                "rss_kib":{"before":rss_before,"after":rss_after},
+                "source_asset_preserved":true
+            })
+        );
     }
 
     #[test]

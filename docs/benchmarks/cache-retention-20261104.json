@@ -1,0 +1,232 @@
+{
+  "after": {
+    "buffer_bytes": 2040,
+    "cache_epoch": 1,
+    "document_epoch": 1,
+    "indexed_revision": 3,
+    "last_preparation": {
+      "budget": {
+        "estimated_working_bytes": 471881728,
+        "instances": 2,
+        "limit_bytes": 536870912,
+        "shapes": 2,
+        "triangles": 460812
+      },
+      "buffer_bytes": 37346788,
+      "elapsed_us": 34112888,
+      "memory": {
+        "edge_nodes": 131074,
+        "edge_tree_vec_bytes": 12083040,
+        "edge_vec_bytes": 7388416,
+        "edges": 461772,
+        "face_nodes": 131074,
+        "face_tree_vec_bytes": 12075360,
+        "instances": 2,
+        "primitive_face_bytes": 432,
+        "ready_surface_shapes": 2,
+        "scene_entry_payload_bytes": 400,
+        "scene_tree_vec_bytes": 264,
+        "shapes": 2,
+        "triangles": 460812,
+        "vertex_nodes": 28922,
+        "vertex_tree_vec_bytes": 2097408,
+        "vertex_vec_bytes": 3701868,
+        "vertices": 231369
+      }
+    },
+    "memory": {
+      "edge_nodes": 3,
+      "edge_tree_vec_bytes": 352,
+      "edge_vec_bytes": 256,
+      "edges": 12,
+      "face_nodes": 3,
+      "face_tree_vec_bytes": 352,
+      "instances": 1,
+      "primitive_face_bytes": 432,
+      "ready_surface_shapes": 1,
+      "scene_entry_payload_bytes": 200,
+      "scene_tree_vec_bytes": 296,
+      "shapes": 1,
+      "triangles": 12,
+      "vertex_nodes": 1,
+      "vertex_tree_vec_bytes": 256,
+      "vertex_vec_bytes": 96,
+      "vertices": 8
+    },
+    "render_revision": 3,
+    "retention": {
+      "current_buffer_bytes": 2040,
+      "evicted_buffer_bytes_total": 37344780,
+      "evictions_total": 1,
+      "idle_buffer_bytes": 0,
+      "last_trim": {
+        "after_buffer_bytes": 2040,
+        "before_buffer_bytes": 37346820,
+        "evicted_buffer_bytes": 37344780,
+        "evicted_shapes": 1
+      },
+      "limit_bytes": 1048576,
+      "over_budget_bytes": 0,
+      "referenced_buffer_bytes": 2040
+    }
+  },
+  "before": {
+    "buffer_bytes": 37346788,
+    "cache_epoch": 1,
+    "document_epoch": 1,
+    "indexed_revision": 2,
+    "last_preparation": {
+      "budget": {
+        "estimated_working_bytes": 471881728,
+        "instances": 2,
+        "limit_bytes": 536870912,
+        "shapes": 2,
+        "triangles": 460812
+      },
+      "buffer_bytes": 37346788,
+      "elapsed_us": 34112888,
+      "memory": {
+        "edge_nodes": 131074,
+        "edge_tree_vec_bytes": 12083040,
+        "edge_vec_bytes": 7388416,
+        "edges": 461772,
+        "face_nodes": 131074,
+        "face_tree_vec_bytes": 12075360,
+        "instances": 2,
+        "primitive_face_bytes": 432,
+        "ready_surface_shapes": 2,
+        "scene_entry_payload_bytes": 400,
+        "scene_tree_vec_bytes": 264,
+        "shapes": 2,
+        "triangles": 460812,
+        "vertex_nodes": 28922,
+        "vertex_tree_vec_bytes": 2097408,
+        "vertex_vec_bytes": 3701868,
+        "vertices": 231369
+      }
+    },
+    "memory": {
+      "edge_nodes": 131074,
+      "edge_tree_vec_bytes": 12083040,
+      "edge_vec_bytes": 7388416,
+      "edges": 461772,
+      "face_nodes": 131074,
+      "face_tree_vec_bytes": 12075360,
+      "instances": 2,
+      "primitive_face_bytes": 432,
+      "ready_surface_shapes": 2,
+      "scene_entry_payload_bytes": 400,
+      "scene_tree_vec_bytes": 264,
+      "shapes": 2,
+      "triangles": 460812,
+      "vertex_nodes": 28922,
+      "vertex_tree_vec_bytes": 2097408,
+      "vertex_vec_bytes": 3701868,
+      "vertices": 231369
+    },
+    "render_revision": 2,
+    "retention": {
+      "current_buffer_bytes": 37346788,
+      "evicted_buffer_bytes_total": 0,
+      "evictions_total": 0,
+      "idle_buffer_bytes": 0,
+      "last_trim": {
+        "after_buffer_bytes": 37346788,
+        "before_buffer_bytes": 37346788,
+        "evicted_buffer_bytes": 0,
+        "evicted_shapes": 0
+      },
+      "limit_bytes": 1048576,
+      "over_budget_bytes": 36298212,
+      "referenced_buffer_bytes": 37346788
+    }
+  },
+  "deferred": {
+    "buffer_bytes": 37346820,
+    "cache_epoch": 1,
+    "document_epoch": 1,
+    "indexed_revision": 3,
+    "last_preparation": {
+      "budget": {
+        "estimated_working_bytes": 471881728,
+        "instances": 2,
+        "limit_bytes": 536870912,
+        "shapes": 2,
+        "triangles": 460812
+      },
+      "buffer_bytes": 37346788,
+      "elapsed_us": 34112888,
+      "memory": {
+        "edge_nodes": 131074,
+        "edge_tree_vec_bytes": 12083040,
+        "edge_vec_bytes": 7388416,
+        "edges": 461772,
+        "face_nodes": 131074,
+        "face_tree_vec_bytes": 12075360,
+        "instances": 2,
+        "primitive_face_bytes": 432,
+        "ready_surface_shapes": 2,
+        "scene_entry_payload_bytes": 400,
+        "scene_tree_vec_bytes": 264,
+        "shapes": 2,
+        "triangles": 460812,
+        "vertex_nodes": 28922,
+        "vertex_tree_vec_bytes": 2097408,
+        "vertex_vec_bytes": 3701868,
+        "vertices": 231369
+      }
+    },
+    "memory": {
+      "edge_nodes": 131074,
+      "edge_tree_vec_bytes": 12083040,
+      "edge_vec_bytes": 7388416,
+      "edges": 461772,
+      "face_nodes": 131074,
+      "face_tree_vec_bytes": 12075360,
+      "instances": 1,
+      "primitive_face_bytes": 432,
+      "ready_surface_shapes": 2,
+      "scene_entry_payload_bytes": 200,
+      "scene_tree_vec_bytes": 296,
+      "shapes": 2,
+      "triangles": 460812,
+      "vertex_nodes": 28922,
+      "vertex_tree_vec_bytes": 2097408,
+      "vertex_vec_bytes": 3701868,
+      "vertices": 231369
+    },
+    "render_revision": 3,
+    "retention": {
+      "current_buffer_bytes": 37346820,
+      "evicted_buffer_bytes_total": 0,
+      "evictions_total": 0,
+      "idle_buffer_bytes": 0,
+      "last_trim": {
+        "after_buffer_bytes": 37346820,
+        "before_buffer_bytes": 37346820,
+        "evicted_buffer_bytes": 0,
+        "evicted_shapes": 0
+      },
+      "limit_bytes": 1048576,
+      "over_budget_bytes": 36298244,
+      "referenced_buffer_bytes": 37346820
+    }
+  },
+  "edges": 461760,
+  "profile": "debug",
+  "rss_kib": {
+    "after": 114368,
+    "before": 114224
+  },
+  "source_asset_preserved": true,
+  "triangles": 460800,
+  "trim_us": 16,
+  "trimmed": {
+    "after_buffer_bytes": 2040,
+    "before_buffer_bytes": 37346820,
+    "evicted_buffer_bytes": 37344780,
+    "evicted_shapes": 1
+  },
+  "undo_first_edge_us": 15375449,
+  "vertices": 231361
+}

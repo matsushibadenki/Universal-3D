@@ -85,18 +85,34 @@ impl<K> Default for BoundsTree<K> {
 }
 impl<K: Copy + Eq + Hash> BoundsTree<K> {
     /// Balanced initial tree; subsequent edits continue to use local insert/remove repairs.
-    pub fn from_leaves(mut leaves: Vec<(K, Bounds)>) -> Self {
+    pub fn from_leaves(leaves: Vec<(K, Bounds)>) -> Self {
+        Self::from_leaves_cancellable(leaves, None).expect("Uncancelled bounds construction")
+    }
+    pub fn from_leaves_cancellable(
+        mut leaves: Vec<(K, Bounds)>,
+        cancel: Option<&std::sync::atomic::AtomicBool>,
+    ) -> Result<Self, String> {
+        crate::snapping::check_cancel(cancel)?;
         let mut tree = Self {
             nodes: Vec::with_capacity(leaves.len().saturating_mul(2).saturating_sub(1)),
             leaves: HashMap::with_capacity(leaves.len()),
             ..Self::default()
         };
         if !leaves.is_empty() {
-            tree.root = Some(tree.build_leaves(&mut leaves, None));
+            tree.root = Some(tree.build_leaves(&mut leaves, None, cancel)?);
         }
-        tree
+        crate::snapping::check_cancel(cancel)?;
+        Ok(tree)
     }
-    fn build_leaves(&mut self, leaves: &mut [(K, Bounds)], parent: Option<usize>) -> usize {
+    fn build_leaves(
+        &mut self,
+        leaves: &mut [(K, Bounds)],
+        parent: Option<usize>,
+        cancel: Option<&std::sync::atomic::AtomicBool>,
+    ) -> Result<usize, String> {
+        if self.nodes.len().is_multiple_of(1024) {
+            crate::snapping::check_cancel(cancel)?;
+        }
         let bounds = leaves
             .iter()
             .map(|(_, b)| *b)
@@ -129,12 +145,12 @@ impl<K: Copy + Eq + Hash> BoundsTree<K> {
                 center(a).total_cmp(&center(b))
             });
             let (left, right) = leaves.split_at_mut(middle);
-            let a = self.build_leaves(left, Some(index));
-            let b = self.build_leaves(right, Some(index));
+            let a = self.build_leaves(left, Some(index), cancel)?;
+            let b = self.build_leaves(right, Some(index), cancel)?;
             self.nodes[index].children = Some([a, b]);
             self.refresh(index);
         }
-        index
+        Ok(index)
     }
     fn allocate(&mut self, node: Node<K>) -> usize {
         if let Some(i) = self.free.pop() {
