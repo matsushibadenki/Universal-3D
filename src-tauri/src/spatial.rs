@@ -289,6 +289,53 @@ impl<K: Copy + Eq + Hash> BoundsTree<K> {
         self.nodes[leaf].parent = Some(parent);
         self.repair(Some(parent));
     }
+    /// Pack live nodes into existing storage, repairing every moved index in place.
+    /// No second tree or node remap array is allocated.
+    pub fn compact(&mut self) {
+        self.free.sort_unstable();
+        while let Some(hole) = self.free.pop() {
+            self.nodes.swap_remove(hole);
+            if hole == self.nodes.len() {
+                continue;
+            }
+            let node = &self.nodes[hole];
+            let (parent, children, key) = (node.parent, node.children, node.key);
+            let old = self.nodes.len();
+            if let Some(parent) = parent {
+                let siblings = self.nodes[parent].children.as_mut().unwrap();
+                for child in siblings {
+                    if *child == old {
+                        *child = hole;
+                    }
+                }
+            } else {
+                self.root = Some(hole);
+            }
+            if let Some(children) = children {
+                for child in children {
+                    self.nodes[child].parent = Some(hole);
+                }
+            }
+            if let Some(key) = key {
+                self.leaves.insert(key, hole);
+            }
+        }
+        self.nodes.shrink_to_fit();
+        self.free.shrink_to_fit();
+        self.leaves.shrink_to_fit();
+    }
+    pub fn has_excess_capacity(&self) -> bool {
+        let needed = self
+            .leaves
+            .len()
+            .saturating_mul(2)
+            .saturating_sub(1)
+            .saturating_mul(std::mem::size_of::<Node<K>>());
+        self.vec_bytes() > needed.saturating_mul(2).saturating_add(64 * 1024)
+    }
+    pub fn capacity_payload_bytes(&self) -> usize {
+        self.leaves.capacity() * std::mem::size_of::<(K, usize)>()
+    }
     pub fn vec_bytes(&self) -> usize {
         self.nodes.capacity() * std::mem::size_of::<Node<K>>()
             + self.free.capacity() * std::mem::size_of::<usize>()
@@ -350,6 +397,48 @@ mod tests {
         assert_eq!(n.height, 1 + ha.max(hb));
         assert_eq!(n.bounds, ba.union(bb));
         (n.bounds, n.height, na + nb)
+    }
+    #[test]
+    fn compaction_preserves_queries_parents_and_future_edits() {
+        let mut tree = BoundsTree::from_leaves(
+            (0..2048u64)
+                .map(|id| (id, Bounds::point([id as f32, 0., 0.])))
+                .collect(),
+        );
+        let before = tree.vec_bytes();
+        for id in 0..2048 {
+            if id % 97 != 0 {
+                tree.remove(id);
+            }
+        }
+        tree.compact();
+        assert!(tree.vec_bytes() < before / 8);
+        assert!(tree.free.is_empty());
+        assert_eq!(check(&tree, tree.root.unwrap(), None).2, tree.leaves.len());
+        let planes = box_planes([100., -1., -1.], [1500., 1., 1.]);
+        let mut found = Vec::new();
+        tree.query(&planes, |id| found.push(id));
+        found.sort();
+        assert_eq!(
+            found,
+            (100..=1500).filter(|id| id % 97 == 0).collect::<Vec<_>>()
+        );
+        for id in 0..100 {
+            tree.insert(id, Bounds::point([id as f32, 1., 0.]));
+        }
+        for id in 0..2048 {
+            tree.remove(id);
+            if id % 13 == 0 {
+                tree.compact();
+            }
+        }
+        tree.compact();
+        assert!(tree.root.is_none());
+        assert_eq!(tree.vec_bytes(), 0);
+        assert_eq!(tree.capacity_payload_bytes(), 0);
+        tree.insert(9, Bounds::point([0.; 3]));
+        tree.compact();
+        assert_eq!(check(&tree, tree.root.unwrap(), None).2, 1);
     }
     #[test]
     fn bulk_tree_matches_linear_search_and_remains_editable() {

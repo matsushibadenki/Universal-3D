@@ -43,6 +43,32 @@ class ImportTests(unittest.TestCase):
             root.write_text('#usda 1.0\ndef Xform "Root" (prepend references = @missing.usdc@) {}')
             with self.assertRaises(ValueError):adapter.convert(root,{'origin':'test','revision':'','license':'test'})
 
+class ProgressTests(unittest.TestCase):
+    def test_download_chunks_report_bytes_and_enforce_limit(self):
+        import io
+        from unittest.mock import patch
+        payload = b'x' * 150000
+        class Response(io.BytesIO):
+            headers = {'Content-Length': str(len(payload))}
+        events = []
+        with patch.object(adapter.urllib.request, 'urlopen', return_value=Response(payload)), patch.object(adapter, 'progress', side_effect=lambda *a, **k: events.append(a)):
+            self.assertEqual(adapter.read_url('https://example.invalid/test', len(payload)), payload)
+        self.assertTrue(any(event[1] == 65536 for event in events))
+        self.assertEqual(events[-1], ('read', len(payload), len(payload)))
+        with patch.object(adapter.urllib.request, 'urlopen', return_value=Response(payload)):
+            with self.assertRaises(ValueError): adapter.read_url('https://example.invalid/test', 100)
+
+    def test_status_is_small_atomic_numeric_metadata(self):
+        import json
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / 'progress.json'
+            with patch.object(adapter, '_progress_path', path):
+                adapter.progress('extract', 4096, 10000, force=True)
+                status = json.loads(path.read_text())
+            self.assertEqual(status, {'phase':'extract', 'completed':4096, 'total':10000})
+            self.assertFalse(path.with_suffix('.tmp').exists())
+
 class PackageTests(unittest.TestCase):
     def test_manifest_pins_revision_checks_hashes_and_keeps_dependencies(self):
         from unittest.mock import patch

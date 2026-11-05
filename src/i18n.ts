@@ -1,6 +1,12 @@
 const en = {
   loadShapes: "Shapes",
   loadRead: "Reading",
+  loadParse: "Parsing",
+  loadExtract: "Extracting",
+  loadPoints: "points",
+  loadTriangulate: "Triangulating",
+  loadBytes: "bytes",
+  loadFaces: "faces",
   loadConvert: "Converting",
   loadValidate: "Checking",
   loadVertices: "Vertices",
@@ -23,11 +29,14 @@ const en = {
   recoveryFile: "Recovery copy",
   recoveryRestore: "Restore copy",
   recoveryLater: "Close",
-  recoveryCopy: "Restores as an unsaved copy. The original file stays unchanged.",
+  recoveryCopy:
+    "Restores as an unsaved copy. The original file stays unchanged.",
   recoverySaved: "Recovery copy saved",
   recoveryWaiting: "Automatic recovery · every 30 seconds",
+  recoveryScanning: "Scanning recovery copies",
   recoveryFailed: "Recovery save unavailable",
-  recoveryHelp: "Committed edits are backed up every 30 seconds while changed. Drag previews are excluded. Copies include USD meshes. After an abnormal exit, restore a copy here; closing this dialog keeps it for later. Saving or explicitly discarding the current document clears its recovery copy.",
+  recoveryHelp:
+    "Committed edits are backed up every 30 seconds while changed. Drag previews are excluded. Copies include USD meshes. After an abnormal exit, restore a copy here; closing this dialog keeps it for later. Saving or explicitly discarding the current document clears its recovery copy.",
 
   meshLabel: "USD mesh",
   usdImport: "Import OpenUSD…",
@@ -40,11 +49,14 @@ const en = {
   usdComplete: "Imported",
   usdTriangles: "triangles",
   usdDetails: "Source / diagnostics",
-  usdRuntime: "OpenUSD runtime required. Run scripts/setup-usd.sh with Python 3.11–3.14, or set UNIVERSAL3D_USD_PYTHON to a Python executable with usd-core 26.11.",
+  usdRuntime:
+    "OpenUSD runtime required. Run scripts/setup-usd.sh with Python 3.11–3.14, or set UNIVERSAL3D_USD_PYTHON to a Python executable with usd-core 26.11.",
   usdCancelled: "Import cancelled or timed out.",
   usdFailed: "OpenUSD import failed.",
-  usdHelp: "Paste a Hugging Face dataset resolve/blob URL ending in com.nvidia.simready.packaging.json. Public packages only, up to 512 MiB. USD layers, dependencies and licenses are retained. Local USD/USDA/USDC/USDZ is also supported.",
-  usdLimitations: "Static polygon snapshot · flat shading. Textures / MDL, physics, animation and subdivision evaluation are not rendered. Undo removes the import in one step.",
+  usdHelp:
+    "Paste a Hugging Face dataset resolve/blob URL ending in com.nvidia.simready.packaging.json. Public packages only, up to 512 MiB. USD layers, dependencies and licenses are retained. Local USD/USDA/USDC/USDZ is also supported.",
+  usdLimitations:
+    "Static polygon snapshot · flat shading. Textures / MDL, physics, animation and subdivision evaluation are not rendered. Undo removes the import in one step.",
   usdUnsupported: "Some geometry types were skipped; see diagnostics. ",
 
   selectTool: "Select tool",
@@ -56,7 +68,8 @@ const en = {
   snapInfo: "Snap and coordinate settings",
   snapHelp:
     "World / Local is remembered per tool. Move: Relative snaps displacement; Grid snaps absolute world coordinates through the origin. Grid requires World; switching to Local returns to Relative. Axis handles affect one coordinate, colored plane handles affect two. The center snaps all three world coordinates in Grid mode, including depth. Rotation / scale use relative steps. Hold J to temporarily invert snapping. Vertex mode or hold V: grab a vertex of the selected object, then drag within 14 px of another visible object’s vertex. Handles use the pivot and retain axis / plane constraints; the center aligns in 3D. Cyan marks the source, yellow the target. Without a nearby target, move freely. V takes priority over step / grid snapping. Press V before dragging to choose a source vertex. Esc cancels the drag.",
-  surfaceSnapHelp: "Edge: snap within 14 px to polygon edges. New USD imports preserve original boundaries and omit triangulation diagonals; legacy meshes reconstruct boundaries and creases. Surface: snap to the frontmost surface under the pointer. Axis / plane constraints take priority, so constrained moves may not touch the target. J temporarily inverts snapping; V overrides with vertex snapping. Esc cancels the entire drag. The selected object is excluded; source vertices can be grabbed before dragging. No rotation alignment.",
+  surfaceSnapHelp:
+    "Edge: snap within 14 px to polygon edges. New USD imports preserve original boundaries and omit triangulation diagonals; legacy meshes reconstruct boundaries and creases. Surface: snap to the frontmost surface under the pointer. Axis / plane constraints take priority, so constrained moves may not touch the target. J temporarily inverts snapping; V overrides with vertex snapping. Esc cancels the entire drag. The selected object is excluded; source vertices can be grabbed before dragging. No rotation alignment.",
   shear: "Shear",
 
   moveTool: "Move tool",
@@ -153,6 +166,12 @@ export type Language = "en" | "ja" | "zh";
 const ja: Record<Key, string> = {
   loadShapes: "形状",
   loadRead: "読込中",
+  loadParse: "解析中",
+  loadExtract: "形状読込中",
+  loadPoints: "頂点",
+  loadTriangulate: "三角形化中",
+  loadBytes: "バイト",
+  loadFaces: "面",
   loadConvert: "変換中",
   loadValidate: "検証中",
   loadVertices: "頂点の準備",
@@ -175,11 +194,14 @@ const ja: Record<Key, string> = {
   recoveryFile: "復旧用コピー",
   recoveryRestore: "コピーを復元",
   recoveryLater: "閉じる",
-  recoveryCopy: "未保存のコピーとして復元します。元のファイルは変更されません。",
+  recoveryCopy:
+    "未保存のコピーとして復元します。元のファイルは変更されません。",
   recoverySaved: "復旧用コピーを保存済み",
   recoveryWaiting: "自動復旧 · 30秒間隔",
+  recoveryScanning: "復旧コピーを検索中",
   recoveryFailed: "復旧用コピーを保存できません",
-  recoveryHelp: "変更があるとき、確定した編集を30秒間隔で保存します。ドラッグ途中の値は含めません。USDメッシュも保存対象です。異常終了後はここから復元できます。この画面を閉じてもコピーは残ります。手動保存、または文書を明示的に破棄すると、その文書の復旧用コピーを削除します。",
+  recoveryHelp:
+    "変更があるとき、確定した編集を30秒間隔で保存します。ドラッグ途中の値は含めません。USDメッシュも保存対象です。異常終了後はここから復元できます。この画面を閉じてもコピーは残ります。手動保存、または文書を明示的に破棄すると、その文書の復旧用コピーを削除します。",
 
   meshLabel: "USDメッシュ",
   usdImport: "OpenUSDを読み込む…",
@@ -192,11 +214,14 @@ const ja: Record<Key, string> = {
   usdComplete: "読み込み完了",
   usdTriangles: "三角形",
   usdDetails: "出典・診断",
-  usdRuntime: "OpenUSDランタイムが必要です。Python 3.11〜3.14でscripts/setup-usd.shを実行するか、usd-core 26.11を導入したPythonをUNIVERSAL3D_USD_PYTHONに指定してください。",
+  usdRuntime:
+    "OpenUSDランタイムが必要です。Python 3.11〜3.14でscripts/setup-usd.shを実行するか、usd-core 26.11を導入したPythonをUNIVERSAL3D_USD_PYTHONに指定してください。",
   usdCancelled: "読み込みを取り消したか、制限時間を超えました。",
   usdFailed: "OpenUSDを読み込めませんでした。",
-  usdHelp: "末尾がcom.nvidia.simready.packaging.jsonのHugging Faceデータセットresolve/blob URLを貼り付けます。公開パッケージ・512 MiBまで対応。USD参照・依存ファイル・ライセンスを保持します。ローカルのUSD/USDA/USDC/USDZも読み込めます。",
-  usdLimitations: "静止ポリゴン・フラット陰影で表示します。テクスチャ／MDL・物理・アニメーション・サブディビジョン評価は未対応。1回のUndoで取り込みを戻せます。",
+  usdHelp:
+    "末尾がcom.nvidia.simready.packaging.jsonのHugging Faceデータセットresolve/blob URLを貼り付けます。公開パッケージ・512 MiBまで対応。USD参照・依存ファイル・ライセンスを保持します。ローカルのUSD/USDA/USDC/USDZも読み込めます。",
+  usdLimitations:
+    "静止ポリゴン・フラット陰影で表示します。テクスチャ／MDL・物理・アニメーション・サブディビジョン評価は未対応。1回のUndoで取り込みを戻せます。",
   usdUnsupported: "一部の形状形式を省略しました。診断を確認してください。",
 
   selectTool: "選択ツール",
@@ -208,7 +233,8 @@ const ja: Record<Key, string> = {
   snapInfo: "座標系とスナップの設定",
   snapHelp:
     "ワールド／ローカルはツールごとに保持します。移動の「相対」は開始位置からの移動量、「グリッド」はワールド原点基準の絶対座標を揃えます。グリッドはワールド専用で、ローカルへ切り替えると相対に戻ります。軸ハンドルは1座標、色付きの平面ハンドルは2座標を変更します。グリッド時の中央ハンドルは奥行きを含む3座標を揃えます。回転・スケールは相対ステップです。J長押しでスナップを一時反転、Escでドラッグ全体を取り消します。頂点モード、またはVを押しながら選択物の頂点をドラッグすると、別の表示オブジェクトの頂点へ14px以内で吸着します。軸・平面ハンドルはピボットを基準に拘束を維持し、中央は3次元で一致します。水色は移動元、黄色は吸着先です。候補がなければ通常移動。Vは刻み・グリッドより優先し、移動元の頂点を選ぶにはドラッグ前に押します。",
-  surfaceSnapHelp: "エッジは14px以内のポリゴン辺へ吸着します。USDの元の境界を保持し、三角分割線を除外します。旧メッシュは境界・折れ目を再構成します。面はカーソル直下の最も手前の表面へ吸着します。軸・平面の拘束が優先され、拘束時は吸着先に接触しない場合があります。Jで一時反転、Vで頂点スナップへ一時切替、Escでドラッグ全体を取消します。選択物自身は対象外です。移動元の頂点を直接つかむ操作も可能です。回転は合わせません。",
+  surfaceSnapHelp:
+    "エッジは14px以内のポリゴン辺へ吸着します。USDの元の境界を保持し、三角分割線を除外します。旧メッシュは境界・折れ目を再構成します。面はカーソル直下の最も手前の表面へ吸着します。軸・平面の拘束が優先され、拘束時は吸着先に接触しない場合があります。Jで一時反転、Vで頂点スナップへ一時切替、Escでドラッグ全体を取消します。選択物自身は対象外です。移動元の頂点を直接つかむ操作も可能です。回転は合わせません。",
   shear: "シアー",
 
   moveTool: "移動ツール",
@@ -303,6 +329,12 @@ const ja: Record<Key, string> = {
 const zh: Record<Key, string> = {
   loadShapes: "形状",
   loadRead: "正在读取",
+  loadParse: "正在解析",
+  loadExtract: "正在提取几何",
+  loadPoints: "顶点",
+  loadTriangulate: "正在三角化",
+  loadBytes: "字节",
+  loadFaces: "面",
   loadConvert: "正在转换",
   loadValidate: "正在检查",
   loadVertices: "准备顶点",
@@ -328,8 +360,10 @@ const zh: Record<Key, string> = {
   recoveryCopy: "恢复为未保存的副本，不会更改原始文件。",
   recoverySaved: "恢复副本已保存",
   recoveryWaiting: "自动恢复 · 每30秒",
+  recoveryScanning: "正在扫描恢复副本",
   recoveryFailed: "无法保存恢复副本",
-  recoveryHelp: "有更改时，每30秒保存已确认的编辑，不包含拖动预览。副本包含USD网格。异常退出后可在此恢复；关闭此对话框会保留副本。手动保存或明确放弃当前文档时，将清除该文档的恢复副本。",
+  recoveryHelp:
+    "有更改时，每30秒保存已确认的编辑，不包含拖动预览。副本包含USD网格。异常退出后可在此恢复；关闭此对话框会保留副本。手动保存或明确放弃当前文档时，将清除该文档的恢复副本。",
 
   meshLabel: "USD网格",
   usdImport: "导入OpenUSD…",
@@ -342,11 +376,14 @@ const zh: Record<Key, string> = {
   usdComplete: "导入完成",
   usdTriangles: "三角形",
   usdDetails: "来源与诊断",
-  usdRuntime: "需要OpenUSD运行时。请使用Python 3.11–3.14运行scripts/setup-usd.sh，或将UNIVERSAL3D_USD_PYTHON设置为已安装usd-core 26.11的Python路径。",
+  usdRuntime:
+    "需要OpenUSD运行时。请使用Python 3.11–3.14运行scripts/setup-usd.sh，或将UNIVERSAL3D_USD_PYTHON设置为已安装usd-core 26.11的Python路径。",
   usdCancelled: "导入已取消或超时。",
   usdFailed: "OpenUSD导入失败。",
-  usdHelp: "粘贴以com.nvidia.simready.packaging.json结尾的Hugging Face数据集resolve/blob URL。支持不超过512 MiB的公开资源包，保留USD引用、依赖文件与许可证。也支持本地USD/USDA/USDC/USDZ。",
-  usdLimitations: "显示静态多边形与平面着色。暂不支持纹理／MDL、物理、动画和细分求值。一次撤销即可移除本次导入。",
+  usdHelp:
+    "粘贴以com.nvidia.simready.packaging.json结尾的Hugging Face数据集resolve/blob URL。支持不超过512 MiB的公开资源包，保留USD引用、依赖文件与许可证。也支持本地USD/USDA/USDC/USDZ。",
+  usdLimitations:
+    "显示静态多边形与平面着色。暂不支持纹理／MDL、物理、动画和细分求值。一次撤销即可移除本次导入。",
   usdUnsupported: "部分几何类型已跳过，请查看诊断。",
 
   selectTool: "选择工具",
@@ -358,7 +395,8 @@ const zh: Record<Key, string> = {
   snapInfo: "坐标系与吸附设置",
   snapHelp:
     "每个工具分别记住世界／局部坐标。移动的相对模式对起点位移进行吸附；网格模式对以世界原点为基准的绝对坐标进行吸附。网格只适用于世界坐标，切换到局部时会返回相对模式。轴柄只改变一个坐标，彩色平面柄改变两个坐标。网格模式下的中心柄对包括深度在内的三个坐标吸附。旋转和缩放使用相对步进。按住J临时反转吸附，Esc取消整个拖动。顶点模式或按住V拖动所选对象的顶点，可吸附到14px内其他可见对象的顶点。轴和平面手柄以枢轴为基准并保持约束，中心手柄在三维中对齐。青色标记源点，黄色标记目标。附近无顶点时自由移动。V优先于步长和网格吸附；请在拖动前按V选择源顶点。",
-  surfaceSnapHelp: "边模式吸附到14px内的多边形边。新USD保留原始边界并忽略三角剖分对角线；旧网格重建边界和折痕。表面模式吸附到光标下最近的表面。轴／平面约束优先，受约束移动可能无法接触目标。J临时反转，V临时切换顶点吸附，Esc取消整个拖动。排除所选对象，可直接抓取源顶点。不对齐旋转。",
+  surfaceSnapHelp:
+    "边模式吸附到14px内的多边形边。新USD保留原始边界并忽略三角剖分对角线；旧网格重建边界和折痕。表面模式吸附到光标下最近的表面。轴／平面约束优先，受约束移动可能无法接触目标。J临时反转，V临时切换顶点吸附，Esc取消整个拖动。排除所选对象，可直接抓取源顶点。不对齐旋转。",
   shear: "剪切",
 
   moveTool: "移动工具",

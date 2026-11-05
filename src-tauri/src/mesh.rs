@@ -19,17 +19,21 @@ pub struct Source {
 }
 impl Mesh {
     pub fn validate(&self) -> Result<(), String> {
-        if self.edge_mask.as_ref().is_some_and(|mask| {
-            mask.len() != self.triangles.len()
-                || !mask.bytes().all(|byte| (b'0'..=b'7').contains(&byte))
-        }) || self.triangles.is_empty()
+        self.validate_cancellable(None)
+    }
+    pub fn validate_cancellable(
+        &self,
+        cancel: Option<&std::sync::atomic::AtomicBool>,
+    ) -> Result<(), String> {
+        self.validate_with_check(|| crate::snapping::check_cancel(cancel))
+    }
+    fn validate_with_check(
+        &self,
+        mut check: impl FnMut() -> Result<(), String>,
+    ) -> Result<(), String> {
+        check()?;
+        if self.triangles.is_empty()
             || self.triangles.len() > MAX_TRIANGLES
-            || self
-                .triangles
-                .iter()
-                .flatten()
-                .flatten()
-                .any(|x| !x.is_finite() || x.abs() > 10000.)
             || self
                 .color
                 .iter()
@@ -38,16 +42,48 @@ impl Mesh {
             || self.source.origin.len() > 8192
             || self.source.revision.len() > 128
             || self.source.license.len() > 4096
+            || self
+                .edge_mask
+                .as_ref()
+                .is_some_and(|mask| mask.len() != self.triangles.len())
         {
             return Err("Invalid imported mesh".into());
         }
-        Ok(())
+        if let Some(mask) = &self.edge_mask {
+            for chunk in mask.as_bytes().chunks(4096) {
+                check()?;
+                if !chunk.iter().all(|byte| (b'0'..=b'7').contains(byte)) {
+                    return Err("Invalid imported mesh".into());
+                }
+            }
+        }
+        for chunk in self.triangles.chunks(1024) {
+            check()?;
+            if chunk
+                .iter()
+                .flatten()
+                .flatten()
+                .any(|x| !x.is_finite() || x.abs() > 10000.)
+            {
+                return Err("Invalid imported mesh".into());
+            }
+        }
+        check()
     }
 }
 
 // Ear clipping preserves concave polygon boundaries. Degenerate/non-simple polygons fail
 // instead of silently filling an incorrect fan. Hole faces are omitted by the importer.
+#[cfg(test)]
 pub fn triangulate(points: &[[f32; 3]], indices: &[usize]) -> Result<Vec<Face>, String> {
+    triangulate_cancellable(points, indices, None)
+}
+pub fn triangulate_cancellable(
+    points: &[[f32; 3]],
+    indices: &[usize],
+    cancel: Option<&std::sync::atomic::AtomicBool>,
+) -> Result<Vec<Face>, String> {
+    crate::snapping::check_cancel(cancel)?;
     if indices.len() < 3 || indices.len() > 4096 || indices.iter().any(|&i| i >= points.len()) {
         return Err("Invalid USD face topology".into());
     }
@@ -89,8 +125,12 @@ pub fn triangulate(points: &[[f32; 3]], indices: &[usize]) -> Result<Vec<Face>, 
     let mut remaining: Vec<usize> = (0..indices.len()).collect();
     let mut faces = Vec::new();
     while remaining.len() > 3 {
+        crate::snapping::check_cancel(cancel)?;
         let mut found = false;
         for j in 0..remaining.len() {
+            if j.is_multiple_of(32) {
+                crate::snapping::check_cancel(cancel)?;
+            }
             let a = remaining[(j + remaining.len() - 1) % remaining.len()];
             let b = remaining[j];
             let c = remaining[(j + 1) % remaining.len()];
@@ -123,6 +163,47 @@ pub fn triangulate(points: &[[f32; 3]], indices: &[usize]) -> Result<Vec<Face>, 
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn mesh_validation_checks_mid_buffer_and_retains_all_rejection_rules() {
+        let mut mesh = Mesh {
+            triangles: vec![[[0.; 3]; 3]; 2500],
+            edge_mask: Some("7".repeat(2500)),
+            color: [0.5; 3],
+            source: Source {
+                origin: "test".into(),
+                revision: String::new(),
+                license: String::new(),
+            },
+            prim_path: "/Mesh".into(),
+        };
+        let mut checks = 0;
+        let error = mesh
+            .validate_with_check(|| {
+                checks += 1;
+                // Metadata and the mask pass; cancel between geometry chunks.
+                if checks == 4 {
+                    Err("LOAD_CANCELLED".into())
+                } else {
+                    Ok(())
+                }
+            })
+            .unwrap_err();
+        assert_eq!(error, "LOAD_CANCELLED");
+        assert_eq!(checks, 4);
+        assert!(mesh.validate().is_ok());
+        mesh.triangles[2400][2][2] = f32::NAN;
+        assert!(mesh.validate().is_err());
+        mesh.triangles[2400][2][2] = 0.;
+        mesh.edge_mask = Some(format!("{}8", "7".repeat(2499)));
+        assert!(mesh.validate().is_err());
+        mesh.edge_mask = None;
+        let cancelled = std::sync::atomic::AtomicBool::new(true);
+        assert_eq!(
+            mesh.validate_cancellable(Some(&cancelled)).unwrap_err(),
+            "LOAD_CANCELLED"
+        );
+        assert!(mesh.validate().is_ok());
+    }
     #[test]
     fn concave_polygon_preserves_area_and_winding() {
         let points = [

@@ -5,12 +5,15 @@ import { desktop } from "./store";
 import { IconButton } from "./EditorChrome";
 import type { Key } from "./i18n";
 
-type Kind = "open" | "recovery" | "usd";
+type Kind = "open" | "recovery" | "usd" | "snap";
 type Progress = {
   id: string;
   kind: Kind;
   phase:
     | "read"
+    | "parse"
+    | "extract"
+    | "triangulate"
     | "convert"
     | "validate"
     | "vertices"
@@ -65,6 +68,9 @@ export async function cancelCurrentLoad(kind: Kind) {
 }
 const phases: Record<Progress["phase"], Key> = {
   read: "loadRead",
+  parse: "loadParse",
+  extract: "loadExtract",
+  triangulate: "loadTriangulate",
   convert: "loadConvert",
   validate: "loadValidate",
   vertices: "loadVertices",
@@ -85,6 +91,29 @@ export function LoadProgress({
   if (!progress || (kind && progress.kind !== kind)) return null;
   const cancelling = progress.cancelling || pending === progress.id;
   const label = t(cancelling ? "loadCancelling" : phases[progress.phase]);
+  const bytes = progress.phase === "read" || progress.phase === "parse";
+  const unit = t(
+    bytes
+      ? "loadBytes"
+      : progress.phase === "instances"
+        ? "objects"
+        : progress.phase === "triangulate"
+          ? "loadFaces"
+          : progress.phase === "extract"
+            ? "loadPoints"
+            : "loadShapes",
+  );
+  const divisor =
+    bytes && progress.total >= 1048576
+      ? 1048576
+      : bytes && progress.total >= 1024
+        ? 1024
+        : 1;
+  const suffix = divisor === 1048576 ? "MiB" : divisor === 1024 ? "KiB" : unit;
+  const counts =
+    divisor > 1
+      ? `${(progress.completed / divisor).toFixed(1)}/${(progress.total / divisor).toFixed(1)} ${suffix}`
+      : `${progress.completed}/${progress.total}`;
   return (
     <div className="load-progress" aria-busy="true">
       <span className="load-phase" role="status">
@@ -94,17 +123,15 @@ export function LoadProgress({
         aria-label={label}
         aria-valuetext={
           progress.total
-            ? `${progress.completed}/${progress.total} ${t(progress.phase === "instances" ? "objects" : "loadShapes")}`
+            ? `${progress.completed}/${progress.total} ${unit}`
             : undefined
         }
         max={progress.total || 1}
         value={progress.total ? progress.completed : undefined}
       />
       {progress.total > 0 && (
-        <small
-          title={t(progress.phase === "instances" ? "objects" : "loadShapes")}
-        >
-          {progress.completed}/{progress.total}
+        <small title={`${progress.completed}/${progress.total} ${unit}`}>
+          {counts}
         </small>
       )}
       <IconButton

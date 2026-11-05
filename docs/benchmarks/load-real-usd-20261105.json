@@ -1,0 +1,5561 @@
+{
+  "platform": "macOS-27.2-arm64-arm-64bit",
+  "machine": "arm64",
+  "profile": "debug",
+  "rustc": "rustc 1.99.1 (58cf8f9c3 2026-10-13) (Homebrew)",
+  "input": {
+    "name": "sm_IV_pole_a01_01.usd",
+    "sha256": "539472c190fbd410a1ed0697fe88467e8340efec6b60a3bba8499b6796dad688",
+    "bytes": 21505,
+    "label": "NVIDIA IV_pole_a01 @524747d9b5e1f21b5b18b56041788c01d745f1a1 CC-BY-4.0",
+    "sha256_verified_after_runs": true
+  },
+  "mode": "usd",
+  "runs": [
+    {
+      "diagnostics": {
+        "admission": {
+          "combined_bytes": 41043784,
+          "reserved_working_bytes": 0,
+          "resident_index_bytes": 41043784,
+          "tracked_scenes": 1
+        },
+        "buffer_bytes": 41038184,
+        "cache_epoch": 0,
+        "document_epoch": 0,
+        "indexed_revision": 1,
+        "last_preparation": {
+          "budget": {
+            "concurrent_working_bytes": 0,
+            "estimated_combined_bytes": 469822464,
+            "estimated_working_bytes": 469822464,
+            "instances": 17,
+            "limit_bytes": 536870912,
+            "resident_bytes": 0,
+            "shapes": 17,
+            "triangles": 458726
+          },
+          "buffer_bytes": 41038184,
+          "elapsed_us": 10193394,
+          "memory": {
+            "edge_nodes": 155763,
+            "edge_tree_vec_bytes": 13716872,
+            "edge_vec_bytes": 7493968,
+            "edges": 468369,
+            "face_nodes": 155763,
+            "face_tree_vec_bytes": 13639728,
+            "instances": 17,
+            "primitive_face_bytes": 432,
+            "ready_surface_shapes": 17,
+            "scene_entry_payload_bytes": 3400,
+            "scene_tree_vec_bytes": 2904,
+            "shapes": 17,
+            "triangles": 458726,
+            "vertex_nodes": 28843,
+            "vertex_tree_vec_bytes": 2492672,
+            "vertex_vec_bytes": 3691608,
+            "vertices": 230731
+          },
+          "reused_buffer_bytes": 0,
+          "reused_shapes": 0
+        },
+        "memory": {
+          "edge_nodes": 155763,
+          "edge_tree_vec_bytes": 13716872,
+          "edge_vec_bytes": 7493968,
+          "edges": 468369,
+          "face_nodes": 155763,
+          "face_tree_vec_bytes": 13639728,
+          "instances": 17,
+          "primitive_face_bytes": 432,
+          "ready_surface_shapes": 17,
+          "scene_entry_payload_bytes": 3400,
+          "scene_tree_vec_bytes": 2904,
+          "shapes": 17,
+          "triangles": 458726,
+          "vertex_nodes": 28843,
+          "vertex_tree_vec_bytes": 2492672,
+          "vertex_vec_bytes": 3691608,
+          "vertices": 230731
+        },
+        "render_revision": 1,
+        "retention": {
+          "current_buffer_bytes": 41038184,
+          "evicted_buffer_bytes_total": 0,
+          "evictions_total": 0,
+          "idle_buffer_bytes": 0,
+          "last_trim": {
+            "after_buffer_bytes": 41038184,
+            "before_buffer_bytes": 41038184,
+            "evicted_buffer_bytes": 0,
+            "evicted_shapes": 0,
+            "scene_compaction_deferred": false,
+            "scene_reclaimed_buffer_bytes": 0,
+            "scene_reclaimed_payload_bytes": 0
+          },
+          "limit_bytes": 134217728,
+          "over_budget_bytes": 0,
+          "referenced_buffer_bytes": 41038184
+        }
+      },
+      "first_snap": {
+        "acquire_us": 4,
+        "edge_hit": true,
+        "edge_us": 4049,
+        "face_hit": false,
+        "face_us": 56,
+        "geometries_built": 0,
+        "objects_visited": 0
+      },
+      "mesh_assets": 16,
+      "mode": "usd",
+      "objects": 17,
+      "profile": {
+        "commit_started": true,
+        "id": "1",
+        "kind": "usd",
+        "outcome": "success",
+        "phases": [
+          {
+            "elapsed_us": 1034,
+            "entries": 1,
+            "phase": "commit"
+          },
+          {
+            "elapsed_us": 4592232,
+            "entries": 2,
+            "phase": "convert"
+          },
+          {
+            "elapsed_us": 3454588,
+            "entries": 1,
+            "phase": "extract"
+          },
+          {
+            "elapsed_us": 562,
+            "entries": 1,
+            "phase": "instances"
+          },
+          {
+            "elapsed_us": 1747146,
+            "entries": 2,
+            "phase": "parse"
+          },
+          {
+            "elapsed_us": 7953,
+            "entries": 2,
+            "phase": "read"
+          },
+          {
+            "elapsed_us": 8665754,
+            "entries": 16,
+            "phase": "surfaces"
+          },
+          {
+            "elapsed_us": 3314861,
+            "entries": 1,
+            "phase": "triangulate"
+          },
+          {
+            "elapsed_us": 422519,
+            "entries": 1,
+            "phase": "validate"
+          },
+          {
+            "elapsed_us": 1395913,
+            "entries": 16,
+            "phase": "vertices"
+          }
+        ],
+        "total_us": 23602566
+      },
+      "scope": "Headless production CPU load path; no dialog, IPC notification, renderer upload or GPU completion. Recovery writes a private checkpoint but never consumes the input.",
+      "triangles": 458714,
+      "memory": {
+        "interval_ms": 50.0,
+        "errors": [],
+        "samples": [
+          {
+            "root_rss_bytes": 11108352,
+            "tree_rss_sum_bytes": 17678336,
+            "process_count": 2,
+            "at_us": 100374,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11108352,
+            "tree_rss_sum_bytes": 31145984,
+            "process_count": 2,
+            "at_us": 298375,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11108352,
+            "tree_rss_sum_bytes": 37650432,
+            "process_count": 2,
+            "at_us": 638970,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11108352,
+            "tree_rss_sum_bytes": 41123840,
+            "process_count": 2,
+            "at_us": 903334,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11108352,
+            "tree_rss_sum_bytes": 51281920,
+            "process_count": 2,
+            "at_us": 1182549,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11108352,
+            "tree_rss_sum_bytes": 57016320,
+            "process_count": 2,
+            "at_us": 1348636,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11108352,
+            "tree_rss_sum_bytes": 59850752,
+            "process_count": 2,
+            "at_us": 1740396,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11108352,
+            "tree_rss_sum_bytes": 63946752,
+            "process_count": 2,
+            "at_us": 1968361,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11108352,
+            "tree_rss_sum_bytes": 67600384,
+            "process_count": 2,
+            "at_us": 2094673,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11108352,
+            "tree_rss_sum_bytes": 78725120,
+            "process_count": 2,
+            "at_us": 2231041,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11108352,
+            "tree_rss_sum_bytes": 82083840,
+            "process_count": 2,
+            "at_us": 2362067,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11108352,
+            "tree_rss_sum_bytes": 88866816,
+            "process_count": 2,
+            "at_us": 2659578,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11108352,
+            "tree_rss_sum_bytes": 93208576,
+            "process_count": 2,
+            "at_us": 2796691,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11108352,
+            "tree_rss_sum_bytes": 98287616,
+            "process_count": 2,
+            "at_us": 2951242,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 11223040,
+            "tree_rss_sum_bytes": 109920256,
+            "process_count": 2,
+            "at_us": 3082578,
+            "phase": "extract"
+          },
+          {
+            "root_rss_bytes": 11223040,
+            "tree_rss_sum_bytes": 114327552,
+            "process_count": 2,
+            "at_us": 3286227,
+            "phase": "extract"
+          },
+          {
+            "root_rss_bytes": 11223040,
+            "tree_rss_sum_bytes": 120799232,
+            "process_count": 2,
+            "at_us": 3493577,
+            "phase": "extract"
+          },
+          {
+            "root_rss_bytes": 11223040,
+            "tree_rss_sum_bytes": 123256832,
+            "process_count": 2,
+            "at_us": 3674371,
+            "phase": "extract"
+          },
+          {
+            "root_rss_bytes": 11223040,
+            "tree_rss_sum_bytes": 125894656,
+            "process_count": 2,
+            "at_us": 3802986,
+            "phase": "extract"
+          },
+          {
+            "root_rss_bytes": 11223040,
+            "tree_rss_sum_bytes": 134660096,
+            "process_count": 2,
+            "at_us": 3943786,
+            "phase": "extract"
+          },
+          {
+            "root_rss_bytes": 11223040,
+            "tree_rss_sum_bytes": 136495104,
+            "process_count": 2,
+            "at_us": 4084196,
+            "phase": "extract"
+          },
+          {
+            "root_rss_bytes": 11223040,
+            "tree_rss_sum_bytes": 140951552,
+            "process_count": 2,
+            "at_us": 4202080,
+            "phase": "extract"
+          },
+          {
+            "root_rss_bytes": 11239424,
+            "tree_rss_sum_bytes": 145473536,
+            "process_count": 2,
+            "at_us": 4324002,
+            "phase": "extract"
+          },
+          {
+            "root_rss_bytes": 11239424,
+            "tree_rss_sum_bytes": 150241280,
+            "process_count": 2,
+            "at_us": 4476893,
+            "phase": "extract"
+          },
+          {
+            "root_rss_bytes": 11239424,
+            "tree_rss_sum_bytes": 153255936,
+            "process_count": 2,
+            "at_us": 4639041,
+            "phase": "extract"
+          },
+          {
+            "root_rss_bytes": 11239424,
+            "tree_rss_sum_bytes": 155369472,
+            "process_count": 2,
+            "at_us": 4758024,
+            "phase": "extract"
+          },
+          {
+            "root_rss_bytes": 11239424,
+            "tree_rss_sum_bytes": 160104448,
+            "process_count": 2,
+            "at_us": 4885670,
+            "phase": "extract"
+          },
+          {
+            "root_rss_bytes": 11239424,
+            "tree_rss_sum_bytes": 167919616,
+            "process_count": 2,
+            "at_us": 5034209,
+            "phase": "extract"
+          },
+          {
+            "root_rss_bytes": 11239424,
+            "tree_rss_sum_bytes": 170131456,
+            "process_count": 2,
+            "at_us": 5176392,
+            "phase": "extract"
+          },
+          {
+            "root_rss_bytes": 11239424,
+            "tree_rss_sum_bytes": 172163072,
+            "process_count": 2,
+            "at_us": 5451893,
+            "phase": "extract"
+          },
+          {
+            "root_rss_bytes": 11239424,
+            "tree_rss_sum_bytes": 178094080,
+            "process_count": 2,
+            "at_us": 5667642,
+            "phase": "extract"
+          },
+          {
+            "root_rss_bytes": 11239424,
+            "tree_rss_sum_bytes": 182337536,
+            "process_count": 2,
+            "at_us": 5856548,
+            "phase": "extract"
+          },
+          {
+            "root_rss_bytes": 11239424,
+            "tree_rss_sum_bytes": 185614336,
+            "process_count": 2,
+            "at_us": 5988380,
+            "phase": "extract"
+          },
+          {
+            "root_rss_bytes": 11239424,
+            "tree_rss_sum_bytes": 190676992,
+            "process_count": 2,
+            "at_us": 6227435,
+            "phase": "extract"
+          },
+          {
+            "root_rss_bytes": 11239424,
+            "tree_rss_sum_bytes": 194756608,
+            "process_count": 2,
+            "at_us": 6355866,
+            "phase": "extract"
+          },
+          {
+            "root_rss_bytes": 11239424,
+            "tree_rss_sum_bytes": 197853184,
+            "process_count": 2,
+            "at_us": 6458343,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11239424,
+            "tree_rss_sum_bytes": 195624960,
+            "process_count": 2,
+            "at_us": 6578302,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11272192,
+            "tree_rss_sum_bytes": 195657728,
+            "process_count": 2,
+            "at_us": 6699989,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11288576,
+            "tree_rss_sum_bytes": 195674112,
+            "process_count": 2,
+            "at_us": 6834667,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11288576,
+            "tree_rss_sum_bytes": 195674112,
+            "process_count": 2,
+            "at_us": 6959787,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11288576,
+            "tree_rss_sum_bytes": 195674112,
+            "process_count": 2,
+            "at_us": 7076972,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11288576,
+            "tree_rss_sum_bytes": 195674112,
+            "process_count": 2,
+            "at_us": 7171928,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11288576,
+            "tree_rss_sum_bytes": 195674112,
+            "process_count": 2,
+            "at_us": 7291074,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11288576,
+            "tree_rss_sum_bytes": 195674112,
+            "process_count": 2,
+            "at_us": 7398148,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11288576,
+            "tree_rss_sum_bytes": 195674112,
+            "process_count": 2,
+            "at_us": 7502022,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11288576,
+            "tree_rss_sum_bytes": 195674112,
+            "process_count": 2,
+            "at_us": 7607702,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11288576,
+            "tree_rss_sum_bytes": 195674112,
+            "process_count": 2,
+            "at_us": 7707879,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11288576,
+            "tree_rss_sum_bytes": 195674112,
+            "process_count": 2,
+            "at_us": 7811054,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11288576,
+            "tree_rss_sum_bytes": 195674112,
+            "process_count": 2,
+            "at_us": 7924280,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11288576,
+            "tree_rss_sum_bytes": 195674112,
+            "process_count": 2,
+            "at_us": 8023300,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11288576,
+            "tree_rss_sum_bytes": 11288576,
+            "process_count": 2,
+            "at_us": 8122457,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 34226176,
+            "tree_rss_sum_bytes": 34226176,
+            "process_count": 1,
+            "at_us": 8234118,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 34947072,
+            "tree_rss_sum_bytes": 34947072,
+            "process_count": 1,
+            "at_us": 8329212,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 35225600,
+            "tree_rss_sum_bytes": 35225600,
+            "process_count": 1,
+            "at_us": 8426950,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 36683776,
+            "tree_rss_sum_bytes": 36683776,
+            "process_count": 1,
+            "at_us": 8524308,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 38043648,
+            "tree_rss_sum_bytes": 38043648,
+            "process_count": 1,
+            "at_us": 8619476,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 38699008,
+            "tree_rss_sum_bytes": 38699008,
+            "process_count": 1,
+            "at_us": 8722083,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 38993920,
+            "tree_rss_sum_bytes": 38993920,
+            "process_count": 1,
+            "at_us": 8840086,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 39206912,
+            "tree_rss_sum_bytes": 39206912,
+            "process_count": 1,
+            "at_us": 8940759,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 39682048,
+            "tree_rss_sum_bytes": 39682048,
+            "process_count": 1,
+            "at_us": 9033107,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 41795584,
+            "tree_rss_sum_bytes": 41795584,
+            "process_count": 1,
+            "at_us": 9126999,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 41795584,
+            "tree_rss_sum_bytes": 41795584,
+            "process_count": 1,
+            "at_us": 9218373,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 42598400,
+            "tree_rss_sum_bytes": 42598400,
+            "process_count": 1,
+            "at_us": 9322182,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 43319296,
+            "tree_rss_sum_bytes": 43319296,
+            "process_count": 1,
+            "at_us": 9426031,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 43565056,
+            "tree_rss_sum_bytes": 43565056,
+            "process_count": 1,
+            "at_us": 9538811,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 43974656,
+            "tree_rss_sum_bytes": 43974656,
+            "process_count": 1,
+            "at_us": 9642379,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 44990464,
+            "tree_rss_sum_bytes": 44990464,
+            "process_count": 1,
+            "at_us": 9807843,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 46137344,
+            "tree_rss_sum_bytes": 46137344,
+            "process_count": 1,
+            "at_us": 9916637,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 46645248,
+            "tree_rss_sum_bytes": 46645248,
+            "process_count": 1,
+            "at_us": 10018118,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 47153152,
+            "tree_rss_sum_bytes": 47153152,
+            "process_count": 1,
+            "at_us": 10121484,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 48005120,
+            "tree_rss_sum_bytes": 48005120,
+            "process_count": 1,
+            "at_us": 10224320,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 48349184,
+            "tree_rss_sum_bytes": 48349184,
+            "process_count": 1,
+            "at_us": 10321173,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 49414144,
+            "tree_rss_sum_bytes": 49414144,
+            "process_count": 1,
+            "at_us": 10418510,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 51101696,
+            "tree_rss_sum_bytes": 51101696,
+            "process_count": 1,
+            "at_us": 10514979,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 51560448,
+            "tree_rss_sum_bytes": 51560448,
+            "process_count": 1,
+            "at_us": 10605123,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 52051968,
+            "tree_rss_sum_bytes": 52051968,
+            "process_count": 1,
+            "at_us": 10699919,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 52428800,
+            "tree_rss_sum_bytes": 52428800,
+            "process_count": 1,
+            "at_us": 10800629,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 52576256,
+            "tree_rss_sum_bytes": 52576256,
+            "process_count": 1,
+            "at_us": 10900967,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 52592640,
+            "tree_rss_sum_bytes": 52592640,
+            "process_count": 1,
+            "at_us": 10994100,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 53100544,
+            "tree_rss_sum_bytes": 53100544,
+            "process_count": 1,
+            "at_us": 11098040,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 53133312,
+            "tree_rss_sum_bytes": 53133312,
+            "process_count": 1,
+            "at_us": 11188025,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 53510144,
+            "tree_rss_sum_bytes": 53510144,
+            "process_count": 1,
+            "at_us": 11287454,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 54001664,
+            "tree_rss_sum_bytes": 54001664,
+            "process_count": 1,
+            "at_us": 11377611,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 55312384,
+            "tree_rss_sum_bytes": 55312384,
+            "process_count": 1,
+            "at_us": 11468109,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 55787520,
+            "tree_rss_sum_bytes": 55787520,
+            "process_count": 1,
+            "at_us": 11550086,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 56262656,
+            "tree_rss_sum_bytes": 56262656,
+            "process_count": 1,
+            "at_us": 11631992,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 56819712,
+            "tree_rss_sum_bytes": 56819712,
+            "process_count": 1,
+            "at_us": 11733464,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 57065472,
+            "tree_rss_sum_bytes": 57065472,
+            "process_count": 1,
+            "at_us": 11825800,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 57098240,
+            "tree_rss_sum_bytes": 57098240,
+            "process_count": 1,
+            "at_us": 11919608,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 57376768,
+            "tree_rss_sum_bytes": 57376768,
+            "process_count": 1,
+            "at_us": 12011156,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 58753024,
+            "tree_rss_sum_bytes": 58753024,
+            "process_count": 1,
+            "at_us": 12103425,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 59277312,
+            "tree_rss_sum_bytes": 59277312,
+            "process_count": 1,
+            "at_us": 12192591,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 59293696,
+            "tree_rss_sum_bytes": 59293696,
+            "process_count": 1,
+            "at_us": 12285167,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 59293696,
+            "tree_rss_sum_bytes": 59293696,
+            "process_count": 1,
+            "at_us": 12375532,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 59326464,
+            "tree_rss_sum_bytes": 59326464,
+            "process_count": 1,
+            "at_us": 12479671,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 59375616,
+            "tree_rss_sum_bytes": 59375616,
+            "process_count": 1,
+            "at_us": 12577385,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 59408384,
+            "tree_rss_sum_bytes": 59408384,
+            "process_count": 1,
+            "at_us": 12674341,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 59408384,
+            "tree_rss_sum_bytes": 59408384,
+            "process_count": 1,
+            "at_us": 12765746,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 59441152,
+            "tree_rss_sum_bytes": 59441152,
+            "process_count": 1,
+            "at_us": 12859977,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 59457536,
+            "tree_rss_sum_bytes": 59457536,
+            "process_count": 1,
+            "at_us": 12971050,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 59473920,
+            "tree_rss_sum_bytes": 59473920,
+            "process_count": 1,
+            "at_us": 13068447,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 59604992,
+            "tree_rss_sum_bytes": 59604992,
+            "process_count": 1,
+            "at_us": 13168712,
+            "phase": "validate"
+          },
+          {
+            "root_rss_bytes": 59604992,
+            "tree_rss_sum_bytes": 59604992,
+            "process_count": 1,
+            "at_us": 13262748,
+            "phase": "validate"
+          },
+          {
+            "root_rss_bytes": 59604992,
+            "tree_rss_sum_bytes": 59604992,
+            "process_count": 1,
+            "at_us": 13365538,
+            "phase": "validate"
+          },
+          {
+            "root_rss_bytes": 59604992,
+            "tree_rss_sum_bytes": 59604992,
+            "process_count": 1,
+            "at_us": 13464828,
+            "phase": "validate"
+          },
+          {
+            "root_rss_bytes": 59604992,
+            "tree_rss_sum_bytes": 59604992,
+            "process_count": 1,
+            "at_us": 13564889,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 59965440,
+            "tree_rss_sum_bytes": 59965440,
+            "process_count": 1,
+            "at_us": 13672801,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 60014592,
+            "tree_rss_sum_bytes": 60014592,
+            "process_count": 1,
+            "at_us": 13776974,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 60014592,
+            "tree_rss_sum_bytes": 60014592,
+            "process_count": 1,
+            "at_us": 13883877,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 60391424,
+            "tree_rss_sum_bytes": 60391424,
+            "process_count": 1,
+            "at_us": 13990806,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 60440576,
+            "tree_rss_sum_bytes": 60440576,
+            "process_count": 1,
+            "at_us": 14096712,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 60653568,
+            "tree_rss_sum_bytes": 60653568,
+            "process_count": 1,
+            "at_us": 14202930,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 61128704,
+            "tree_rss_sum_bytes": 61128704,
+            "process_count": 1,
+            "at_us": 14304599,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 61194240,
+            "tree_rss_sum_bytes": 61194240,
+            "process_count": 1,
+            "at_us": 14423037,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 61194240,
+            "tree_rss_sum_bytes": 61194240,
+            "process_count": 1,
+            "at_us": 14529842,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 61489152,
+            "tree_rss_sum_bytes": 61489152,
+            "process_count": 1,
+            "at_us": 14637507,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 62128128,
+            "tree_rss_sum_bytes": 62128128,
+            "process_count": 1,
+            "at_us": 14745639,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 62308352,
+            "tree_rss_sum_bytes": 62308352,
+            "process_count": 1,
+            "at_us": 14853675,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 62308352,
+            "tree_rss_sum_bytes": 62308352,
+            "process_count": 1,
+            "at_us": 14969259,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 63012864,
+            "tree_rss_sum_bytes": 63012864,
+            "process_count": 1,
+            "at_us": 15094363,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 63012864,
+            "tree_rss_sum_bytes": 63012864,
+            "process_count": 1,
+            "at_us": 15196613,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 63094784,
+            "tree_rss_sum_bytes": 63094784,
+            "process_count": 1,
+            "at_us": 15305745,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 63094784,
+            "tree_rss_sum_bytes": 63094784,
+            "process_count": 1,
+            "at_us": 15422255,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 63504384,
+            "tree_rss_sum_bytes": 63504384,
+            "process_count": 1,
+            "at_us": 15533786,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 63750144,
+            "tree_rss_sum_bytes": 63750144,
+            "process_count": 1,
+            "at_us": 15656465,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 64569344,
+            "tree_rss_sum_bytes": 64569344,
+            "process_count": 1,
+            "at_us": 15769953,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 64815104,
+            "tree_rss_sum_bytes": 64815104,
+            "process_count": 1,
+            "at_us": 15908045,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 64815104,
+            "tree_rss_sum_bytes": 64815104,
+            "process_count": 1,
+            "at_us": 16020744,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 64831488,
+            "tree_rss_sum_bytes": 64831488,
+            "process_count": 1,
+            "at_us": 16115312,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 64831488,
+            "tree_rss_sum_bytes": 64831488,
+            "process_count": 1,
+            "at_us": 16214678,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 64847872,
+            "tree_rss_sum_bytes": 64847872,
+            "process_count": 1,
+            "at_us": 16307897,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 65486848,
+            "tree_rss_sum_bytes": 65486848,
+            "process_count": 1,
+            "at_us": 16393614,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 66617344,
+            "tree_rss_sum_bytes": 66617344,
+            "process_count": 1,
+            "at_us": 16493178,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 66617344,
+            "tree_rss_sum_bytes": 66617344,
+            "process_count": 1,
+            "at_us": 16590806,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 66650112,
+            "tree_rss_sum_bytes": 66650112,
+            "process_count": 1,
+            "at_us": 16681763,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 66863104,
+            "tree_rss_sum_bytes": 66863104,
+            "process_count": 1,
+            "at_us": 16776579,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 66863104,
+            "tree_rss_sum_bytes": 66863104,
+            "process_count": 1,
+            "at_us": 16858116,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 67158016,
+            "tree_rss_sum_bytes": 67158016,
+            "process_count": 1,
+            "at_us": 16954366,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 67993600,
+            "tree_rss_sum_bytes": 67993600,
+            "process_count": 1,
+            "at_us": 17035093,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 68255744,
+            "tree_rss_sum_bytes": 68255744,
+            "process_count": 1,
+            "at_us": 17151082,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 68272128,
+            "tree_rss_sum_bytes": 68272128,
+            "process_count": 1,
+            "at_us": 17253543,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 69959680,
+            "tree_rss_sum_bytes": 69959680,
+            "process_count": 1,
+            "at_us": 17339742,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 72499200,
+            "tree_rss_sum_bytes": 72499200,
+            "process_count": 1,
+            "at_us": 17442840,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 72499200,
+            "tree_rss_sum_bytes": 72499200,
+            "process_count": 1,
+            "at_us": 17538571,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 72941568,
+            "tree_rss_sum_bytes": 72941568,
+            "process_count": 1,
+            "at_us": 17642353,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 75202560,
+            "tree_rss_sum_bytes": 75202560,
+            "process_count": 1,
+            "at_us": 17735170,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 75202560,
+            "tree_rss_sum_bytes": 75202560,
+            "process_count": 1,
+            "at_us": 17828023,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 75759616,
+            "tree_rss_sum_bytes": 75759616,
+            "process_count": 1,
+            "at_us": 17915438,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 76152832,
+            "tree_rss_sum_bytes": 76152832,
+            "process_count": 1,
+            "at_us": 18006189,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 76775424,
+            "tree_rss_sum_bytes": 76775424,
+            "process_count": 1,
+            "at_us": 18094761,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 77266944,
+            "tree_rss_sum_bytes": 77266944,
+            "process_count": 1,
+            "at_us": 18176805,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 77856768,
+            "tree_rss_sum_bytes": 77856768,
+            "process_count": 1,
+            "at_us": 18272458,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 78053376,
+            "tree_rss_sum_bytes": 78053376,
+            "process_count": 1,
+            "at_us": 18372022,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 78970880,
+            "tree_rss_sum_bytes": 78970880,
+            "process_count": 1,
+            "at_us": 18486542,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 79495168,
+            "tree_rss_sum_bytes": 79495168,
+            "process_count": 1,
+            "at_us": 18580407,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 80019456,
+            "tree_rss_sum_bytes": 80019456,
+            "process_count": 1,
+            "at_us": 18695138,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 80297984,
+            "tree_rss_sum_bytes": 80297984,
+            "process_count": 1,
+            "at_us": 18793080,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 80543744,
+            "tree_rss_sum_bytes": 80543744,
+            "process_count": 1,
+            "at_us": 18999386,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 81412096,
+            "tree_rss_sum_bytes": 81412096,
+            "process_count": 1,
+            "at_us": 19105043,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 81887232,
+            "tree_rss_sum_bytes": 81887232,
+            "process_count": 1,
+            "at_us": 19222200,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 82608128,
+            "tree_rss_sum_bytes": 82608128,
+            "process_count": 1,
+            "at_us": 19332560,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 82608128,
+            "tree_rss_sum_bytes": 82608128,
+            "process_count": 1,
+            "at_us": 19450811,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 82984960,
+            "tree_rss_sum_bytes": 82984960,
+            "process_count": 1,
+            "at_us": 19647386,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 83361792,
+            "tree_rss_sum_bytes": 83361792,
+            "process_count": 1,
+            "at_us": 19763914,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 83738624,
+            "tree_rss_sum_bytes": 83738624,
+            "process_count": 1,
+            "at_us": 19870913,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 84049920,
+            "tree_rss_sum_bytes": 84049920,
+            "process_count": 1,
+            "at_us": 19991171,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 84639744,
+            "tree_rss_sum_bytes": 84639744,
+            "process_count": 1,
+            "at_us": 20091113,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 84639744,
+            "tree_rss_sum_bytes": 84639744,
+            "process_count": 1,
+            "at_us": 20212121,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 84639744,
+            "tree_rss_sum_bytes": 84639744,
+            "process_count": 1,
+            "at_us": 20324728,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 84639744,
+            "tree_rss_sum_bytes": 84639744,
+            "process_count": 1,
+            "at_us": 20432367,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 84967424,
+            "tree_rss_sum_bytes": 84967424,
+            "process_count": 1,
+            "at_us": 20533797,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 85278720,
+            "tree_rss_sum_bytes": 85278720,
+            "process_count": 1,
+            "at_us": 20628049,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 86048768,
+            "tree_rss_sum_bytes": 86048768,
+            "process_count": 1,
+            "at_us": 20730329,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 86982656,
+            "tree_rss_sum_bytes": 86982656,
+            "process_count": 1,
+            "at_us": 20823363,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 88457216,
+            "tree_rss_sum_bytes": 88457216,
+            "process_count": 1,
+            "at_us": 20923438,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 88801280,
+            "tree_rss_sum_bytes": 88801280,
+            "process_count": 1,
+            "at_us": 21019327,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 88899584,
+            "tree_rss_sum_bytes": 88899584,
+            "process_count": 1,
+            "at_us": 21122303,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 88899584,
+            "tree_rss_sum_bytes": 88899584,
+            "process_count": 1,
+            "at_us": 21220384,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 88899584,
+            "tree_rss_sum_bytes": 88899584,
+            "process_count": 1,
+            "at_us": 21411776,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 90308608,
+            "tree_rss_sum_bytes": 90308608,
+            "process_count": 1,
+            "at_us": 21524714,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 90308608,
+            "tree_rss_sum_bytes": 90308608,
+            "process_count": 1,
+            "at_us": 21634300,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 91537408,
+            "tree_rss_sum_bytes": 91537408,
+            "process_count": 1,
+            "at_us": 21731343,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 92274688,
+            "tree_rss_sum_bytes": 92274688,
+            "process_count": 1,
+            "at_us": 21828759,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 92733440,
+            "tree_rss_sum_bytes": 92733440,
+            "process_count": 1,
+            "at_us": 21924582,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 93323264,
+            "tree_rss_sum_bytes": 93323264,
+            "process_count": 1,
+            "at_us": 22033818,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 93634560,
+            "tree_rss_sum_bytes": 93634560,
+            "process_count": 1,
+            "at_us": 22127314,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 94322688,
+            "tree_rss_sum_bytes": 94322688,
+            "process_count": 1,
+            "at_us": 22226214,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 94322688,
+            "tree_rss_sum_bytes": 94322688,
+            "process_count": 1,
+            "at_us": 22318686,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 95748096,
+            "tree_rss_sum_bytes": 95748096,
+            "process_count": 1,
+            "at_us": 22408484,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 96403456,
+            "tree_rss_sum_bytes": 96403456,
+            "process_count": 1,
+            "at_us": 22506237,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 96468992,
+            "tree_rss_sum_bytes": 96468992,
+            "process_count": 1,
+            "at_us": 22599260,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 97026048,
+            "tree_rss_sum_bytes": 97026048,
+            "process_count": 1,
+            "at_us": 22686064,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 97337344,
+            "tree_rss_sum_bytes": 97337344,
+            "process_count": 1,
+            "at_us": 22781459,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 98828288,
+            "tree_rss_sum_bytes": 98828288,
+            "process_count": 1,
+            "at_us": 22865301,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 98926592,
+            "tree_rss_sum_bytes": 98926592,
+            "process_count": 1,
+            "at_us": 22956971,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 98926592,
+            "tree_rss_sum_bytes": 98926592,
+            "process_count": 1,
+            "at_us": 23049001,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 99794944,
+            "tree_rss_sum_bytes": 99794944,
+            "process_count": 1,
+            "at_us": 23146127,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 100057088,
+            "tree_rss_sum_bytes": 100057088,
+            "process_count": 1,
+            "at_us": 23237850,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 100859904,
+            "tree_rss_sum_bytes": 100859904,
+            "process_count": 1,
+            "at_us": 23332469,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 101105664,
+            "tree_rss_sum_bytes": 101105664,
+            "process_count": 1,
+            "at_us": 23433266,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 101105664,
+            "tree_rss_sum_bytes": 101105664,
+            "process_count": 1,
+            "at_us": 23527650,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 102121472,
+            "tree_rss_sum_bytes": 102121472,
+            "process_count": 1,
+            "at_us": 23624664,
+            "phase": "first_snap"
+          }
+        ],
+        "per_phase": {
+          "commit": {
+            "samples": 0,
+            "sampled_peak_root_rss_bytes": null,
+            "sampled_peak_tree_rss_sum_bytes": null
+          },
+          "convert": {
+            "samples": 28,
+            "sampled_peak_root_rss_bytes": 11288576,
+            "sampled_peak_tree_rss_sum_bytes": 197853184
+          },
+          "extract": {
+            "samples": 21,
+            "sampled_peak_root_rss_bytes": 11239424,
+            "sampled_peak_tree_rss_sum_bytes": 194756608
+          },
+          "first_snap": {
+            "samples": 1,
+            "sampled_peak_root_rss_bytes": 102121472,
+            "sampled_peak_tree_rss_sum_bytes": 102121472
+          },
+          "instances": {
+            "samples": 0,
+            "sampled_peak_root_rss_bytes": null,
+            "sampled_peak_tree_rss_sum_bytes": null
+          },
+          "parse": {
+            "samples": 17,
+            "sampled_peak_root_rss_bytes": 43974656,
+            "sampled_peak_tree_rss_sum_bytes": 98287616
+          },
+          "read": {
+            "samples": 0,
+            "sampled_peak_root_rss_bytes": null,
+            "sampled_peak_tree_rss_sum_bytes": null
+          },
+          "surfaces": {
+            "samples": 81,
+            "sampled_peak_root_rss_bytes": 101105664,
+            "sampled_peak_tree_rss_sum_bytes": 101105664
+          },
+          "triangulate": {
+            "samples": 35,
+            "sampled_peak_root_rss_bytes": 59473920,
+            "sampled_peak_tree_rss_sum_bytes": 59473920
+          },
+          "validate": {
+            "samples": 4,
+            "sampled_peak_root_rss_bytes": 59604992,
+            "sampled_peak_tree_rss_sum_bytes": 59604992
+          },
+          "vertices": {
+            "samples": 15,
+            "sampled_peak_root_rss_bytes": 97337344,
+            "sampled_peak_tree_rss_sum_bytes": 97337344
+          }
+        },
+        "sampled_peak_root_rss_bytes": 102121472,
+        "sampled_peak_tree_rss_sum_bytes": 197853184,
+        "exit_zero_rss_samples_excluded": 0,
+        "observed_sample_interval_us": {
+          "median": 102790,
+          "max": 391760
+        }
+      },
+      "stage_events": [
+        {
+          "at_us": 1579,
+          "phase": "read",
+          "pid": 42157
+        },
+        {
+          "at_us": 2002,
+          "phase": "convert",
+          "pid": 42157
+        },
+        {
+          "at_us": 2926243,
+          "phase": "parse",
+          "pid": 42157
+        },
+        {
+          "at_us": 2981542,
+          "phase": "extract",
+          "pid": 42157
+        },
+        {
+          "at_us": 6436127,
+          "phase": "convert",
+          "pid": 42157
+        },
+        {
+          "at_us": 8104064,
+          "phase": "read",
+          "pid": 42157
+        },
+        {
+          "at_us": 8110083,
+          "phase": "parse",
+          "pid": 42157
+        },
+        {
+          "at_us": 9801930,
+          "phase": "triangulate",
+          "pid": 42157
+        },
+        {
+          "at_us": 13116790,
+          "phase": "validate",
+          "pid": 42157
+        },
+        {
+          "at_us": 13539309,
+          "phase": "vertices",
+          "pid": 42157
+        },
+        {
+          "at_us": 13575267,
+          "phase": "surfaces",
+          "pid": 42157
+        },
+        {
+          "at_us": 13795295,
+          "phase": "vertices",
+          "pid": 42157
+        },
+        {
+          "at_us": 13887883,
+          "phase": "surfaces",
+          "pid": 42157
+        },
+        {
+          "at_us": 14469762,
+          "phase": "vertices",
+          "pid": 42157
+        },
+        {
+          "at_us": 14562772,
+          "phase": "surfaces",
+          "pid": 42157
+        },
+        {
+          "at_us": 15170728,
+          "phase": "vertices",
+          "pid": 42157
+        },
+        {
+          "at_us": 15214590,
+          "phase": "surfaces",
+          "pid": 42157
+        },
+        {
+          "at_us": 15505005,
+          "phase": "vertices",
+          "pid": 42157
+        },
+        {
+          "at_us": 15611919,
+          "phase": "surfaces",
+          "pid": 42157
+        },
+        {
+          "at_us": 16164377,
+          "phase": "vertices",
+          "pid": 42157
+        },
+        {
+          "at_us": 16237351,
+          "phase": "surfaces",
+          "pid": 42157
+        },
+        {
+          "at_us": 16688382,
+          "phase": "vertices",
+          "pid": 42157
+        },
+        {
+          "at_us": 16716314,
+          "phase": "surfaces",
+          "pid": 42157
+        },
+        {
+          "at_us": 16886158,
+          "phase": "vertices",
+          "pid": 42157
+        },
+        {
+          "at_us": 16912904,
+          "phase": "surfaces",
+          "pid": 42157
+        },
+        {
+          "at_us": 17097254,
+          "phase": "vertices",
+          "pid": 42157
+        },
+        {
+          "at_us": 17359195,
+          "phase": "surfaces",
+          "pid": 42157
+        },
+        {
+          "at_us": 18715289,
+          "phase": "vertices",
+          "pid": 42157
+        },
+        {
+          "at_us": 18805407,
+          "phase": "surfaces",
+          "pid": 42157
+        },
+        {
+          "at_us": 19650570,
+          "phase": "vertices",
+          "pid": 42157
+        },
+        {
+          "at_us": 19758291,
+          "phase": "surfaces",
+          "pid": 42157
+        },
+        {
+          "at_us": 20337574,
+          "phase": "vertices",
+          "pid": 42157
+        },
+        {
+          "at_us": 20374458,
+          "phase": "surfaces",
+          "pid": 42157
+        },
+        {
+          "at_us": 20576176,
+          "phase": "vertices",
+          "pid": 42157
+        },
+        {
+          "at_us": 20578186,
+          "phase": "surfaces",
+          "pid": 42157
+        },
+        {
+          "at_us": 20584236,
+          "phase": "vertices",
+          "pid": 42157
+        },
+        {
+          "at_us": 20818731,
+          "phase": "surfaces",
+          "pid": 42157
+        },
+        {
+          "at_us": 22481545,
+          "phase": "vertices",
+          "pid": 42157
+        },
+        {
+          "at_us": 22513317,
+          "phase": "surfaces",
+          "pid": 42157
+        },
+        {
+          "at_us": 22685515,
+          "phase": "vertices",
+          "pid": 42157
+        },
+        {
+          "at_us": 22816518,
+          "phase": "surfaces",
+          "pid": 42157
+        },
+        {
+          "at_us": 23600977,
+          "phase": "instances",
+          "pid": 42157
+        },
+        {
+          "at_us": 23601534,
+          "phase": "commit",
+          "pid": 42157
+        },
+        {
+          "at_us": 23602566,
+          "phase": "done",
+          "pid": 42157
+        },
+        {
+          "at_us": 23602566,
+          "phase": "first_snap",
+          "pid": 42157
+        }
+      ],
+      "supervisor_wall_us": 23718132,
+      "run": 1
+    },
+    {
+      "diagnostics": {
+        "admission": {
+          "combined_bytes": 41043784,
+          "reserved_working_bytes": 0,
+          "resident_index_bytes": 41043784,
+          "tracked_scenes": 1
+        },
+        "buffer_bytes": 41038184,
+        "cache_epoch": 0,
+        "document_epoch": 0,
+        "indexed_revision": 1,
+        "last_preparation": {
+          "budget": {
+            "concurrent_working_bytes": 0,
+            "estimated_combined_bytes": 469822464,
+            "estimated_working_bytes": 469822464,
+            "instances": 17,
+            "limit_bytes": 536870912,
+            "resident_bytes": 0,
+            "shapes": 17,
+            "triangles": 458726
+          },
+          "buffer_bytes": 41038184,
+          "elapsed_us": 12860260,
+          "memory": {
+            "edge_nodes": 155763,
+            "edge_tree_vec_bytes": 13716872,
+            "edge_vec_bytes": 7493968,
+            "edges": 468369,
+            "face_nodes": 155763,
+            "face_tree_vec_bytes": 13639728,
+            "instances": 17,
+            "primitive_face_bytes": 432,
+            "ready_surface_shapes": 17,
+            "scene_entry_payload_bytes": 3400,
+            "scene_tree_vec_bytes": 2904,
+            "shapes": 17,
+            "triangles": 458726,
+            "vertex_nodes": 28843,
+            "vertex_tree_vec_bytes": 2492672,
+            "vertex_vec_bytes": 3691608,
+            "vertices": 230731
+          },
+          "reused_buffer_bytes": 0,
+          "reused_shapes": 0
+        },
+        "memory": {
+          "edge_nodes": 155763,
+          "edge_tree_vec_bytes": 13716872,
+          "edge_vec_bytes": 7493968,
+          "edges": 468369,
+          "face_nodes": 155763,
+          "face_tree_vec_bytes": 13639728,
+          "instances": 17,
+          "primitive_face_bytes": 432,
+          "ready_surface_shapes": 17,
+          "scene_entry_payload_bytes": 3400,
+          "scene_tree_vec_bytes": 2904,
+          "shapes": 17,
+          "triangles": 458726,
+          "vertex_nodes": 28843,
+          "vertex_tree_vec_bytes": 2492672,
+          "vertex_vec_bytes": 3691608,
+          "vertices": 230731
+        },
+        "render_revision": 1,
+        "retention": {
+          "current_buffer_bytes": 41038184,
+          "evicted_buffer_bytes_total": 0,
+          "evictions_total": 0,
+          "idle_buffer_bytes": 0,
+          "last_trim": {
+            "after_buffer_bytes": 41038184,
+            "before_buffer_bytes": 41038184,
+            "evicted_buffer_bytes": 0,
+            "evicted_shapes": 0,
+            "scene_compaction_deferred": false,
+            "scene_reclaimed_buffer_bytes": 0,
+            "scene_reclaimed_payload_bytes": 0
+          },
+          "limit_bytes": 134217728,
+          "over_budget_bytes": 0,
+          "referenced_buffer_bytes": 41038184
+        }
+      },
+      "first_snap": {
+        "acquire_us": 6,
+        "edge_hit": true,
+        "edge_us": 10719,
+        "face_hit": false,
+        "face_us": 75,
+        "geometries_built": 0,
+        "objects_visited": 0
+      },
+      "mesh_assets": 16,
+      "mode": "usd",
+      "objects": 17,
+      "profile": {
+        "commit_started": true,
+        "id": "1",
+        "kind": "usd",
+        "outcome": "success",
+        "phases": [
+          {
+            "elapsed_us": 923,
+            "entries": 1,
+            "phase": "commit"
+          },
+          {
+            "elapsed_us": 1882464,
+            "entries": 2,
+            "phase": "convert"
+          },
+          {
+            "elapsed_us": 1750964,
+            "entries": 1,
+            "phase": "extract"
+          },
+          {
+            "elapsed_us": 542,
+            "entries": 1,
+            "phase": "instances"
+          },
+          {
+            "elapsed_us": 2054518,
+            "entries": 2,
+            "phase": "parse"
+          },
+          {
+            "elapsed_us": 7971,
+            "entries": 2,
+            "phase": "read"
+          },
+          {
+            "elapsed_us": 11143439,
+            "entries": 16,
+            "phase": "surfaces"
+          },
+          {
+            "elapsed_us": 5495554,
+            "entries": 1,
+            "phase": "triangulate"
+          },
+          {
+            "elapsed_us": 441153,
+            "entries": 1,
+            "phase": "validate"
+          },
+          {
+            "elapsed_us": 1586352,
+            "entries": 16,
+            "phase": "vertices"
+          }
+        ],
+        "total_us": 24363885
+      },
+      "scope": "Headless production CPU load path; no dialog, IPC notification, renderer upload or GPU completion. Recovery writes a private checkpoint but never consumes the input.",
+      "triangles": 458714,
+      "memory": {
+        "interval_ms": 50.0,
+        "errors": [],
+        "samples": [
+          {
+            "root_rss_bytes": 11108352,
+            "tree_rss_sum_bytes": 21102592,
+            "process_count": 2,
+            "at_us": 37138,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11108352,
+            "tree_rss_sum_bytes": 41156608,
+            "process_count": 2,
+            "at_us": 130886,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11108352,
+            "tree_rss_sum_bytes": 59588608,
+            "process_count": 2,
+            "at_us": 228401,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11108352,
+            "tree_rss_sum_bytes": 65961984,
+            "process_count": 2,
+            "at_us": 310546,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11108352,
+            "tree_rss_sum_bytes": 79478784,
+            "process_count": 2,
+            "at_us": 405466,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11108352,
+            "tree_rss_sum_bytes": 87621632,
+            "process_count": 2,
+            "at_us": 514155,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11108352,
+            "tree_rss_sum_bytes": 97386496,
+            "process_count": 2,
+            "at_us": 619881,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 11223040,
+            "tree_rss_sum_bytes": 113098752,
+            "process_count": 2,
+            "at_us": 718804,
+            "phase": "extract"
+          },
+          {
+            "root_rss_bytes": 11223040,
+            "tree_rss_sum_bytes": 119996416,
+            "process_count": 2,
+            "at_us": 817380,
+            "phase": "extract"
+          },
+          {
+            "root_rss_bytes": 11223040,
+            "tree_rss_sum_bytes": 123486208,
+            "process_count": 2,
+            "at_us": 921975,
+            "phase": "extract"
+          },
+          {
+            "root_rss_bytes": 11223040,
+            "tree_rss_sum_bytes": 126222336,
+            "process_count": 2,
+            "at_us": 1036304,
+            "phase": "extract"
+          },
+          {
+            "root_rss_bytes": 11223040,
+            "tree_rss_sum_bytes": 135102464,
+            "process_count": 2,
+            "at_us": 1142608,
+            "phase": "extract"
+          },
+          {
+            "root_rss_bytes": 11223040,
+            "tree_rss_sum_bytes": 139640832,
+            "process_count": 2,
+            "at_us": 1242064,
+            "phase": "extract"
+          },
+          {
+            "root_rss_bytes": 11223040,
+            "tree_rss_sum_bytes": 144244736,
+            "process_count": 2,
+            "at_us": 1338226,
+            "phase": "extract"
+          },
+          {
+            "root_rss_bytes": 11239424,
+            "tree_rss_sum_bytes": 149831680,
+            "process_count": 2,
+            "at_us": 1434395,
+            "phase": "extract"
+          },
+          {
+            "root_rss_bytes": 11239424,
+            "tree_rss_sum_bytes": 153092096,
+            "process_count": 2,
+            "at_us": 1533476,
+            "phase": "extract"
+          },
+          {
+            "root_rss_bytes": 11239424,
+            "tree_rss_sum_bytes": 155975680,
+            "process_count": 2,
+            "at_us": 1637767,
+            "phase": "extract"
+          },
+          {
+            "root_rss_bytes": 11239424,
+            "tree_rss_sum_bytes": 165642240,
+            "process_count": 2,
+            "at_us": 1740216,
+            "phase": "extract"
+          },
+          {
+            "root_rss_bytes": 11239424,
+            "tree_rss_sum_bytes": 169918464,
+            "process_count": 2,
+            "at_us": 1843870,
+            "phase": "extract"
+          },
+          {
+            "root_rss_bytes": 11239424,
+            "tree_rss_sum_bytes": 172343296,
+            "process_count": 2,
+            "at_us": 1952281,
+            "phase": "extract"
+          },
+          {
+            "root_rss_bytes": 11239424,
+            "tree_rss_sum_bytes": 179503104,
+            "process_count": 2,
+            "at_us": 2054100,
+            "phase": "extract"
+          },
+          {
+            "root_rss_bytes": 11239424,
+            "tree_rss_sum_bytes": 185221120,
+            "process_count": 2,
+            "at_us": 2166197,
+            "phase": "extract"
+          },
+          {
+            "root_rss_bytes": 11239424,
+            "tree_rss_sum_bytes": 190857216,
+            "process_count": 2,
+            "at_us": 2261245,
+            "phase": "extract"
+          },
+          {
+            "root_rss_bytes": 11239424,
+            "tree_rss_sum_bytes": 196558848,
+            "process_count": 2,
+            "at_us": 2360086,
+            "phase": "extract"
+          },
+          {
+            "root_rss_bytes": 11239424,
+            "tree_rss_sum_bytes": 195444736,
+            "process_count": 2,
+            "at_us": 2454618,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11239424,
+            "tree_rss_sum_bytes": 195444736,
+            "process_count": 2,
+            "at_us": 2556824,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11239424,
+            "tree_rss_sum_bytes": 195444736,
+            "process_count": 2,
+            "at_us": 2651997,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11239424,
+            "tree_rss_sum_bytes": 195444736,
+            "process_count": 2,
+            "at_us": 2747280,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11239424,
+            "tree_rss_sum_bytes": 195444736,
+            "process_count": 2,
+            "at_us": 2839645,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11239424,
+            "tree_rss_sum_bytes": 195444736,
+            "process_count": 2,
+            "at_us": 2935281,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11239424,
+            "tree_rss_sum_bytes": 195444736,
+            "process_count": 2,
+            "at_us": 3032013,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11239424,
+            "tree_rss_sum_bytes": 195444736,
+            "process_count": 2,
+            "at_us": 3118355,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11272192,
+            "tree_rss_sum_bytes": 195477504,
+            "process_count": 2,
+            "at_us": 3223233,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11272192,
+            "tree_rss_sum_bytes": 195477504,
+            "process_count": 2,
+            "at_us": 3331699,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11272192,
+            "tree_rss_sum_bytes": 195477504,
+            "process_count": 2,
+            "at_us": 3438677,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11272192,
+            "tree_rss_sum_bytes": 195477504,
+            "process_count": 2,
+            "at_us": 3543796,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11272192,
+            "tree_rss_sum_bytes": 195477504,
+            "process_count": 2,
+            "at_us": 3653515,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 33816576,
+            "tree_rss_sum_bytes": 33816576,
+            "process_count": 1,
+            "at_us": 3756661,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 34488320,
+            "tree_rss_sum_bytes": 34488320,
+            "process_count": 1,
+            "at_us": 3863010,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 34848768,
+            "tree_rss_sum_bytes": 34848768,
+            "process_count": 1,
+            "at_us": 3971130,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 34848768,
+            "tree_rss_sum_bytes": 34848768,
+            "process_count": 1,
+            "at_us": 4072832,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 36438016,
+            "tree_rss_sum_bytes": 36438016,
+            "process_count": 1,
+            "at_us": 4189102,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 37306368,
+            "tree_rss_sum_bytes": 37306368,
+            "process_count": 1,
+            "at_us": 4307450,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 37650432,
+            "tree_rss_sum_bytes": 37650432,
+            "process_count": 1,
+            "at_us": 4418155,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 38273024,
+            "tree_rss_sum_bytes": 38273024,
+            "process_count": 1,
+            "at_us": 4536005,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 38273024,
+            "tree_rss_sum_bytes": 38273024,
+            "process_count": 1,
+            "at_us": 4642094,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 38273024,
+            "tree_rss_sum_bytes": 38273024,
+            "process_count": 1,
+            "at_us": 4760101,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 39878656,
+            "tree_rss_sum_bytes": 39878656,
+            "process_count": 1,
+            "at_us": 4877575,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 40435712,
+            "tree_rss_sum_bytes": 40435712,
+            "process_count": 1,
+            "at_us": 4992764,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 40878080,
+            "tree_rss_sum_bytes": 40878080,
+            "process_count": 1,
+            "at_us": 5103784,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 42057728,
+            "tree_rss_sum_bytes": 42057728,
+            "process_count": 1,
+            "at_us": 5221807,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 42713088,
+            "tree_rss_sum_bytes": 42713088,
+            "process_count": 1,
+            "at_us": 5326010,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 43188224,
+            "tree_rss_sum_bytes": 43188224,
+            "process_count": 1,
+            "at_us": 5447025,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 44023808,
+            "tree_rss_sum_bytes": 44023808,
+            "process_count": 1,
+            "at_us": 5562490,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 44941312,
+            "tree_rss_sum_bytes": 44941312,
+            "process_count": 1,
+            "at_us": 5683733,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 46137344,
+            "tree_rss_sum_bytes": 46137344,
+            "process_count": 1,
+            "at_us": 5803085,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 46514176,
+            "tree_rss_sum_bytes": 46514176,
+            "process_count": 1,
+            "at_us": 5908398,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 47054848,
+            "tree_rss_sum_bytes": 47054848,
+            "process_count": 1,
+            "at_us": 6032062,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 47497216,
+            "tree_rss_sum_bytes": 47497216,
+            "process_count": 1,
+            "at_us": 6149858,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 48300032,
+            "tree_rss_sum_bytes": 48300032,
+            "process_count": 1,
+            "at_us": 6304625,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 48709632,
+            "tree_rss_sum_bytes": 48709632,
+            "process_count": 1,
+            "at_us": 6435787,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 49086464,
+            "tree_rss_sum_bytes": 49086464,
+            "process_count": 1,
+            "at_us": 6570246,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 50659328,
+            "tree_rss_sum_bytes": 50659328,
+            "process_count": 1,
+            "at_us": 6705268,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 51003392,
+            "tree_rss_sum_bytes": 51003392,
+            "process_count": 1,
+            "at_us": 6839222,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 51363840,
+            "tree_rss_sum_bytes": 51363840,
+            "process_count": 1,
+            "at_us": 6967575,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 51724288,
+            "tree_rss_sum_bytes": 51724288,
+            "process_count": 1,
+            "at_us": 7095559,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 52068352,
+            "tree_rss_sum_bytes": 52068352,
+            "process_count": 1,
+            "at_us": 7217874,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 52117504,
+            "tree_rss_sum_bytes": 52117504,
+            "process_count": 1,
+            "at_us": 7334711,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 52117504,
+            "tree_rss_sum_bytes": 52117504,
+            "process_count": 1,
+            "at_us": 7458420,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 52183040,
+            "tree_rss_sum_bytes": 52183040,
+            "process_count": 1,
+            "at_us": 7584607,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 52248576,
+            "tree_rss_sum_bytes": 52248576,
+            "process_count": 1,
+            "at_us": 7694363,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 52281344,
+            "tree_rss_sum_bytes": 52281344,
+            "process_count": 1,
+            "at_us": 7815150,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 52281344,
+            "tree_rss_sum_bytes": 52281344,
+            "process_count": 1,
+            "at_us": 7942950,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 52314112,
+            "tree_rss_sum_bytes": 52314112,
+            "process_count": 1,
+            "at_us": 8061967,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 52379648,
+            "tree_rss_sum_bytes": 52379648,
+            "process_count": 1,
+            "at_us": 8185952,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 52396032,
+            "tree_rss_sum_bytes": 52396032,
+            "process_count": 1,
+            "at_us": 8300448,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 52658176,
+            "tree_rss_sum_bytes": 52658176,
+            "process_count": 1,
+            "at_us": 8423165,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 53886976,
+            "tree_rss_sum_bytes": 53886976,
+            "process_count": 1,
+            "at_us": 8538108,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 54263808,
+            "tree_rss_sum_bytes": 54263808,
+            "process_count": 1,
+            "at_us": 8661085,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 54624256,
+            "tree_rss_sum_bytes": 54624256,
+            "process_count": 1,
+            "at_us": 8784029,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 54984704,
+            "tree_rss_sum_bytes": 54984704,
+            "process_count": 1,
+            "at_us": 8895306,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 55328768,
+            "tree_rss_sum_bytes": 55328768,
+            "process_count": 1,
+            "at_us": 9119951,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 55705600,
+            "tree_rss_sum_bytes": 55705600,
+            "process_count": 1,
+            "at_us": 9229273,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 55721984,
+            "tree_rss_sum_bytes": 55721984,
+            "process_count": 1,
+            "at_us": 9351505,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 55754752,
+            "tree_rss_sum_bytes": 55754752,
+            "process_count": 1,
+            "at_us": 9479763,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 56197120,
+            "tree_rss_sum_bytes": 56197120,
+            "process_count": 1,
+            "at_us": 9597955,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 56573952,
+            "tree_rss_sum_bytes": 56573952,
+            "process_count": 1,
+            "at_us": 9707445,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 56934400,
+            "tree_rss_sum_bytes": 56934400,
+            "process_count": 1,
+            "at_us": 9825722,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 58589184,
+            "tree_rss_sum_bytes": 58589184,
+            "process_count": 1,
+            "at_us": 9948257,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 58933248,
+            "tree_rss_sum_bytes": 58933248,
+            "process_count": 1,
+            "at_us": 10070084,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 58998784,
+            "tree_rss_sum_bytes": 58998784,
+            "process_count": 1,
+            "at_us": 10187663,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 58998784,
+            "tree_rss_sum_bytes": 58998784,
+            "process_count": 1,
+            "at_us": 10300950,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 58998784,
+            "tree_rss_sum_bytes": 58998784,
+            "process_count": 1,
+            "at_us": 10418804,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 59211776,
+            "tree_rss_sum_bytes": 59211776,
+            "process_count": 1,
+            "at_us": 10548925,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 59228160,
+            "tree_rss_sum_bytes": 59228160,
+            "process_count": 1,
+            "at_us": 10663109,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 59277312,
+            "tree_rss_sum_bytes": 59277312,
+            "process_count": 1,
+            "at_us": 10758364,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 59686912,
+            "tree_rss_sum_bytes": 59686912,
+            "process_count": 1,
+            "at_us": 10852814,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 59949056,
+            "tree_rss_sum_bytes": 59949056,
+            "process_count": 1,
+            "at_us": 10954577,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 59965440,
+            "tree_rss_sum_bytes": 59965440,
+            "process_count": 1,
+            "at_us": 11062289,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 59965440,
+            "tree_rss_sum_bytes": 59965440,
+            "process_count": 1,
+            "at_us": 11153003,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 60162048,
+            "tree_rss_sum_bytes": 60162048,
+            "process_count": 1,
+            "at_us": 11250268,
+            "phase": "validate"
+          },
+          {
+            "root_rss_bytes": 60162048,
+            "tree_rss_sum_bytes": 60162048,
+            "process_count": 1,
+            "at_us": 11355202,
+            "phase": "validate"
+          },
+          {
+            "root_rss_bytes": 60162048,
+            "tree_rss_sum_bytes": 60162048,
+            "process_count": 1,
+            "at_us": 11443526,
+            "phase": "validate"
+          },
+          {
+            "root_rss_bytes": 60162048,
+            "tree_rss_sum_bytes": 60162048,
+            "process_count": 1,
+            "at_us": 11552587,
+            "phase": "validate"
+          },
+          {
+            "root_rss_bytes": 60162048,
+            "tree_rss_sum_bytes": 60162048,
+            "process_count": 1,
+            "at_us": 11639184,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 60522496,
+            "tree_rss_sum_bytes": 60522496,
+            "process_count": 1,
+            "at_us": 11730449,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 60620800,
+            "tree_rss_sum_bytes": 60620800,
+            "process_count": 1,
+            "at_us": 11815970,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 60653568,
+            "tree_rss_sum_bytes": 60653568,
+            "process_count": 1,
+            "at_us": 11915821,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 60751872,
+            "tree_rss_sum_bytes": 60751872,
+            "process_count": 1,
+            "at_us": 12022560,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 60801024,
+            "tree_rss_sum_bytes": 60801024,
+            "process_count": 1,
+            "at_us": 12130532,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 60801024,
+            "tree_rss_sum_bytes": 60801024,
+            "process_count": 1,
+            "at_us": 12247233,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 60801024,
+            "tree_rss_sum_bytes": 60801024,
+            "process_count": 1,
+            "at_us": 12369087,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 60801024,
+            "tree_rss_sum_bytes": 60801024,
+            "process_count": 1,
+            "at_us": 12482246,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 60801024,
+            "tree_rss_sum_bytes": 60801024,
+            "process_count": 1,
+            "at_us": 12599239,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 60850176,
+            "tree_rss_sum_bytes": 60850176,
+            "process_count": 1,
+            "at_us": 12725099,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 60850176,
+            "tree_rss_sum_bytes": 60850176,
+            "process_count": 1,
+            "at_us": 12887676,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 61063168,
+            "tree_rss_sum_bytes": 61063168,
+            "process_count": 1,
+            "at_us": 13041536,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 61079552,
+            "tree_rss_sum_bytes": 61079552,
+            "process_count": 1,
+            "at_us": 13177335,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 61079552,
+            "tree_rss_sum_bytes": 61079552,
+            "process_count": 1,
+            "at_us": 13309355,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 61620224,
+            "tree_rss_sum_bytes": 61620224,
+            "process_count": 1,
+            "at_us": 13427515,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 61767680,
+            "tree_rss_sum_bytes": 61767680,
+            "process_count": 1,
+            "at_us": 13557543,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 61849600,
+            "tree_rss_sum_bytes": 61849600,
+            "process_count": 1,
+            "at_us": 13717454,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 61849600,
+            "tree_rss_sum_bytes": 61849600,
+            "process_count": 1,
+            "at_us": 13839263,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 61865984,
+            "tree_rss_sum_bytes": 61865984,
+            "process_count": 1,
+            "at_us": 13960493,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 62308352,
+            "tree_rss_sum_bytes": 62308352,
+            "process_count": 1,
+            "at_us": 14091101,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 62373888,
+            "tree_rss_sum_bytes": 62373888,
+            "process_count": 1,
+            "at_us": 14220148,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 63979520,
+            "tree_rss_sum_bytes": 63979520,
+            "process_count": 1,
+            "at_us": 14332886,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 63979520,
+            "tree_rss_sum_bytes": 63979520,
+            "process_count": 1,
+            "at_us": 14485019,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 63979520,
+            "tree_rss_sum_bytes": 63979520,
+            "process_count": 1,
+            "at_us": 14600330,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 63979520,
+            "tree_rss_sum_bytes": 63979520,
+            "process_count": 1,
+            "at_us": 14714090,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 63979520,
+            "tree_rss_sum_bytes": 63979520,
+            "process_count": 1,
+            "at_us": 14836196,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 64061440,
+            "tree_rss_sum_bytes": 64061440,
+            "process_count": 1,
+            "at_us": 14955753,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 64634880,
+            "tree_rss_sum_bytes": 64634880,
+            "process_count": 1,
+            "at_us": 15079660,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 65781760,
+            "tree_rss_sum_bytes": 65781760,
+            "process_count": 1,
+            "at_us": 15247206,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 65781760,
+            "tree_rss_sum_bytes": 65781760,
+            "process_count": 1,
+            "at_us": 15472698,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 65781760,
+            "tree_rss_sum_bytes": 65781760,
+            "process_count": 1,
+            "at_us": 15601736,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 65945600,
+            "tree_rss_sum_bytes": 65945600,
+            "process_count": 1,
+            "at_us": 15716733,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 66043904,
+            "tree_rss_sum_bytes": 66043904,
+            "process_count": 1,
+            "at_us": 15828262,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 66043904,
+            "tree_rss_sum_bytes": 66043904,
+            "process_count": 1,
+            "at_us": 15930411,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 66568192,
+            "tree_rss_sum_bytes": 66568192,
+            "process_count": 1,
+            "at_us": 16074531,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 67518464,
+            "tree_rss_sum_bytes": 67518464,
+            "process_count": 1,
+            "at_us": 16189330,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 67796992,
+            "tree_rss_sum_bytes": 67796992,
+            "process_count": 1,
+            "at_us": 16304006,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 68501504,
+            "tree_rss_sum_bytes": 68501504,
+            "process_count": 1,
+            "at_us": 16416395,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 69533696,
+            "tree_rss_sum_bytes": 69533696,
+            "process_count": 1,
+            "at_us": 16539712,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 73170944,
+            "tree_rss_sum_bytes": 73170944,
+            "process_count": 1,
+            "at_us": 16642643,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 73744384,
+            "tree_rss_sum_bytes": 73744384,
+            "process_count": 1,
+            "at_us": 16743715,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 73744384,
+            "tree_rss_sum_bytes": 73744384,
+            "process_count": 1,
+            "at_us": 16865567,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 75087872,
+            "tree_rss_sum_bytes": 75087872,
+            "process_count": 1,
+            "at_us": 16963521,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 76005376,
+            "tree_rss_sum_bytes": 76005376,
+            "process_count": 1,
+            "at_us": 17073009,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 76742656,
+            "tree_rss_sum_bytes": 76742656,
+            "process_count": 1,
+            "at_us": 17174420,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 78086144,
+            "tree_rss_sum_bytes": 78086144,
+            "process_count": 1,
+            "at_us": 17271667,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 78757888,
+            "tree_rss_sum_bytes": 78757888,
+            "process_count": 1,
+            "at_us": 17364547,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 80347136,
+            "tree_rss_sum_bytes": 80347136,
+            "process_count": 1,
+            "at_us": 17469069,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 80871424,
+            "tree_rss_sum_bytes": 80871424,
+            "process_count": 1,
+            "at_us": 17572974,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 81379328,
+            "tree_rss_sum_bytes": 81379328,
+            "process_count": 1,
+            "at_us": 17685276,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 81379328,
+            "tree_rss_sum_bytes": 81379328,
+            "process_count": 1,
+            "at_us": 17798047,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 81379328,
+            "tree_rss_sum_bytes": 81379328,
+            "process_count": 1,
+            "at_us": 17989210,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 81821696,
+            "tree_rss_sum_bytes": 81821696,
+            "process_count": 1,
+            "at_us": 18107197,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 82345984,
+            "tree_rss_sum_bytes": 82345984,
+            "process_count": 1,
+            "at_us": 18236636,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 82853888,
+            "tree_rss_sum_bytes": 82853888,
+            "process_count": 1,
+            "at_us": 18350188,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 83017728,
+            "tree_rss_sum_bytes": 83017728,
+            "process_count": 1,
+            "at_us": 18477420,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 83607552,
+            "tree_rss_sum_bytes": 83607552,
+            "process_count": 1,
+            "at_us": 18590337,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 83607552,
+            "tree_rss_sum_bytes": 83607552,
+            "process_count": 1,
+            "at_us": 18705146,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 83656704,
+            "tree_rss_sum_bytes": 83656704,
+            "process_count": 1,
+            "at_us": 18826262,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 83787776,
+            "tree_rss_sum_bytes": 83787776,
+            "process_count": 1,
+            "at_us": 18965177,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 83787776,
+            "tree_rss_sum_bytes": 83787776,
+            "process_count": 1,
+            "at_us": 19093546,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 83804160,
+            "tree_rss_sum_bytes": 83804160,
+            "process_count": 1,
+            "at_us": 19216740,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 83804160,
+            "tree_rss_sum_bytes": 83804160,
+            "process_count": 1,
+            "at_us": 19336295,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 83804160,
+            "tree_rss_sum_bytes": 83804160,
+            "process_count": 1,
+            "at_us": 19448084,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 83935232,
+            "tree_rss_sum_bytes": 83935232,
+            "process_count": 1,
+            "at_us": 19573430,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 83935232,
+            "tree_rss_sum_bytes": 83935232,
+            "process_count": 1,
+            "at_us": 19704383,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 83935232,
+            "tree_rss_sum_bytes": 83935232,
+            "process_count": 1,
+            "at_us": 19817277,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 83951616,
+            "tree_rss_sum_bytes": 83951616,
+            "process_count": 1,
+            "at_us": 19938124,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 83951616,
+            "tree_rss_sum_bytes": 83951616,
+            "process_count": 1,
+            "at_us": 20058194,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 84066304,
+            "tree_rss_sum_bytes": 84066304,
+            "process_count": 1,
+            "at_us": 20166862,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 84475904,
+            "tree_rss_sum_bytes": 84475904,
+            "process_count": 1,
+            "at_us": 20297008,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 85491712,
+            "tree_rss_sum_bytes": 85491712,
+            "process_count": 1,
+            "at_us": 20410274,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 86769664,
+            "tree_rss_sum_bytes": 86769664,
+            "process_count": 1,
+            "at_us": 20542926,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 88162304,
+            "tree_rss_sum_bytes": 88162304,
+            "process_count": 1,
+            "at_us": 20657816,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 88686592,
+            "tree_rss_sum_bytes": 88686592,
+            "process_count": 1,
+            "at_us": 20778774,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 88686592,
+            "tree_rss_sum_bytes": 88686592,
+            "process_count": 1,
+            "at_us": 20883244,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 88686592,
+            "tree_rss_sum_bytes": 88686592,
+            "process_count": 1,
+            "at_us": 21000128,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 88686592,
+            "tree_rss_sum_bytes": 88686592,
+            "process_count": 1,
+            "at_us": 21121409,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 90095616,
+            "tree_rss_sum_bytes": 90095616,
+            "process_count": 1,
+            "at_us": 21230488,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 90898432,
+            "tree_rss_sum_bytes": 90898432,
+            "process_count": 1,
+            "at_us": 21345506,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 91176960,
+            "tree_rss_sum_bytes": 91176960,
+            "process_count": 1,
+            "at_us": 21463238,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 91652096,
+            "tree_rss_sum_bytes": 91652096,
+            "process_count": 1,
+            "at_us": 21570417,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 91963392,
+            "tree_rss_sum_bytes": 91963392,
+            "process_count": 1,
+            "at_us": 21692200,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 92405760,
+            "tree_rss_sum_bytes": 92405760,
+            "process_count": 1,
+            "at_us": 21817239,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 92913664,
+            "tree_rss_sum_bytes": 92913664,
+            "process_count": 1,
+            "at_us": 21921270,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 94060544,
+            "tree_rss_sum_bytes": 94060544,
+            "process_count": 1,
+            "at_us": 22030802,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 94535680,
+            "tree_rss_sum_bytes": 94535680,
+            "process_count": 1,
+            "at_us": 22148025,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 95518720,
+            "tree_rss_sum_bytes": 95518720,
+            "process_count": 1,
+            "at_us": 22260474,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 95911936,
+            "tree_rss_sum_bytes": 95911936,
+            "process_count": 1,
+            "at_us": 22375742,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 96419840,
+            "tree_rss_sum_bytes": 96419840,
+            "process_count": 1,
+            "at_us": 22486422,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 96681984,
+            "tree_rss_sum_bytes": 96681984,
+            "process_count": 1,
+            "at_us": 22599212,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 96780288,
+            "tree_rss_sum_bytes": 96780288,
+            "process_count": 1,
+            "at_us": 22709028,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 96845824,
+            "tree_rss_sum_bytes": 96845824,
+            "process_count": 1,
+            "at_us": 22807069,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 96845824,
+            "tree_rss_sum_bytes": 96845824,
+            "process_count": 1,
+            "at_us": 22908503,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 97288192,
+            "tree_rss_sum_bytes": 97288192,
+            "process_count": 1,
+            "at_us": 23017471,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 97419264,
+            "tree_rss_sum_bytes": 97419264,
+            "process_count": 1,
+            "at_us": 23128933,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 97419264,
+            "tree_rss_sum_bytes": 97419264,
+            "process_count": 1,
+            "at_us": 23233272,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 97419264,
+            "tree_rss_sum_bytes": 97419264,
+            "process_count": 1,
+            "at_us": 23331086,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 98713600,
+            "tree_rss_sum_bytes": 98713600,
+            "process_count": 1,
+            "at_us": 23442790,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 98713600,
+            "tree_rss_sum_bytes": 98713600,
+            "process_count": 1,
+            "at_us": 23557887,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 98713600,
+            "tree_rss_sum_bytes": 98713600,
+            "process_count": 1,
+            "at_us": 23696286,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 98713600,
+            "tree_rss_sum_bytes": 98713600,
+            "process_count": 1,
+            "at_us": 23872870,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 99991552,
+            "tree_rss_sum_bytes": 99991552,
+            "process_count": 1,
+            "at_us": 23996597,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 99991552,
+            "tree_rss_sum_bytes": 99991552,
+            "process_count": 1,
+            "at_us": 24124117,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 99991552,
+            "tree_rss_sum_bytes": 99991552,
+            "process_count": 1,
+            "at_us": 24240011,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 99991552,
+            "tree_rss_sum_bytes": 99991552,
+            "process_count": 1,
+            "at_us": 24356327,
+            "phase": "surfaces"
+          }
+        ],
+        "per_phase": {
+          "commit": {
+            "samples": 0,
+            "sampled_peak_root_rss_bytes": null,
+            "sampled_peak_tree_rss_sum_bytes": null
+          },
+          "convert": {
+            "samples": 19,
+            "sampled_peak_root_rss_bytes": 11272192,
+            "sampled_peak_tree_rss_sum_bytes": 195477504
+          },
+          "extract": {
+            "samples": 17,
+            "sampled_peak_root_rss_bytes": 11239424,
+            "sampled_peak_tree_rss_sum_bytes": 196558848
+          },
+          "first_snap": {
+            "samples": 0,
+            "sampled_peak_root_rss_bytes": null,
+            "sampled_peak_tree_rss_sum_bytes": null
+          },
+          "instances": {
+            "samples": 0,
+            "sampled_peak_root_rss_bytes": null,
+            "sampled_peak_tree_rss_sum_bytes": null
+          },
+          "parse": {
+            "samples": 19,
+            "sampled_peak_root_rss_bytes": 44941312,
+            "sampled_peak_tree_rss_sum_bytes": 97386496
+          },
+          "read": {
+            "samples": 0,
+            "sampled_peak_root_rss_bytes": null,
+            "sampled_peak_tree_rss_sum_bytes": null
+          },
+          "surfaces": {
+            "samples": 93,
+            "sampled_peak_root_rss_bytes": 99991552,
+            "sampled_peak_tree_rss_sum_bytes": 99991552
+          },
+          "triangulate": {
+            "samples": 45,
+            "sampled_peak_root_rss_bytes": 59965440,
+            "sampled_peak_tree_rss_sum_bytes": 59965440
+          },
+          "validate": {
+            "samples": 4,
+            "sampled_peak_root_rss_bytes": 60162048,
+            "sampled_peak_tree_rss_sum_bytes": 60162048
+          },
+          "vertices": {
+            "samples": 14,
+            "sampled_peak_root_rss_bytes": 96845824,
+            "sampled_peak_tree_rss_sum_bytes": 96845824
+          }
+        },
+        "sampled_peak_root_rss_bytes": 99991552,
+        "sampled_peak_tree_rss_sum_bytes": 196558848,
+        "exit_zero_rss_samples_excluded": 0,
+        "observed_sample_interval_us": {
+          "median": 114412.5,
+          "max": 225492
+        }
+      },
+      "stage_events": [
+        {
+          "at_us": 25,
+          "phase": "read",
+          "pid": 42489
+        },
+        {
+          "at_us": 55,
+          "phase": "convert",
+          "pid": 42489
+        },
+        {
+          "at_us": 590601,
+          "phase": "parse",
+          "pid": 42489
+        },
+        {
+          "at_us": 645871,
+          "phase": "extract",
+          "pid": 42489
+        },
+        {
+          "at_us": 2396834,
+          "phase": "convert",
+          "pid": 42489
+        },
+        {
+          "at_us": 3688774,
+          "phase": "read",
+          "pid": 42489
+        },
+        {
+          "at_us": 3696699,
+          "phase": "parse",
+          "pid": 42489
+        },
+        {
+          "at_us": 5695931,
+          "phase": "triangulate",
+          "pid": 42489
+        },
+        {
+          "at_us": 11191481,
+          "phase": "validate",
+          "pid": 42489
+        },
+        {
+          "at_us": 11632634,
+          "phase": "vertices",
+          "pid": 42489
+        },
+        {
+          "at_us": 11665160,
+          "phase": "surfaces",
+          "pid": 42489
+        },
+        {
+          "at_us": 11850864,
+          "phase": "vertices",
+          "pid": 42489
+        },
+        {
+          "at_us": 11926249,
+          "phase": "surfaces",
+          "pid": 42489
+        },
+        {
+          "at_us": 12520460,
+          "phase": "vertices",
+          "pid": 42489
+        },
+        {
+          "at_us": 12622162,
+          "phase": "surfaces",
+          "pid": 42489
+        },
+        {
+          "at_us": 13539814,
+          "phase": "vertices",
+          "pid": 42489
+        },
+        {
+          "at_us": 13592830,
+          "phase": "surfaces",
+          "pid": 42489
+        },
+        {
+          "at_us": 13887776,
+          "phase": "vertices",
+          "pid": 42489
+        },
+        {
+          "at_us": 13994223,
+          "phase": "surfaces",
+          "pid": 42489
+        },
+        {
+          "at_us": 14730268,
+          "phase": "vertices",
+          "pid": 42489
+        },
+        {
+          "at_us": 14825578,
+          "phase": "surfaces",
+          "pid": 42489
+        },
+        {
+          "at_us": 15653041,
+          "phase": "vertices",
+          "pid": 42489
+        },
+        {
+          "at_us": 15695618,
+          "phase": "surfaces",
+          "pid": 42489
+        },
+        {
+          "at_us": 15937229,
+          "phase": "vertices",
+          "pid": 42489
+        },
+        {
+          "at_us": 15972604,
+          "phase": "surfaces",
+          "pid": 42489
+        },
+        {
+          "at_us": 16246863,
+          "phase": "vertices",
+          "pid": 42489
+        },
+        {
+          "at_us": 16511008,
+          "phase": "surfaces",
+          "pid": 42489
+        },
+        {
+          "at_us": 18283252,
+          "phase": "vertices",
+          "pid": 42489
+        },
+        {
+          "at_us": 18373531,
+          "phase": "surfaces",
+          "pid": 42489
+        },
+        {
+          "at_us": 19057949,
+          "phase": "vertices",
+          "pid": 42489
+        },
+        {
+          "at_us": 19154359,
+          "phase": "surfaces",
+          "pid": 42489
+        },
+        {
+          "at_us": 19831897,
+          "phase": "vertices",
+          "pid": 42489
+        },
+        {
+          "at_us": 19875677,
+          "phase": "surfaces",
+          "pid": 42489
+        },
+        {
+          "at_us": 20132941,
+          "phase": "vertices",
+          "pid": 42489
+        },
+        {
+          "at_us": 20134540,
+          "phase": "surfaces",
+          "pid": 42489
+        },
+        {
+          "at_us": 20140885,
+          "phase": "vertices",
+          "pid": 42489
+        },
+        {
+          "at_us": 20454703,
+          "phase": "surfaces",
+          "pid": 42489
+        },
+        {
+          "at_us": 22497773,
+          "phase": "vertices",
+          "pid": 42489
+        },
+        {
+          "at_us": 22551237,
+          "phase": "surfaces",
+          "pid": 42489
+        },
+        {
+          "at_us": 22787629,
+          "phase": "vertices",
+          "pid": 42489
+        },
+        {
+          "at_us": 22968160,
+          "phase": "surfaces",
+          "pid": 42489
+        },
+        {
+          "at_us": 24362430,
+          "phase": "instances",
+          "pid": 42489
+        },
+        {
+          "at_us": 24362966,
+          "phase": "commit",
+          "pid": 42489
+        },
+        {
+          "at_us": 24363885,
+          "phase": "done",
+          "pid": 42489
+        },
+        {
+          "at_us": 24363885,
+          "phase": "first_snap",
+          "pid": 42489
+        }
+      ],
+      "supervisor_wall_us": 24405064,
+      "run": 2
+    },
+    {
+      "diagnostics": {
+        "admission": {
+          "combined_bytes": 41043784,
+          "reserved_working_bytes": 0,
+          "resident_index_bytes": 41043784,
+          "tracked_scenes": 1
+        },
+        "buffer_bytes": 41038184,
+        "cache_epoch": 0,
+        "document_epoch": 0,
+        "indexed_revision": 1,
+        "last_preparation": {
+          "budget": {
+            "concurrent_working_bytes": 0,
+            "estimated_combined_bytes": 469822464,
+            "estimated_working_bytes": 469822464,
+            "instances": 17,
+            "limit_bytes": 536870912,
+            "resident_bytes": 0,
+            "shapes": 17,
+            "triangles": 458726
+          },
+          "buffer_bytes": 41038184,
+          "elapsed_us": 8165945,
+          "memory": {
+            "edge_nodes": 155763,
+            "edge_tree_vec_bytes": 13716872,
+            "edge_vec_bytes": 7493968,
+            "edges": 468369,
+            "face_nodes": 155763,
+            "face_tree_vec_bytes": 13639728,
+            "instances": 17,
+            "primitive_face_bytes": 432,
+            "ready_surface_shapes": 17,
+            "scene_entry_payload_bytes": 3400,
+            "scene_tree_vec_bytes": 2904,
+            "shapes": 17,
+            "triangles": 458726,
+            "vertex_nodes": 28843,
+            "vertex_tree_vec_bytes": 2492672,
+            "vertex_vec_bytes": 3691608,
+            "vertices": 230731
+          },
+          "reused_buffer_bytes": 0,
+          "reused_shapes": 0
+        },
+        "memory": {
+          "edge_nodes": 155763,
+          "edge_tree_vec_bytes": 13716872,
+          "edge_vec_bytes": 7493968,
+          "edges": 468369,
+          "face_nodes": 155763,
+          "face_tree_vec_bytes": 13639728,
+          "instances": 17,
+          "primitive_face_bytes": 432,
+          "ready_surface_shapes": 17,
+          "scene_entry_payload_bytes": 3400,
+          "scene_tree_vec_bytes": 2904,
+          "shapes": 17,
+          "triangles": 458726,
+          "vertex_nodes": 28843,
+          "vertex_tree_vec_bytes": 2492672,
+          "vertex_vec_bytes": 3691608,
+          "vertices": 230731
+        },
+        "render_revision": 1,
+        "retention": {
+          "current_buffer_bytes": 41038184,
+          "evicted_buffer_bytes_total": 0,
+          "evictions_total": 0,
+          "idle_buffer_bytes": 0,
+          "last_trim": {
+            "after_buffer_bytes": 41038184,
+            "before_buffer_bytes": 41038184,
+            "evicted_buffer_bytes": 0,
+            "evicted_shapes": 0,
+            "scene_compaction_deferred": false,
+            "scene_reclaimed_buffer_bytes": 0,
+            "scene_reclaimed_payload_bytes": 0
+          },
+          "limit_bytes": 134217728,
+          "over_budget_bytes": 0,
+          "referenced_buffer_bytes": 41038184
+        }
+      },
+      "first_snap": {
+        "acquire_us": 4,
+        "edge_hit": true,
+        "edge_us": 3515,
+        "face_hit": false,
+        "face_us": 32,
+        "geometries_built": 0,
+        "objects_visited": 0
+      },
+      "mesh_assets": 16,
+      "mode": "usd",
+      "objects": 17,
+      "profile": {
+        "commit_started": true,
+        "id": "1",
+        "kind": "usd",
+        "outcome": "success",
+        "phases": [
+          {
+            "elapsed_us": 193,
+            "entries": 1,
+            "phase": "commit"
+          },
+          {
+            "elapsed_us": 2870788,
+            "entries": 2,
+            "phase": "convert"
+          },
+          {
+            "elapsed_us": 2097953,
+            "entries": 1,
+            "phase": "extract"
+          },
+          {
+            "elapsed_us": 372,
+            "entries": 1,
+            "phase": "instances"
+          },
+          {
+            "elapsed_us": 1232016,
+            "entries": 1,
+            "phase": "parse"
+          },
+          {
+            "elapsed_us": 3893,
+            "entries": 2,
+            "phase": "read"
+          },
+          {
+            "elapsed_us": 6931774,
+            "entries": 16,
+            "phase": "surfaces"
+          },
+          {
+            "elapsed_us": 3397097,
+            "entries": 1,
+            "phase": "triangulate"
+          },
+          {
+            "elapsed_us": 357859,
+            "entries": 1,
+            "phase": "validate"
+          },
+          {
+            "elapsed_us": 1116469,
+            "entries": 16,
+            "phase": "vertices"
+          }
+        ],
+        "total_us": 18008416
+      },
+      "scope": "Headless production CPU load path; no dialog, IPC notification, renderer upload or GPU completion. Recovery writes a private checkpoint but never consumes the input.",
+      "triangles": 458714,
+      "memory": {
+        "interval_ms": 50.0,
+        "errors": [],
+        "samples": [
+          {
+            "root_rss_bytes": 11108352,
+            "tree_rss_sum_bytes": 12124160,
+            "process_count": 2,
+            "at_us": 87462,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11108352,
+            "tree_rss_sum_bytes": 30195712,
+            "process_count": 2,
+            "at_us": 222336,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11108352,
+            "tree_rss_sum_bytes": 35848192,
+            "process_count": 2,
+            "at_us": 353585,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11108352,
+            "tree_rss_sum_bytes": 41664512,
+            "process_count": 2,
+            "at_us": 525001,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11108352,
+            "tree_rss_sum_bytes": 55132160,
+            "process_count": 2,
+            "at_us": 618836,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11108352,
+            "tree_rss_sum_bytes": 60112896,
+            "process_count": 2,
+            "at_us": 725895,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11108352,
+            "tree_rss_sum_bytes": 64782336,
+            "process_count": 2,
+            "at_us": 927897,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11108352,
+            "tree_rss_sum_bytes": 71335936,
+            "process_count": 2,
+            "at_us": 1101534,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11108352,
+            "tree_rss_sum_bytes": 79790080,
+            "process_count": 2,
+            "at_us": 1234374,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11075584,
+            "tree_rss_sum_bytes": 82739200,
+            "process_count": 2,
+            "at_us": 1427517,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11059200,
+            "tree_rss_sum_bytes": 92078080,
+            "process_count": 2,
+            "at_us": 1568763,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11059200,
+            "tree_rss_sum_bytes": 96534528,
+            "process_count": 2,
+            "at_us": 1735322,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11157504,
+            "tree_rss_sum_bytes": 109854720,
+            "process_count": 2,
+            "at_us": 1926857,
+            "phase": "extract"
+          },
+          {
+            "root_rss_bytes": 11141120,
+            "tree_rss_sum_bytes": 114507776,
+            "process_count": 2,
+            "at_us": 2045519,
+            "phase": "extract"
+          },
+          {
+            "root_rss_bytes": 11141120,
+            "tree_rss_sum_bytes": 120602624,
+            "process_count": 2,
+            "at_us": 2165478,
+            "phase": "extract"
+          },
+          {
+            "root_rss_bytes": 11141120,
+            "tree_rss_sum_bytes": 122994688,
+            "process_count": 2,
+            "at_us": 2294186,
+            "phase": "extract"
+          },
+          {
+            "root_rss_bytes": 11141120,
+            "tree_rss_sum_bytes": 125878272,
+            "process_count": 2,
+            "at_us": 2420931,
+            "phase": "extract"
+          },
+          {
+            "root_rss_bytes": 11141120,
+            "tree_rss_sum_bytes": 134823936,
+            "process_count": 2,
+            "at_us": 2542681,
+            "phase": "extract"
+          },
+          {
+            "root_rss_bytes": 11141120,
+            "tree_rss_sum_bytes": 139788288,
+            "process_count": 2,
+            "at_us": 2654501,
+            "phase": "extract"
+          },
+          {
+            "root_rss_bytes": 11141120,
+            "tree_rss_sum_bytes": 143032320,
+            "process_count": 2,
+            "at_us": 2760183,
+            "phase": "extract"
+          },
+          {
+            "root_rss_bytes": 11141120,
+            "tree_rss_sum_bytes": 150192128,
+            "process_count": 2,
+            "at_us": 2868416,
+            "phase": "extract"
+          },
+          {
+            "root_rss_bytes": 11141120,
+            "tree_rss_sum_bytes": 153239552,
+            "process_count": 2,
+            "at_us": 3024335,
+            "phase": "extract"
+          },
+          {
+            "root_rss_bytes": 11141120,
+            "tree_rss_sum_bytes": 155942912,
+            "process_count": 2,
+            "at_us": 3161863,
+            "phase": "extract"
+          },
+          {
+            "root_rss_bytes": 11141120,
+            "tree_rss_sum_bytes": 165183488,
+            "process_count": 2,
+            "at_us": 3260949,
+            "phase": "extract"
+          },
+          {
+            "root_rss_bytes": 11141120,
+            "tree_rss_sum_bytes": 169066496,
+            "process_count": 2,
+            "at_us": 3358238,
+            "phase": "extract"
+          },
+          {
+            "root_rss_bytes": 11141120,
+            "tree_rss_sum_bytes": 171704320,
+            "process_count": 2,
+            "at_us": 3454972,
+            "phase": "extract"
+          },
+          {
+            "root_rss_bytes": 11141120,
+            "tree_rss_sum_bytes": 178733056,
+            "process_count": 2,
+            "at_us": 3550315,
+            "phase": "extract"
+          },
+          {
+            "root_rss_bytes": 11141120,
+            "tree_rss_sum_bytes": 184254464,
+            "process_count": 2,
+            "at_us": 3632183,
+            "phase": "extract"
+          },
+          {
+            "root_rss_bytes": 11141120,
+            "tree_rss_sum_bytes": 190431232,
+            "process_count": 2,
+            "at_us": 3726610,
+            "phase": "extract"
+          },
+          {
+            "root_rss_bytes": 11141120,
+            "tree_rss_sum_bytes": 195936256,
+            "process_count": 2,
+            "at_us": 3820725,
+            "phase": "extract"
+          },
+          {
+            "root_rss_bytes": 11173888,
+            "tree_rss_sum_bytes": 196198400,
+            "process_count": 2,
+            "at_us": 3918579,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11173888,
+            "tree_rss_sum_bytes": 196198400,
+            "process_count": 2,
+            "at_us": 4012188,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11173888,
+            "tree_rss_sum_bytes": 196198400,
+            "process_count": 2,
+            "at_us": 4116569,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11173888,
+            "tree_rss_sum_bytes": 196198400,
+            "process_count": 2,
+            "at_us": 4209650,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11173888,
+            "tree_rss_sum_bytes": 196198400,
+            "process_count": 2,
+            "at_us": 4300897,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11173888,
+            "tree_rss_sum_bytes": 196198400,
+            "process_count": 2,
+            "at_us": 4397790,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11173888,
+            "tree_rss_sum_bytes": 196198400,
+            "process_count": 2,
+            "at_us": 4492105,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11173888,
+            "tree_rss_sum_bytes": 196198400,
+            "process_count": 2,
+            "at_us": 4582106,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11173888,
+            "tree_rss_sum_bytes": 196198400,
+            "process_count": 2,
+            "at_us": 4673350,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11173888,
+            "tree_rss_sum_bytes": 196198400,
+            "process_count": 2,
+            "at_us": 4764984,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11173888,
+            "tree_rss_sum_bytes": 196198400,
+            "process_count": 2,
+            "at_us": 4854414,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 11173888,
+            "tree_rss_sum_bytes": 196198400,
+            "process_count": 2,
+            "at_us": 4957532,
+            "phase": "convert"
+          },
+          {
+            "root_rss_bytes": 33767424,
+            "tree_rss_sum_bytes": 33767424,
+            "process_count": 1,
+            "at_us": 5048896,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 33767424,
+            "tree_rss_sum_bytes": 33767424,
+            "process_count": 1,
+            "at_us": 5137628,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 33767424,
+            "tree_rss_sum_bytes": 33767424,
+            "process_count": 1,
+            "at_us": 5229658,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 36454400,
+            "tree_rss_sum_bytes": 36454400,
+            "process_count": 1,
+            "at_us": 5308005,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 37027840,
+            "tree_rss_sum_bytes": 37027840,
+            "process_count": 1,
+            "at_us": 5398039,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 37535744,
+            "tree_rss_sum_bytes": 37535744,
+            "process_count": 1,
+            "at_us": 5490764,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 37863424,
+            "tree_rss_sum_bytes": 37863424,
+            "process_count": 1,
+            "at_us": 5586190,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 38780928,
+            "tree_rss_sum_bytes": 38780928,
+            "process_count": 1,
+            "at_us": 5669747,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 40173568,
+            "tree_rss_sum_bytes": 40173568,
+            "process_count": 1,
+            "at_us": 5758323,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 40665088,
+            "tree_rss_sum_bytes": 40665088,
+            "process_count": 1,
+            "at_us": 5850732,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 41795584,
+            "tree_rss_sum_bytes": 41795584,
+            "process_count": 1,
+            "at_us": 5942497,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 42811392,
+            "tree_rss_sum_bytes": 42811392,
+            "process_count": 1,
+            "at_us": 6035346,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 43646976,
+            "tree_rss_sum_bytes": 43646976,
+            "process_count": 1,
+            "at_us": 6124750,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 44761088,
+            "tree_rss_sum_bytes": 44761088,
+            "process_count": 1,
+            "at_us": 6224240,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 46268416,
+            "tree_rss_sum_bytes": 46268416,
+            "process_count": 1,
+            "at_us": 6321008,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 47087616,
+            "tree_rss_sum_bytes": 47087616,
+            "process_count": 1,
+            "at_us": 6418376,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 47611904,
+            "tree_rss_sum_bytes": 47611904,
+            "process_count": 1,
+            "at_us": 6518898,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 47611904,
+            "tree_rss_sum_bytes": 47611904,
+            "process_count": 1,
+            "at_us": 6611337,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 48693248,
+            "tree_rss_sum_bytes": 48693248,
+            "process_count": 1,
+            "at_us": 6711829,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 50446336,
+            "tree_rss_sum_bytes": 50446336,
+            "process_count": 1,
+            "at_us": 6809741,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 51052544,
+            "tree_rss_sum_bytes": 51052544,
+            "process_count": 1,
+            "at_us": 6900338,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 51527680,
+            "tree_rss_sum_bytes": 51527680,
+            "process_count": 1,
+            "at_us": 6998821,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 51675136,
+            "tree_rss_sum_bytes": 51675136,
+            "process_count": 1,
+            "at_us": 7096280,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 52510720,
+            "tree_rss_sum_bytes": 52510720,
+            "process_count": 1,
+            "at_us": 7189153,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 52740096,
+            "tree_rss_sum_bytes": 52740096,
+            "process_count": 1,
+            "at_us": 7292125,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 52772864,
+            "tree_rss_sum_bytes": 52772864,
+            "process_count": 1,
+            "at_us": 7384057,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 52969472,
+            "tree_rss_sum_bytes": 52969472,
+            "process_count": 1,
+            "at_us": 7502778,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 53362688,
+            "tree_rss_sum_bytes": 53362688,
+            "process_count": 1,
+            "at_us": 7591415,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 53559296,
+            "tree_rss_sum_bytes": 53559296,
+            "process_count": 1,
+            "at_us": 7693547,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 53559296,
+            "tree_rss_sum_bytes": 53559296,
+            "process_count": 1,
+            "at_us": 7800477,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 55214080,
+            "tree_rss_sum_bytes": 55214080,
+            "process_count": 1,
+            "at_us": 7911360,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 55656448,
+            "tree_rss_sum_bytes": 55656448,
+            "process_count": 1,
+            "at_us": 8025565,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 56180736,
+            "tree_rss_sum_bytes": 56180736,
+            "process_count": 1,
+            "at_us": 8129561,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 56590336,
+            "tree_rss_sum_bytes": 56590336,
+            "process_count": 1,
+            "at_us": 8223017,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 56623104,
+            "tree_rss_sum_bytes": 56623104,
+            "process_count": 1,
+            "at_us": 8324966,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 56639488,
+            "tree_rss_sum_bytes": 56639488,
+            "process_count": 1,
+            "at_us": 8424275,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 56688640,
+            "tree_rss_sum_bytes": 56688640,
+            "process_count": 1,
+            "at_us": 8536575,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 58179584,
+            "tree_rss_sum_bytes": 58179584,
+            "process_count": 1,
+            "at_us": 8649081,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 58703872,
+            "tree_rss_sum_bytes": 58703872,
+            "process_count": 1,
+            "at_us": 8743180,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 58867712,
+            "tree_rss_sum_bytes": 58867712,
+            "process_count": 1,
+            "at_us": 8842315,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 58867712,
+            "tree_rss_sum_bytes": 58867712,
+            "process_count": 1,
+            "at_us": 8939359,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 58867712,
+            "tree_rss_sum_bytes": 58867712,
+            "process_count": 1,
+            "at_us": 9030050,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 58949632,
+            "tree_rss_sum_bytes": 58949632,
+            "process_count": 1,
+            "at_us": 9135013,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 59195392,
+            "tree_rss_sum_bytes": 59195392,
+            "process_count": 1,
+            "at_us": 9240212,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 59244544,
+            "tree_rss_sum_bytes": 59244544,
+            "process_count": 1,
+            "at_us": 9331314,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 59326464,
+            "tree_rss_sum_bytes": 59326464,
+            "process_count": 1,
+            "at_us": 9414612,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 59375616,
+            "tree_rss_sum_bytes": 59375616,
+            "process_count": 1,
+            "at_us": 9508282,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 59375616,
+            "tree_rss_sum_bytes": 59375616,
+            "process_count": 1,
+            "at_us": 9594187,
+            "phase": "triangulate"
+          },
+          {
+            "root_rss_bytes": 59588608,
+            "tree_rss_sum_bytes": 59588608,
+            "process_count": 1,
+            "at_us": 9681698,
+            "phase": "validate"
+          },
+          {
+            "root_rss_bytes": 59588608,
+            "tree_rss_sum_bytes": 59588608,
+            "process_count": 1,
+            "at_us": 9774628,
+            "phase": "validate"
+          },
+          {
+            "root_rss_bytes": 59604992,
+            "tree_rss_sum_bytes": 59604992,
+            "process_count": 1,
+            "at_us": 9868364,
+            "phase": "validate"
+          },
+          {
+            "root_rss_bytes": 59604992,
+            "tree_rss_sum_bytes": 59604992,
+            "process_count": 1,
+            "at_us": 9962499,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 60047360,
+            "tree_rss_sum_bytes": 60047360,
+            "process_count": 1,
+            "at_us": 10056218,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 60145664,
+            "tree_rss_sum_bytes": 60145664,
+            "process_count": 1,
+            "at_us": 10150216,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 60227584,
+            "tree_rss_sum_bytes": 60227584,
+            "process_count": 1,
+            "at_us": 10244245,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 60571648,
+            "tree_rss_sum_bytes": 60571648,
+            "process_count": 1,
+            "at_us": 10341810,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 60571648,
+            "tree_rss_sum_bytes": 60571648,
+            "process_count": 1,
+            "at_us": 10437649,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 60571648,
+            "tree_rss_sum_bytes": 60571648,
+            "process_count": 1,
+            "at_us": 10535992,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 61014016,
+            "tree_rss_sum_bytes": 61014016,
+            "process_count": 1,
+            "at_us": 10646287,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 61341696,
+            "tree_rss_sum_bytes": 61341696,
+            "process_count": 1,
+            "at_us": 10776174,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 61620224,
+            "tree_rss_sum_bytes": 61620224,
+            "process_count": 1,
+            "at_us": 10888407,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 61997056,
+            "tree_rss_sum_bytes": 61997056,
+            "process_count": 1,
+            "at_us": 10982718,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 62341120,
+            "tree_rss_sum_bytes": 62341120,
+            "process_count": 1,
+            "at_us": 11099017,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 62341120,
+            "tree_rss_sum_bytes": 62341120,
+            "process_count": 1,
+            "at_us": 11240830,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 62341120,
+            "tree_rss_sum_bytes": 62341120,
+            "process_count": 1,
+            "at_us": 11371752,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 62341120,
+            "tree_rss_sum_bytes": 62341120,
+            "process_count": 1,
+            "at_us": 11498082,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 62390272,
+            "tree_rss_sum_bytes": 62390272,
+            "process_count": 1,
+            "at_us": 11635088,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 62390272,
+            "tree_rss_sum_bytes": 62390272,
+            "process_count": 1,
+            "at_us": 11757582,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 62423040,
+            "tree_rss_sum_bytes": 62423040,
+            "process_count": 1,
+            "at_us": 11865776,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 62619648,
+            "tree_rss_sum_bytes": 62619648,
+            "process_count": 1,
+            "at_us": 11984400,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 62619648,
+            "tree_rss_sum_bytes": 62619648,
+            "process_count": 1,
+            "at_us": 12108345,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 63799296,
+            "tree_rss_sum_bytes": 63799296,
+            "process_count": 1,
+            "at_us": 12198646,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 63799296,
+            "tree_rss_sum_bytes": 63799296,
+            "process_count": 1,
+            "at_us": 12297238,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 63848448,
+            "tree_rss_sum_bytes": 63848448,
+            "process_count": 1,
+            "at_us": 12388685,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 63913984,
+            "tree_rss_sum_bytes": 63913984,
+            "process_count": 1,
+            "at_us": 12478238,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 63913984,
+            "tree_rss_sum_bytes": 63913984,
+            "process_count": 1,
+            "at_us": 12568528,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 64913408,
+            "tree_rss_sum_bytes": 64913408,
+            "process_count": 1,
+            "at_us": 12660026,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 64913408,
+            "tree_rss_sum_bytes": 64913408,
+            "process_count": 1,
+            "at_us": 12754942,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 64913408,
+            "tree_rss_sum_bytes": 64913408,
+            "process_count": 1,
+            "at_us": 12842856,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 65126400,
+            "tree_rss_sum_bytes": 65126400,
+            "process_count": 1,
+            "at_us": 12933897,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 65454080,
+            "tree_rss_sum_bytes": 65454080,
+            "process_count": 1,
+            "at_us": 13020708,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 66076672,
+            "tree_rss_sum_bytes": 66076672,
+            "process_count": 1,
+            "at_us": 13096435,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 66961408,
+            "tree_rss_sum_bytes": 66961408,
+            "process_count": 1,
+            "at_us": 13185216,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 67616768,
+            "tree_rss_sum_bytes": 67616768,
+            "process_count": 1,
+            "at_us": 13276467,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 68976640,
+            "tree_rss_sum_bytes": 68976640,
+            "process_count": 1,
+            "at_us": 13359888,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 71221248,
+            "tree_rss_sum_bytes": 71221248,
+            "process_count": 1,
+            "at_us": 13448137,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 72368128,
+            "tree_rss_sum_bytes": 72368128,
+            "process_count": 1,
+            "at_us": 13523390,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 74629120,
+            "tree_rss_sum_bytes": 74629120,
+            "process_count": 1,
+            "at_us": 13596557,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 74809344,
+            "tree_rss_sum_bytes": 74809344,
+            "process_count": 1,
+            "at_us": 13682745,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 74809344,
+            "tree_rss_sum_bytes": 74809344,
+            "process_count": 1,
+            "at_us": 13764175,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 75448320,
+            "tree_rss_sum_bytes": 75448320,
+            "process_count": 1,
+            "at_us": 13848034,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 76136448,
+            "tree_rss_sum_bytes": 76136448,
+            "process_count": 1,
+            "at_us": 13932545,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 76840960,
+            "tree_rss_sum_bytes": 76840960,
+            "process_count": 1,
+            "at_us": 14007542,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 77660160,
+            "tree_rss_sum_bytes": 77660160,
+            "process_count": 1,
+            "at_us": 14087271,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 78594048,
+            "tree_rss_sum_bytes": 78594048,
+            "process_count": 1,
+            "at_us": 14171058,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 79298560,
+            "tree_rss_sum_bytes": 79298560,
+            "process_count": 1,
+            "at_us": 14256938,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 79790080,
+            "tree_rss_sum_bytes": 79790080,
+            "process_count": 1,
+            "at_us": 14344918,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 79839232,
+            "tree_rss_sum_bytes": 79839232,
+            "process_count": 1,
+            "at_us": 14429542,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 81444864,
+            "tree_rss_sum_bytes": 81444864,
+            "process_count": 1,
+            "at_us": 14504381,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 81674240,
+            "tree_rss_sum_bytes": 81674240,
+            "process_count": 1,
+            "at_us": 14608235,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 81674240,
+            "tree_rss_sum_bytes": 81674240,
+            "process_count": 1,
+            "at_us": 14698105,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 82100224,
+            "tree_rss_sum_bytes": 82100224,
+            "process_count": 1,
+            "at_us": 14783402,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 82100224,
+            "tree_rss_sum_bytes": 82100224,
+            "process_count": 1,
+            "at_us": 14885510,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 83279872,
+            "tree_rss_sum_bytes": 83279872,
+            "process_count": 1,
+            "at_us": 14965747,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 83279872,
+            "tree_rss_sum_bytes": 83279872,
+            "process_count": 1,
+            "at_us": 15072690,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 83279872,
+            "tree_rss_sum_bytes": 83279872,
+            "process_count": 1,
+            "at_us": 15166518,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 83279872,
+            "tree_rss_sum_bytes": 83279872,
+            "process_count": 1,
+            "at_us": 15247057,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 83853312,
+            "tree_rss_sum_bytes": 83853312,
+            "process_count": 1,
+            "at_us": 15340972,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 84131840,
+            "tree_rss_sum_bytes": 84131840,
+            "process_count": 1,
+            "at_us": 15437834,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 85803008,
+            "tree_rss_sum_bytes": 85803008,
+            "process_count": 1,
+            "at_us": 15531411,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 87588864,
+            "tree_rss_sum_bytes": 87588864,
+            "process_count": 1,
+            "at_us": 15623968,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 88981504,
+            "tree_rss_sum_bytes": 88981504,
+            "process_count": 1,
+            "at_us": 15709319,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 88981504,
+            "tree_rss_sum_bytes": 88981504,
+            "process_count": 1,
+            "at_us": 15814316,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 88981504,
+            "tree_rss_sum_bytes": 88981504,
+            "process_count": 1,
+            "at_us": 15895310,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 88981504,
+            "tree_rss_sum_bytes": 88981504,
+            "process_count": 1,
+            "at_us": 15986628,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 88997888,
+            "tree_rss_sum_bytes": 88997888,
+            "process_count": 1,
+            "at_us": 16087045,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 89554944,
+            "tree_rss_sum_bytes": 89554944,
+            "process_count": 1,
+            "at_us": 16174508,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 90062848,
+            "tree_rss_sum_bytes": 90062848,
+            "process_count": 1,
+            "at_us": 16266829,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 90603520,
+            "tree_rss_sum_bytes": 90603520,
+            "process_count": 1,
+            "at_us": 16364051,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 91127808,
+            "tree_rss_sum_bytes": 91127808,
+            "process_count": 1,
+            "at_us": 16452582,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 91652096,
+            "tree_rss_sum_bytes": 91652096,
+            "process_count": 1,
+            "at_us": 16555777,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 92635136,
+            "tree_rss_sum_bytes": 92635136,
+            "process_count": 1,
+            "at_us": 16654059,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 93241344,
+            "tree_rss_sum_bytes": 93241344,
+            "process_count": 1,
+            "at_us": 16743503,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 93782016,
+            "tree_rss_sum_bytes": 93782016,
+            "process_count": 1,
+            "at_us": 16834859,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 94388224,
+            "tree_rss_sum_bytes": 94388224,
+            "process_count": 1,
+            "at_us": 16925296,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 94945280,
+            "tree_rss_sum_bytes": 94945280,
+            "process_count": 1,
+            "at_us": 17002968,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 95240192,
+            "tree_rss_sum_bytes": 95240192,
+            "process_count": 1,
+            "at_us": 17095120,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 95830016,
+            "tree_rss_sum_bytes": 95830016,
+            "process_count": 1,
+            "at_us": 17194035,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 95862784,
+            "tree_rss_sum_bytes": 95862784,
+            "process_count": 1,
+            "at_us": 17285701,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 95862784,
+            "tree_rss_sum_bytes": 95862784,
+            "process_count": 1,
+            "at_us": 17396700,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 97009664,
+            "tree_rss_sum_bytes": 97009664,
+            "process_count": 1,
+            "at_us": 17498173,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 97861632,
+            "tree_rss_sum_bytes": 97861632,
+            "process_count": 1,
+            "at_us": 17586459,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 97861632,
+            "tree_rss_sum_bytes": 97861632,
+            "process_count": 1,
+            "at_us": 17681883,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 97861632,
+            "tree_rss_sum_bytes": 97861632,
+            "process_count": 1,
+            "at_us": 17773778,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 98287616,
+            "tree_rss_sum_bytes": 98287616,
+            "process_count": 1,
+            "at_us": 17862569,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 98828288,
+            "tree_rss_sum_bytes": 98828288,
+            "process_count": 1,
+            "at_us": 17953386,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 0,
+            "tree_rss_sum_bytes": 0,
+            "process_count": 1,
+            "at_us": 18045882,
+            "phase": "first_snap"
+          }
+        ],
+        "per_phase": {
+          "commit": {
+            "samples": 0,
+            "sampled_peak_root_rss_bytes": null,
+            "sampled_peak_tree_rss_sum_bytes": null
+          },
+          "convert": {
+            "samples": 24,
+            "sampled_peak_root_rss_bytes": 11173888,
+            "sampled_peak_tree_rss_sum_bytes": 196198400
+          },
+          "extract": {
+            "samples": 18,
+            "sampled_peak_root_rss_bytes": 11157504,
+            "sampled_peak_tree_rss_sum_bytes": 195936256
+          },
+          "first_snap": {
+            "samples": 0,
+            "sampled_peak_root_rss_bytes": null,
+            "sampled_peak_tree_rss_sum_bytes": null
+          },
+          "instances": {
+            "samples": 0,
+            "sampled_peak_root_rss_bytes": null,
+            "sampled_peak_tree_rss_sum_bytes": null
+          },
+          "parse": {
+            "samples": 13,
+            "sampled_peak_root_rss_bytes": 43646976,
+            "sampled_peak_tree_rss_sum_bytes": 43646976
+          },
+          "read": {
+            "samples": 0,
+            "sampled_peak_root_rss_bytes": null,
+            "sampled_peak_tree_rss_sum_bytes": null
+          },
+          "surfaces": {
+            "samples": 74,
+            "sampled_peak_root_rss_bytes": 98828288,
+            "sampled_peak_tree_rss_sum_bytes": 98828288
+          },
+          "triangulate": {
+            "samples": 35,
+            "sampled_peak_root_rss_bytes": 59375616,
+            "sampled_peak_tree_rss_sum_bytes": 59375616
+          },
+          "validate": {
+            "samples": 3,
+            "sampled_peak_root_rss_bytes": 59604992,
+            "sampled_peak_tree_rss_sum_bytes": 59604992
+          },
+          "vertices": {
+            "samples": 11,
+            "sampled_peak_root_rss_bytes": 95830016,
+            "sampled_peak_tree_rss_sum_bytes": 95830016
+          }
+        },
+        "sampled_peak_root_rss_bytes": 98828288,
+        "sampled_peak_tree_rss_sum_bytes": 196198400,
+        "exit_zero_rss_samples_excluded": 1,
+        "observed_sample_interval_us": {
+          "median": 94064.0,
+          "max": 202002
+        }
+      },
+      "stage_events": [
+        {
+          "at_us": 35,
+          "phase": "read",
+          "pid": 42847
+        },
+        {
+          "at_us": 79,
+          "phase": "convert",
+          "pid": 42847
+        },
+        {
+          "at_us": 1753385,
+          "phase": "extract",
+          "pid": 42847
+        },
+        {
+          "at_us": 3851335,
+          "phase": "convert",
+          "pid": 42847
+        },
+        {
+          "at_us": 4968817,
+          "phase": "read",
+          "pid": 42847
+        },
+        {
+          "at_us": 4972643,
+          "phase": "parse",
+          "pid": 42847
+        },
+        {
+          "at_us": 6204658,
+          "phase": "triangulate",
+          "pid": 42847
+        },
+        {
+          "at_us": 9601754,
+          "phase": "validate",
+          "pid": 42847
+        },
+        {
+          "at_us": 9959614,
+          "phase": "vertices",
+          "pid": 42847
+        },
+        {
+          "at_us": 9986266,
+          "phase": "surfaces",
+          "pid": 42847
+        },
+        {
+          "at_us": 10146394,
+          "phase": "vertices",
+          "pid": 42847
+        },
+        {
+          "at_us": 10210858,
+          "phase": "surfaces",
+          "pid": 42847
+        },
+        {
+          "at_us": 10688597,
+          "phase": "vertices",
+          "pid": 42847
+        },
+        {
+          "at_us": 10801962,
+          "phase": "surfaces",
+          "pid": 42847
+        },
+        {
+          "at_us": 11474330,
+          "phase": "vertices",
+          "pid": 42847
+        },
+        {
+          "at_us": 11521999,
+          "phase": "surfaces",
+          "pid": 42847
+        },
+        {
+          "at_us": 11784377,
+          "phase": "vertices",
+          "pid": 42847
+        },
+        {
+          "at_us": 11874093,
+          "phase": "surfaces",
+          "pid": 42847
+        },
+        {
+          "at_us": 12412211,
+          "phase": "vertices",
+          "pid": 42847
+        },
+        {
+          "at_us": 12475628,
+          "phase": "surfaces",
+          "pid": 42847
+        },
+        {
+          "at_us": 12855920,
+          "phase": "vertices",
+          "pid": 42847
+        },
+        {
+          "at_us": 12881883,
+          "phase": "surfaces",
+          "pid": 42847
+        },
+        {
+          "at_us": 13031170,
+          "phase": "vertices",
+          "pid": 42847
+        },
+        {
+          "at_us": 13056153,
+          "phase": "surfaces",
+          "pid": 42847
+        },
+        {
+          "at_us": 13190412,
+          "phase": "vertices",
+          "pid": 42847
+        },
+        {
+          "at_us": 13346253,
+          "phase": "surfaces",
+          "pid": 42847
+        },
+        {
+          "at_us": 14282154,
+          "phase": "vertices",
+          "pid": 42847
+        },
+        {
+          "at_us": 14334760,
+          "phase": "surfaces",
+          "pid": 42847
+        },
+        {
+          "at_us": 14670090,
+          "phase": "vertices",
+          "pid": 42847
+        },
+        {
+          "at_us": 14731534,
+          "phase": "surfaces",
+          "pid": 42847
+        },
+        {
+          "at_us": 15172777,
+          "phase": "vertices",
+          "pid": 42847
+        },
+        {
+          "at_us": 15203617,
+          "phase": "surfaces",
+          "pid": 42847
+        },
+        {
+          "at_us": 15365047,
+          "phase": "vertices",
+          "pid": 42847
+        },
+        {
+          "at_us": 15366212,
+          "phase": "surfaces",
+          "pid": 42847
+        },
+        {
+          "at_us": 15370033,
+          "phase": "vertices",
+          "pid": 42847
+        },
+        {
+          "at_us": 15567618,
+          "phase": "surfaces",
+          "pid": 42847
+        },
+        {
+          "at_us": 16908767,
+          "phase": "vertices",
+          "pid": 42847
+        },
+        {
+          "at_us": 16940710,
+          "phase": "surfaces",
+          "pid": 42847
+        },
+        {
+          "at_us": 17095850,
+          "phase": "vertices",
+          "pid": 42847
+        },
+        {
+          "at_us": 17224654,
+          "phase": "surfaces",
+          "pid": 42847
+        },
+        {
+          "at_us": 18007859,
+          "phase": "instances",
+          "pid": 42847
+        },
+        {
+          "at_us": 18008225,
+          "phase": "commit",
+          "pid": 42847
+        },
+        {
+          "at_us": 18008416,
+          "phase": "done",
+          "pid": 42847
+        },
+        {
+          "at_us": 18008416,
+          "phase": "first_snap",
+          "pid": 42847
+        }
+      ],
+      "supervisor_wall_us": 18096471,
+      "run": 3
+    }
+  ],
+  "summary": {
+    "median_total_us": 23602566,
+    "median_phase_us": {
+      "commit": 923,
+      "convert": 2870788,
+      "extract": 2097953,
+      "instances": 542,
+      "parse": 1747146,
+      "read": 7953,
+      "surfaces": 8665754,
+      "triangulate": 3397097,
+      "validate": 422519,
+      "vertices": 1395913
+    },
+    "phase_observed_runs": {
+      "commit": 3,
+      "convert": 3,
+      "extract": 3,
+      "instances": 3,
+      "parse": 3,
+      "read": 3,
+      "surfaces": 3,
+      "triangulate": 3,
+      "validate": 3,
+      "vertices": 3
+    },
+    "max_sampled_tree_rss_sum_bytes": 197853184
+  },
+  "scope": "Fresh processes, warm filesystem cache possible; headless CPU replay, not native UI/GPU readiness. RSS sum can double-count shared pages; sampled peaks miss short spikes. Phase attribution uses first stdout event as clock anchor and is approximate. Null means no RSS samples, never zero usage."
+}

@@ -86,6 +86,32 @@ pub enum Navigation {
 }
 
 impl Command {
+    pub fn needs_snap_preparation(&self, editor: &Editor) -> bool {
+        match self {
+            Self::TransformBegin { vertex_snap, .. } => {
+                editor.tool == crate::gizmo::Tool::Move
+                    && (*vertex_snap
+                        || (editor.transform_settings.snap
+                            && matches!(
+                                editor.transform_settings.move_snap,
+                                crate::gizmo::MoveSnap::Vertex
+                                    | crate::gizmo::MoveSnap::Edge
+                                    | crate::gizmo::MoveSnap::Face
+                            )))
+            }
+            Self::TransformUpdate {
+                token,
+                snap_toggle,
+                vertex_snap,
+                ..
+            } => editor.transform_drag.as_ref().is_some_and(|drag| {
+                drag.token == *token
+                    && !drag.has_vertex_targets()
+                    && drag.vertex_enabled(*snap_toggle, *vertex_snap)
+            }),
+            _ => false,
+        }
+    }
     pub fn is_transform_gesture(&self) -> bool {
         matches!(
             self,

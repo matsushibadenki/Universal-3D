@@ -3,6 +3,9 @@ mod affine;
 mod document;
 mod editor;
 mod gizmo;
+#[cfg(test)]
+mod load_benchmark;
+mod load_io;
 mod load_task;
 mod mesh;
 mod persistence;
@@ -112,10 +115,38 @@ async fn quit_document(app: &tauri::AppHandle, state: &State) -> Result<(), Stri
     }
     save_workspace(app)?;
     // Lock order is always recovery -> editor. No checkpoint can reappear after exit cleanup.
-    state.recovery.lock().map_err(|e| e.to_string())?.clear();
+    state.recovery.lock().map_err(|e| e.to_string())?.shutdown();
     state.quit_approved.store(true, Ordering::SeqCst);
     app.exit(0);
     Ok(())
+}
+fn start_recovery_scan(app: tauri::AppHandle, root: std::path::PathBuf) {
+    let job = app.state::<State>().recovery.lock().unwrap().begin_scan();
+    tauri::async_runtime::spawn(async move {
+        let worker_app = app.clone();
+        let worker_job = job.clone();
+        let result = tauri::async_runtime::spawn_blocking(move || {
+            let store = persistence::RecoveryStore::create(&root)?;
+            if !worker_app
+                .state::<State>()
+                .recovery
+                .lock()
+                .map_err(|e| e.to_string())?
+                .install_store(&worker_job, store)
+            {
+                return Err("LOAD_CANCELLED".into());
+            }
+            persistence::scan_candidates(&root, &worker_job)
+        })
+        .await
+        .map_err(|e| e.to_string())
+        .and_then(|result| result);
+        app.state::<State>()
+            .recovery
+            .lock()
+            .unwrap()
+            .finish_scan(&job, result);
+    });
 }
 fn start_recovery_worker(app: tauri::AppHandle) {
     std::thread::spawn(move || loop {
@@ -170,10 +201,17 @@ async fn restore_recovery(
         let state = handle.state::<State>();
         let mut recovery = state.recovery.lock().unwrap();
         let store = recovery.store.as_mut().ok_or("Recovery unavailable")?;
-        let recovered = store.recover(&id)?;
-        let prepared = snapping::PreparedDocument::with_task(recovered.document, &task)?;
+        let recovered = store.recover_with_task(&id, &task)?;
+        let budget = state
+            .editor
+            .lock()
+            .map_err(|e| e.to_string())?
+            .snap_build_budget()?;
+        let prepared =
+            snapping::PreparedDocument::with_task_budget(recovered.document, &task, budget)?;
         let mut editor = state.editor.lock().unwrap();
         editor.ensure_unchanged(stamp)?;
+        prepared.check_publication(&editor)?;
         task.commit()?;
         // Publish a self-contained checkpoint before replacing the document or consuming the source.
         // Restore as an unsaved copy; Save As cannot silently overwrite the original document.
@@ -184,7 +222,9 @@ async fn restore_recovery(
     })
     .await
     .map_err(|e| e.to_string())??;
-    notify(&app, &state, true)
+    task_guard.task.finishing()?;
+    notify(&app, &state, true)?;
+    task_guard.task.succeed()
 }
 async fn confirm_replace() -> bool {
     rfd::AsyncMessageDialog::new().set_title("Universal 3D")
@@ -319,23 +359,84 @@ fn get_snapshot(state: tauri::State<State>) -> Snapshot {
     snapshot(&state)
 }
 #[tauri::command]
-fn execute(
+async fn execute(
     app: tauri::AppHandle,
-    state: tauri::State<State>,
+    state: tauri::State<'_, State>,
     command: Command,
     window: tauri::WebviewWindow,
 ) -> Result<(), String> {
     if command.is_transform_gesture() && window.label() != "main" {
         return Err("Only the main viewport can transform objects directly".into());
     }
+    let request = {
+        let e = state.editor.lock().map_err(|e| e.to_string())?;
+        if command.needs_snap_preparation(&e) {
+            let assets = e.missing_snap_meshes();
+            (!assets.is_empty()).then_some((
+                assets,
+                e.stamp(),
+                e.render_revision,
+                e.tool,
+                e.transform_settings,
+                e.document.selected,
+                e.transform_drag.as_ref().map(|d| d.token.clone()),
+            ))
+        } else {
+            None
+        }
+    };
+    // Keep worker results pinned through command execution: retention must not evict
+    // them between installation and creation of the gesture's scene snapshot.
+    let mut prepared = None;
+    let mut preparation = None;
+    let mut expected = None;
+    if let Some((assets, stamp, revision, tool, settings, selected, token)) = request {
+        let guard = state.load_tasks.begin(load_task::Kind::Snap)?;
+        let task = guard.task.clone();
+        let budget = state
+            .editor
+            .lock()
+            .map_err(|e| e.to_string())?
+            .snap_build_budget()?;
+        prepared = Some(
+            tauri::async_runtime::spawn_blocking(move || {
+                snapping::PreparedVertices::meshes_with_task_budget(assets.iter(), &task, budget)
+            })
+            .await
+            .map_err(|e| e.to_string())??,
+        );
+        expected = Some((stamp, revision, tool, settings, selected, token));
+        preparation = Some(guard);
+    }
     {
         let mut e = state.editor.lock().map_err(|e| e.to_string())?;
+        if let Some((stamp, revision, tool, settings, selected, token)) = expected {
+            if e.stamp() != stamp
+                || e.render_revision != revision
+                || e.tool != tool
+                || e.transform_settings != settings
+                || e.document.selected != selected
+                || e.transform_drag.as_ref().map(|d| d.token.clone()) != token
+            {
+                return Err("SNAP_PREPARATION_CONFLICT".into());
+            }
+            prepared.as_ref().unwrap().check_publication(&e)?;
+            preparation.as_ref().unwrap().task.commit()?;
+            e.install_snap_gesture_vertices(prepared.as_ref().unwrap().clone());
+        }
         if state.quitting.load(Ordering::SeqCst) {
             return Err("Closing document / 終了確認中です / 正在关闭文档".into());
         }
         e.execute(command)?;
     }
-    broadcast(&app, &state)
+    if let Some(guard) = &preparation {
+        guard.task.finishing()?;
+    }
+    broadcast(&app, &state)?;
+    if let Some(guard) = &preparation {
+        guard.task.succeed()?;
+    }
+    Ok(())
 }
 #[tauri::command]
 async fn save_document(
@@ -403,12 +504,18 @@ async fn open_document(
     let handle = app.clone();
     tauri::async_runtime::spawn_blocking(move || -> Result<(), String> {
         task.check()?;
-        let doc = persistence::read_document(file.path())?;
-        let prepared = snapping::PreparedDocument::with_task(doc, &task)?;
+        let doc = persistence::read_document_with_task(file.path(), &task)?;
         let state = handle.state::<State>();
+        let budget = state
+            .editor
+            .lock()
+            .map_err(|e| e.to_string())?
+            .snap_build_budget()?;
+        let prepared = snapping::PreparedDocument::with_task_budget(doc, &task, budget)?;
         let mut recovery = state.recovery.lock().unwrap();
         let mut e = state.editor.lock().unwrap();
         e.ensure_unchanged(stamp)?;
+        prepared.check_publication(&e)?;
         task.commit()?;
         e.replace_prepared_document(prepared, Some(file.path().to_owned()), false);
         recovery.clear();
@@ -416,7 +523,13 @@ async fn open_document(
     })
     .await
     .map_err(|e| e.to_string())??;
-    notify(&app, &state, true)
+    task_guard.task.finishing()?;
+    notify(&app, &state, true)?;
+    task_guard.task.succeed()
+}
+#[tauri::command]
+fn get_load_profile(state: tauri::State<State>) -> Option<load_task::Profile> {
+    state.load_tasks.profile()
 }
 #[tauri::command]
 fn get_load_progress(state: tauri::State<State>) -> Option<load_task::Snapshot> {
@@ -485,28 +598,28 @@ async fn import_usd(
     let task_guard = state.load_tasks.begin(load_task::Kind::Usd)?;
     let task = task_guard.task.clone();
     let worker_task = task.clone();
+    let worker_app = app.clone();
     let cancel = task.cancel_arc();
-    let (imported, prepared) =
-        tauri::async_runtime::spawn_blocking(move || -> Result<_, String> {
-            worker_task.progress(load_task::Phase::Convert, 0, 0)?;
-            let imported = usd::load(source, cache, cancel.clone())?;
-            let prepared = snapping::PreparedVertices::meshes_with_task(
-                imported.meshes.iter().map(|(_, _, mesh)| mesh),
-                &worker_task,
-            )?;
-            Ok((imported, prepared))
-        })
-        .await
-        .map_err(|e| e.to_string())??;
+    let prepared = tauri::async_runtime::spawn_blocking(move || -> Result<_, String> {
+        worker_task.progress(load_task::Phase::Convert, 0, 0)?;
+        let imported = usd::load_with_task(source, cache, cancel, &worker_task)?;
+        let input = worker_app
+            .state::<State>()
+            .editor
+            .lock()
+            .map_err(|e| e.to_string())?
+            .capture_usd_append()?;
+        snapping::PreparedUsdAppend::build(input, imported, &worker_task)
+    })
+    .await
+    .map_err(|e| e.to_string())??;
     let report = {
         let mut editor = state.editor.lock().map_err(|e| e.to_string())?;
-        editor.ensure_not_dragging()?;
-        task.commit()?;
-        let report = editor.import_usd(imported)?;
-        editor.install_prepared_vertices(prepared);
-        report
+        prepared.commit(&mut editor, &task)?
     };
+    task.finishing()?;
     broadcast(&app, &state)?;
+    task.succeed()?;
     Ok(Some(report))
 }
 #[tauri::command]
@@ -685,14 +798,13 @@ fn main() {
             workspace_write: Mutex::new(()),
             usd_busy: AtomicBool::new(false),
             file_busy: AtomicBool::new(false),
-            recovery: Mutex::new(persistence::RecoveryService::default()),
+            recovery: Mutex::new(persistence::RecoveryService::pending()),
             load_tasks: load_task::Tasks::default(),
             viewport_visible: AtomicBool::new(true),
         })
         .setup(|app| {
             let recovery_root = app.path().app_data_dir()?.join("recovery");
-            *app.state::<State>().recovery.lock().unwrap() =
-                persistence::RecoveryService::start(&recovery_root);
+            start_recovery_scan(app.handle().clone(), recovery_root);
             start_recovery_worker(app.handle().clone());
             let path = app.path().app_config_dir()?.join("workspace.json");
             let layout = workspace::Workspace::load(&path);
@@ -716,6 +828,7 @@ fn main() {
             open_document,
             import_usd,
             get_load_progress,
+            get_load_profile,
             cancel_load,
             browse_simready,
             float_panel,

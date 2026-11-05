@@ -1,0 +1,39 @@
+{
+  "bytes": 1700001,
+  "note": "Synthetic debug five runs with alternating reader order; not a performance guarantee",
+  "samples": [
+    {
+      "optimized_reader_us": 78068,
+      "previous_reader_us": 113944,
+      "slice_us": 44793
+    },
+    {
+      "optimized_reader_us": 77745,
+      "previous_reader_us": 113738,
+      "slice_us": 45763
+    },
+    {
+      "optimized_reader_us": 79136,
+      "previous_reader_us": 114938,
+      "slice_us": 46120
+    },
+    {
+      "optimized_reader_us": 82128,
+      "previous_reader_us": 119643,
+      "slice_us": 45999
+    },
+    {
+      "optimized_reader_us": 87972,
+      "previous_reader_us": 117699,
+      "slice_us": 47344
+    }
+  ],
+  "date": "2026-11-05",
+  "profile": "debug",
+  "medians_us": {
+    "slice_us": 45999,
+    "previous_reader_us": 114938,
+    "optimized_reader_us": 79136
+  },
+  "reader_time_reduction_percent": 31.15
+}

@@ -3,6 +3,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { Monitor, Scan, RotateCcw, Magnet } from "lucide-react";
 import { desktop } from "./store";
+import { cancelCurrentLoad } from "./LoadProgress";
 import { IconButton, InfoTip } from "./EditorChrome";
 import type { PanelProps } from "./panels";
 import type { Command } from "./types";
@@ -108,7 +109,7 @@ export function Viewport({ p }: { p: PanelProps }) {
         )
           activeToken.current = null;
       } catch (e) {
-        if (mounted.current) setError(String(e));
+        if (mounted.current && !String(e).includes("LOAD_CANCELLED")) setError(String(e));
         commands.current = [];
         const token = activeToken.current;
         activeToken.current = null;
@@ -467,6 +468,7 @@ export function Viewport({ p }: { p: PanelProps }) {
           if (e.key === "Escape") {
             e.preventDefault();
             e.stopPropagation();
+            void cancelCurrentLoad("snap").catch(() => {});
             cancelGesture();
             return;
           }

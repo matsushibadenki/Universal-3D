@@ -6,12 +6,31 @@ import os
 from pathlib import Path, PurePosixPath
 import re
 import sys
+import time
 import urllib.parse
 import urllib.request
 
 MAX_PACKAGE = 512 * 1024 * 1024
 MAX_FILES = 2048
 MAX_POINTS = 1500000
+
+
+# Small atomic status file. Rust attaches its operation ID; no asset names enter IPC.
+_progress_path = None
+_progress_time = 0.0
+_progress_phase = None
+
+def progress(phase, completed=0, total=0, force=False):
+    global _progress_time, _progress_phase
+    if _progress_path is None:
+        return
+    now = time.monotonic()
+    if not force and phase == _progress_phase and now - _progress_time < 0.1:
+        return
+    temporary = _progress_path.with_suffix('.tmp')
+    temporary.write_text(json.dumps({'phase': phase, 'completed': completed, 'total': total}))
+    os.replace(temporary, _progress_path)
+    _progress_time, _progress_phase = now, phase
 
 
 def relative_path(value):
@@ -26,10 +45,19 @@ def relative_path(value):
 def read_url(url, limit):
     # Only constructed Hugging Face endpoints are requested. CDN redirects serve LFS.
     with urllib.request.urlopen(url, timeout=30) as response:
-        data = response.read(limit + 1)
+        total = int(response.headers.get('Content-Length', '0'))
+        progress('read', 0, total, force=True)
+        data = bytearray()
+        while len(data) <= limit:
+            chunk = response.read(min(65536, limit + 1 - len(data)))
+            if not chunk:
+                break
+            data.extend(chunk)
+            progress('read', len(data), max(total, len(data)))
+        progress('read', len(data), len(data), force=True)
     if len(data) > limit:
         raise ValueError('Download exceeds limit: ' + urllib.parse.urlsplit(url).path)
-    return data
+    return bytes(data)
 
 
 def json_url(url):
@@ -103,6 +131,7 @@ def download_package(url, destination):
 
 def convert(path, source):
     from pxr import Usd, UsdGeom, UsdShade, Gf
+    progress("parse", force=True)
     stage = Usd.Stage.Open(str(path), load=Usd.Stage.LoadAll)
     if not stage:
         raise ValueError('Unable to open USD stage')
@@ -118,7 +147,10 @@ def convert(path, source):
     meshes = []
     warnings = {'static_snapshot', 'flat_shading'}
     total_points = total_indices = 0
-    for prim in Usd.PrimRange.Stage(stage, Usd.TraverseInstanceProxies()):
+    progress("convert", force=True)
+    for index, prim in enumerate(Usd.PrimRange.Stage(stage, Usd.TraverseInstanceProxies())):
+        if index % 128 == 0:
+            progress("convert", index, 0)
         if not prim.IsA(UsdGeom.Mesh):
             if prim.IsA(UsdGeom.PointInstancer) or prim.IsA(UsdGeom.Curves) or prim.IsA(UsdGeom.Gprim):
                 warnings.add('unsupported_geometry')
@@ -137,9 +169,13 @@ def convert(path, source):
             raise ValueError('USD geometry exceeds import budget')
         matrix = cache.GetLocalToWorldTransform(prim)
         transformed = []
-        for p in points:
+        progress("extract", 0, len(points), force=True)
+        for index, p in enumerate(points):
+            if index % 4096 == 0:
+                progress("extract", index, len(points))
             v = matrix.Transform(Gf.Vec3d(p)) * scale
             transformed.append([v[0], v[2], -v[1]] if up == 'Z' else list(v))
+        progress("extract", len(points), len(points), force=True)
         color = [0.58, 0.62, 0.67]
         display = mesh.GetDisplayColorPrimvar().ComputeFlattened(time)
         if display:
@@ -166,7 +202,10 @@ def convert(path, source):
 
 
 def main():
+    global _progress_path
     request = json.load(sys.stdin)
+    if request.get("progress"):
+        _progress_path = Path(request["progress"])
     source = {'origin': request['source'], 'revision': '', 'license': 'See source asset license'}
     path = Path(request['source'])
     if request['source'].startswith('https://'):
@@ -174,6 +213,7 @@ def main():
     elif path.suffix.lower() not in ('.usd','.usda','.usdc','.usdz') or not path.is_file():
         raise ValueError('Select a .usd, .usda, .usdc or .usdz file')
     result = convert(path, source)
+    progress('convert', force=True)
     with open(request['output'], 'w') as f:
         json.dump(result, f, allow_nan=False, separators=(',', ':'))
 

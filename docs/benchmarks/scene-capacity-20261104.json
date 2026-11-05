@@ -1,0 +1,35 @@
+{
+  "after_old_snapshot_release": {
+    "combined_bytes": 17976,
+    "reserved_working_bytes": 0,
+    "resident_index_bytes": 17976,
+    "tracked_scenes": 1
+  },
+  "before": {
+    "combined_bytes": 20270120,
+    "reserved_working_bytes": 0,
+    "resident_index_bytes": 20270120,
+    "tracked_scenes": 1
+  },
+  "date": "2026-11-04",
+  "initial_instances": 50001,
+  "note": "Single synthetic debug run; capacity accounting, not RSS or allocator peak",
+  "old_snapshot_pinned": {
+    "combined_bytes": 20286864,
+    "reserved_working_bytes": 0,
+    "resident_index_bytes": 20286864,
+    "tracked_scenes": 2
+  },
+  "remaining_instances": 32,
+  "sparse_tree_buffer_bytes": 9848664,
+  "trim": {
+    "after_buffer_bytes": 6776,
+    "before_buffer_bytes": 9849896,
+    "evicted_buffer_bytes": 0,
+    "evicted_shapes": 0,
+    "scene_compaction_deferred": false,
+    "scene_reclaimed_buffer_bytes": 9843120,
+    "scene_reclaimed_payload_bytes": 4745616
+  },
+  "trim_elapsed_us": 2651
+}

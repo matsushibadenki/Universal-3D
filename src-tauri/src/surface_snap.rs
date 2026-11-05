@@ -6,6 +6,7 @@ use crate::snapping::Projection;
 use crate::spatial::Bounds;
 use std::collections::HashMap;
 use std::sync::atomic::AtomicBool;
+use std::time::Instant;
 
 struct Node {
     bounds: Bounds,
@@ -15,21 +16,102 @@ struct Node {
 struct Tree {
     items: Vec<usize>,
     nodes: Vec<Node>,
+    center_scratch_bytes: usize,
 }
 impl Tree {
     fn new(bounds: &[Bounds], cancel: Option<&AtomicBool>) -> Result<Self, String> {
         check_cancel(cancel)?;
+        let mut centers = Vec::with_capacity(bounds.len());
+        for (i, bounds) in bounds.iter().enumerate() {
+            if i.is_multiple_of(1024) {
+                check_cancel(cancel)?;
+            }
+            centers.push(std::array::from_fn(|axis| {
+                bounds.min[axis] * 0.5 + bounds.max[axis] * 0.5
+            }));
+        }
         let mut tree = Self {
             items: (0..bounds.len()).collect(),
-            nodes: Vec::new(),
+            nodes: Vec::with_capacity(Self::node_count(bounds.len())),
+            center_scratch_bytes: centers.capacity() * std::mem::size_of::<[f32; 3]>(),
         };
         if !bounds.is_empty() {
-            tree.build(0..bounds.len(), bounds, cancel)?;
+            tree.build(0..bounds.len(), bounds, &centers, cancel)?;
         }
         check_cancel(cancel)?;
         Ok(tree)
     }
+    fn node_count(items: usize) -> usize {
+        if items == 0 {
+            return 0;
+        }
+        if items <= 8 {
+            return 1;
+        }
+        let base = 1usize << (usize::BITS - 1 - (items / 8).leading_zeros());
+        let leaves = base + base.min(items - base * 8);
+        leaves * 2 - 1
+    }
     fn build(
+        &mut self,
+        range: std::ops::Range<usize>,
+        bounds: &[Bounds],
+        centers: &[[f32; 3]],
+        cancel: Option<&AtomicBool>,
+    ) -> Result<usize, String> {
+        if self.nodes.len().is_multiple_of(1024) {
+            check_cancel(cancel)?;
+        }
+        let mut b = bounds[self.items[range.start]];
+        for (position, item) in self.items[range.start + 1..range.end].iter().enumerate() {
+            if position.is_multiple_of(4096) {
+                check_cancel(cancel)?;
+            }
+            let next = bounds[*item];
+            b.min[0] = b.min[0].min(next.min[0]);
+            b.max[0] = b.max[0].max(next.max[0]);
+            b.min[1] = b.min[1].min(next.min[1]);
+            b.max[1] = b.max[1].max(next.max[1]);
+            b.min[2] = b.min[2].min(next.min[2]);
+            b.max[2] = b.max[2].max(next.max[2]);
+        }
+        let index = self.nodes.len();
+        self.nodes.push(Node {
+            bounds: b,
+            range: range.clone(),
+            children: None,
+        });
+        if range.len() > 8 {
+            let axis = (0..3)
+                .max_by(|&a, &c| (b.max[a] - b.min[a]).total_cmp(&(b.max[c] - b.min[c])))
+                .unwrap();
+            let middle = range.start + range.len() / 2;
+            self.items[range.clone()].select_nth_unstable_by(range.len() / 2, |a, c| {
+                centers[*a][axis].total_cmp(&centers[*c][axis])
+            });
+            check_cancel(cancel)?;
+            let a = self.build(range.start..middle, bounds, centers, cancel)?;
+            let c = self.build(middle..range.end, bounds, centers, cancel)?;
+            self.nodes[index].children = Some([a, c]);
+        }
+        Ok(index)
+    }
+    #[cfg(test)]
+    fn new_previous(bounds: &[Bounds], cancel: Option<&AtomicBool>) -> Result<Self, String> {
+        check_cancel(cancel)?;
+        let mut tree = Self {
+            items: (0..bounds.len()).collect(),
+            nodes: Vec::new(),
+            center_scratch_bytes: 0,
+        };
+        if !bounds.is_empty() {
+            tree.build_previous(0..bounds.len(), bounds, cancel)?;
+        }
+        check_cancel(cancel)?;
+        Ok(tree)
+    }
+    #[cfg(test)]
+    fn build_previous(
         &mut self,
         range: std::ops::Range<usize>,
         bounds: &[Bounds],
@@ -58,8 +140,8 @@ impl Tree {
                 let center = |i: usize| bounds[i].min[axis] * 0.5 + bounds[i].max[axis] * 0.5;
                 center(*a).total_cmp(&center(*c))
             });
-            let a = self.build(range.start..middle, bounds, cancel)?;
-            let c = self.build(middle..range.end, bounds, cancel)?;
+            let a = self.build_previous(range.start..middle, bounds, cancel)?;
+            let c = self.build_previous(middle..range.end, bounds, cancel)?;
             self.nodes[index].children = Some([a, c]);
         }
         Ok(index)
@@ -73,6 +155,43 @@ pub struct SurfaceIndex {
     edges: Vec<[usize; 2]>,
     edge_tree: Tree,
     face_tree: Tree,
+    build: SurfaceBuild,
+}
+/// Construction wall time; immutable history, not time spent by a later cache hit.
+#[derive(Default, Clone, Copy, Debug, serde::Serialize)]
+pub struct SurfaceBuild {
+    pub shapes: usize,
+    pub total_us: u64,
+    pub vertex_map_us: u64,
+    pub topology_us: u64,
+    pub edge_sort_us: u64,
+    pub edge_bounds_us: u64,
+    pub edge_bvh_us: u64,
+    pub bvh_center_scratch_peak_bytes: usize,
+    pub face_bounds_us: u64,
+    pub face_bvh_us: u64,
+}
+impl SurfaceBuild {
+    pub fn add(&mut self, other: Self) {
+        self.shapes += other.shapes;
+        self.bvh_center_scratch_peak_bytes = self
+            .bvh_center_scratch_peak_bytes
+            .max(other.bvh_center_scratch_peak_bytes);
+        self.total_us += other.total_us;
+        self.vertex_map_us += other.vertex_map_us;
+        self.topology_us += other.topology_us;
+        self.edge_sort_us += other.edge_sort_us;
+        self.edge_bounds_us += other.edge_bounds_us;
+        self.edge_bvh_us += other.edge_bvh_us;
+        self.face_bounds_us += other.face_bounds_us;
+        self.face_bvh_us += other.face_bvh_us;
+    }
+}
+fn lap(since: &mut Instant) -> u64 {
+    let now = Instant::now();
+    let elapsed = (now - *since).as_micros().min(u128::from(u64::MAX)) as u64;
+    *since = now;
+    elapsed
 }
 /// Allocated Vec capacities, not RSS, allocator metadata, or VRAM.
 #[derive(Default, Clone, Copy, Debug, serde::Serialize)]
@@ -123,6 +242,158 @@ impl SurfaceIndex {
         edge_mask: Option<&str>,
         cancel: Option<&AtomicBool>,
     ) -> Result<Self, String> {
+        #[cfg(test)]
+        if std::env::var("U3D_SURFACE_PREVIOUS").as_deref() == Ok("1") {
+            return Self::prepare_previous(points, faces, edge_mask, cancel);
+        }
+        let started = Instant::now();
+        let mut checkpoint = started;
+        let mut build = SurfaceBuild {
+            shapes: 1,
+            ..SurfaceBuild::default()
+        };
+        check_cancel(cancel)?;
+        let mut ids = HashMap::with_capacity(points.len());
+        for (i, p) in points.iter().enumerate() {
+            if i.is_multiple_of(1024) {
+                check_cancel(cancel)?;
+            }
+            ids.insert(bits(*p), i);
+        }
+        build.vertex_map_us = lap(&mut checkpoint);
+        let mut adjacency: HashMap<[usize; 2], ([f64; 3], usize, bool)> = if edge_mask.is_none() {
+            HashMap::with_capacity(faces.len())
+        } else {
+            HashMap::new()
+        };
+        let mut original_edges = if edge_mask.is_some() {
+            std::collections::HashSet::with_capacity(faces.len())
+        } else {
+            std::collections::HashSet::new()
+        };
+        for (face_index, face) in faces.iter().enumerate() {
+            if face_index.is_multiple_of(1024) {
+                check_cancel(cancel)?;
+            }
+            // Explicit polygon masks need no normal or coplanarity reconstruction.
+            let n = if edge_mask.is_none() {
+                let [a, b, c] = face.map(|p| p.map(f64::from));
+                let n = cross(sub(b, a), sub(c, a));
+                let length = dot(n, n).sqrt();
+                if length < 1e-20 {
+                    continue;
+                }
+                n.map(|v| v / length)
+            } else {
+                [0.; 3]
+            };
+            let v = face.map(|p| ids[&bits(p)]);
+            for (side, [a, b]) in [[v[0], v[1]], [v[1], v[2]], [v[2], v[0]]]
+                .into_iter()
+                .enumerate()
+            {
+                if a == b {
+                    continue;
+                }
+                let key = [a.min(b), a.max(b)];
+                if let Some(mask) = edge_mask {
+                    if (mask.as_bytes()[face_index] - b'0') & (1 << side) != 0 {
+                        original_edges.insert(key);
+                    }
+                    continue;
+                }
+                adjacency
+                    .entry(key)
+                    .and_modify(|(first, count, coplanar)| {
+                        *count += 1;
+                        *coplanar &= dot(*first, n).abs() > 1. - 1e-10;
+                    })
+                    .or_insert((n, 1, true));
+            }
+        }
+        // Original USD polygon boundaries take precedence over the legacy crease heuristic.
+        let mut edges: Vec<_> = if edge_mask.is_some() {
+            original_edges.into_iter().collect()
+        } else {
+            adjacency
+                .into_iter()
+                .filter(|(_, (_, count, flat))| *count != 2 || !*flat)
+                .map(|(edge, _)| edge)
+                .collect()
+        };
+        drop(ids);
+        check_cancel(cancel)?;
+        build.topology_us = lap(&mut checkpoint);
+        edges.sort_unstable_by(|a, b| match a[0].cmp(&b[0]) {
+            std::cmp::Ordering::Equal => a[1].cmp(&b[1]),
+            order => order,
+        });
+        build.edge_sort_us = lap(&mut checkpoint);
+        check_cancel(cancel)?;
+        let mut edge_bounds = Vec::with_capacity(edges.len());
+        for (i, [a, b]) in edges.iter().enumerate() {
+            if i.is_multiple_of(1024) {
+                check_cancel(cancel)?;
+            }
+            let a = points[*a];
+            let b = points[*b];
+            edge_bounds.push(Bounds {
+                min: [a[0].min(b[0]), a[1].min(b[1]), a[2].min(b[2])],
+                max: [a[0].max(b[0]), a[1].max(b[1]), a[2].max(b[2])],
+            });
+        }
+        build.edge_bounds_us = lap(&mut checkpoint);
+        let edge_tree = Tree::new(&edge_bounds, cancel)?;
+        drop(edge_bounds);
+        build.edge_bvh_us = lap(&mut checkpoint);
+        let mut face_bounds = Vec::with_capacity(faces.len());
+        for (i, face) in faces.iter().enumerate() {
+            if i.is_multiple_of(1024) {
+                check_cancel(cancel)?;
+            }
+            let [a, b, c] = *face;
+            face_bounds.push(Bounds {
+                min: [
+                    a[0].min(b[0]).min(c[0]),
+                    a[1].min(b[1]).min(c[1]),
+                    a[2].min(b[2]).min(c[2]),
+                ],
+                max: [
+                    a[0].max(b[0]).max(c[0]),
+                    a[1].max(b[1]).max(c[1]),
+                    a[2].max(b[2]).max(c[2]),
+                ],
+            });
+        }
+        build.face_bounds_us = lap(&mut checkpoint);
+        let face_tree = Tree::new(&face_bounds, cancel)?;
+        drop(face_bounds);
+        build.face_bvh_us = lap(&mut checkpoint);
+        check_cancel(cancel)?;
+        build.bvh_center_scratch_peak_bytes = edge_tree
+            .center_scratch_bytes
+            .max(face_tree.center_scratch_bytes);
+        build.total_us = started.elapsed().as_micros().min(u128::from(u64::MAX)) as u64;
+        Ok(Self {
+            edge_tree,
+            face_tree,
+            edges,
+            build,
+        })
+    }
+    #[cfg(test)]
+    fn prepare_previous(
+        points: &[[f32; 3]],
+        faces: &[Face],
+        edge_mask: Option<&str>,
+        cancel: Option<&AtomicBool>,
+    ) -> Result<Self, String> {
+        let started = Instant::now();
+        let mut checkpoint = started;
+        let mut build = SurfaceBuild {
+            shapes: 1,
+            ..SurfaceBuild::default()
+        };
         check_cancel(cancel)?;
         let mut ids = HashMap::new();
         for (i, p) in points.iter().enumerate() {
@@ -131,6 +402,7 @@ impl SurfaceIndex {
             }
             ids.insert(bits(*p), i);
         }
+        build.vertex_map_us = lap(&mut checkpoint);
         let mut adjacency: HashMap<[usize; 2], ([f64; 3], usize, bool)> = HashMap::new();
         let mut original_edges = std::collections::HashSet::new();
         for (face_index, face) in faces.iter().enumerate() {
@@ -184,7 +456,9 @@ impl SurfaceIndex {
         };
         drop(ids);
         check_cancel(cancel)?;
+        build.topology_us = lap(&mut checkpoint);
         edges.sort_unstable();
+        build.edge_sort_us = lap(&mut checkpoint);
         check_cancel(cancel)?;
         let mut edge_bounds = Vec::with_capacity(edges.len());
         for (i, [a, b]) in edges.iter().enumerate() {
@@ -193,8 +467,10 @@ impl SurfaceIndex {
             }
             edge_bounds.push(Bounds::point(points[*a]).union(Bounds::point(points[*b])));
         }
-        let edge_tree = Tree::new(&edge_bounds, cancel)?;
+        build.edge_bounds_us = lap(&mut checkpoint);
+        let edge_tree = Tree::new_previous(&edge_bounds, cancel)?;
         drop(edge_bounds);
+        build.edge_bvh_us = lap(&mut checkpoint);
         let mut face_bounds = Vec::with_capacity(faces.len());
         for (i, face) in faces.iter().enumerate() {
             if i.is_multiple_of(1024) {
@@ -208,13 +484,21 @@ impl SurfaceIndex {
                     .unwrap(),
             );
         }
-        let face_tree = Tree::new(&face_bounds, cancel)?;
+        build.face_bounds_us = lap(&mut checkpoint);
+        let face_tree = Tree::new_previous(&face_bounds, cancel)?;
+        drop(face_bounds);
+        build.face_bvh_us = lap(&mut checkpoint);
         check_cancel(cancel)?;
+        build.total_us = started.elapsed().as_micros().min(u128::from(u64::MAX)) as u64;
         Ok(Self {
             edge_tree,
             face_tree,
             edges,
+            build,
         })
+    }
+    pub fn build_profile(&self) -> SurfaceBuild {
+        self.build
     }
     pub fn memory(&self) -> SurfaceMemory {
         SurfaceMemory {
@@ -432,6 +716,73 @@ mod tests {
     fn close(a: [f32; 3], b: [f32; 3]) {
         for i in 0..3 {
             assert!((a[i] - b[i]).abs() < 0.0001, "{a:?} != {b:?}");
+        }
+    }
+    #[test]
+    fn median_tree_reservation_matches_topology_and_previous_bounds() {
+        fn oracle(n: usize) -> usize {
+            if n == 0 {
+                0
+            } else if n <= 8 {
+                1
+            } else {
+                1 + oracle(n / 2) + oracle(n - n / 2)
+            }
+        }
+        for n in (0..1024).chain([4096, 4097, 8191, 8192, 8193, 458714, 500000, 1000000]) {
+            assert_eq!(Tree::node_count(n), oracle(n));
+        }
+        for n in [0, 1, 8, 9, 16, 17, 31, 32, 33, 129, 1025] {
+            let bounds: Vec<_> = (0..n)
+                .map(|i| Bounds::point([(i % 7) as f32, (i % 13) as f32, 0.]))
+                .collect();
+            let new = Tree::new(&bounds, None).unwrap();
+            let old = Tree::new_previous(&bounds, None).unwrap();
+            assert_eq!(new.nodes.len(), Tree::node_count(n));
+            assert_eq!(new.items, old.items);
+            for (new, old) in new.nodes.iter().zip(&old.nodes) {
+                assert_eq!(new.bounds, old.bounds);
+                assert_eq!(new.range, old.range);
+                assert_eq!(new.children, old.children);
+            }
+        }
+    }
+    #[test]
+    fn optimized_surface_matches_previous_for_masks_legacy_and_degenerate_faces() {
+        let points = [
+            [0., 0., 0.],
+            [1., 0., 0.],
+            [1., 1., 0.],
+            [0., 1., 0.],
+            [0., 0., 1.],
+        ];
+        let faces = [
+            [points[0], points[1], points[2]],
+            [points[0], points[2], points[3]],
+            [points[0], points[1], points[4]],
+            [points[0], points[1], points[1]],
+        ];
+        for mask in [None, Some("7777"), Some("5307"), Some("0000")] {
+            let new = SurfaceIndex::prepare(&points, &faces, mask, None).unwrap();
+            let old = SurfaceIndex::prepare_previous(&points, &faces, mask, None).unwrap();
+            assert_eq!(new.edges, old.edges);
+            assert_eq!(new.face_tree.items, old.face_tree.items);
+            assert_eq!(new.edge_tree.items, old.edge_tree.items);
+            for (a, b) in new.edge_tree.nodes.iter().zip(&old.edge_tree.nodes) {
+                assert_eq!(a.bounds, b.bounds);
+            }
+            let timings = new.build_profile();
+            let sum = timings.vertex_map_us
+                + timings.topology_us
+                + timings.edge_sort_us
+                + timings.edge_bounds_us
+                + timings.edge_bvh_us
+                + timings.face_bounds_us
+                + timings.face_bvh_us;
+            assert!(sum <= timings.total_us);
+            assert_eq!(timings.shapes, 1);
+            let cancel = AtomicBool::new(true);
+            assert!(SurfaceIndex::prepare(&points, &faces, mask, Some(&cancel)).is_err());
         }
     }
     #[test]

@@ -64,7 +64,29 @@ pub fn python() -> PathBuf {
         PathBuf::from(if cfg!(windows) { "python" } else { "python3" })
     }
 }
+#[cfg(test)]
 pub fn load(source: String, cache: PathBuf, cancel: Arc<AtomicBool>) -> Result<Imported, String> {
+    load_context(source, cache, cancel, None)
+}
+pub fn load_with_task(
+    source: String,
+    cache: PathBuf,
+    cancel: Arc<AtomicBool>,
+    task: &crate::load_task::Task,
+) -> Result<Imported, String> {
+    load_context(source, cache, cancel, Some(task))
+}
+fn load_context(
+    source: String,
+    cache: PathBuf,
+    cancel: Arc<AtomicBool>,
+    task: Option<&crate::load_task::Task>,
+) -> Result<Imported, String> {
+    let context = crate::load_io::Context {
+        task,
+        cancel: Some(&cancel),
+    };
+    context.check()?;
     let id = format!(
         "{}-{}",
         std::process::id(),
@@ -74,6 +96,7 @@ pub fn load(source: String, cache: PathBuf, cancel: Arc<AtomicBool>) -> Result<I
     std::fs::create_dir_all(&work).map_err(|e| e.to_string())?;
     let output = work.join("mesh.json");
     let errors = work.join("errors.txt");
+    let progress_path = work.join("progress.json");
     let result = (|| {
         let mut child = Command::new(python())
             .arg("-I")
@@ -84,8 +107,7 @@ pub fn load(source: String, cache: PathBuf, cancel: Arc<AtomicBool>) -> Result<I
             .stderr(std::fs::File::create(&errors).map_err(|e| e.to_string())?)
             .spawn()
             .map_err(|e| format!("USD_RUNTIME_MISSING: {e}"))?;
-        let request =
-            serde_json::json!({"source":source,"package_dir":work.join("package"),"output":output});
+        let request = serde_json::json!({"source":source,"package_dir":work.join("package"),"output":output,"progress":progress_path});
         if let Err(e) = child
             .stdin
             .take()
@@ -98,10 +120,40 @@ pub fn load(source: String, cache: PathBuf, cancel: Arc<AtomicBool>) -> Result<I
         }
         let started = Instant::now();
         loop {
+            if let Some(task) = task {
+                if let Ok(bytes) = std::fs::read(&progress_path) {
+                    #[derive(Deserialize)]
+                    struct ChildProgress {
+                        phase: String,
+                        completed: usize,
+                        total: usize,
+                    }
+                    if bytes.len() <= 4096 {
+                        if let Ok(p) = serde_json::from_slice::<ChildProgress>(&bytes) {
+                            let phase = match p.phase.as_str() {
+                                "read" => Some(crate::load_task::Phase::Read),
+                                "parse" => Some(crate::load_task::Phase::Parse),
+                                "extract" => Some(crate::load_task::Phase::Extract),
+                                "convert" => Some(crate::load_task::Phase::Convert),
+                                _ => None,
+                            };
+                            if let Some(phase) = phase {
+                                // Cancellation is handled below so the child is always reaped.
+                                let _ = task.progress(phase, p.completed, p.total);
+                            }
+                        }
+                    }
+                }
+            }
             if cancel.load(Ordering::Relaxed) || started.elapsed() > Duration::from_secs(300) {
                 let _ = child.kill();
                 let _ = child.wait();
-                return Err("USD_IMPORT_CANCELLED_OR_TIMED_OUT".into());
+                return Err(if cancel.load(Ordering::Relaxed) {
+                    "LOAD_CANCELLED"
+                } else {
+                    "USD_IMPORT_TIMED_OUT"
+                }
+                .into());
             }
             if std::fs::metadata(&output).is_ok_and(|m| m.len() > 64 * 1024 * 1024)
                 || std::fs::metadata(&errors).is_ok_and(|m| m.len() > 1024 * 1024)
@@ -126,10 +178,9 @@ pub fn load(source: String, cache: PathBuf, cancel: Arc<AtomicBool>) -> Result<I
         if std::fs::metadata(&output).map_err(|e| e.to_string())?.len() > 64 * 1024 * 1024 {
             return Err("USD output exceeds 64 MiB".into());
         }
-        let raw: RawImport =
-            serde_json::from_slice(&std::fs::read(&output).map_err(|e| e.to_string())?)
-                .map_err(|e| e.to_string())?;
-        let converted = convert(raw)?;
+        let raw: RawImport = crate::load_io::read_json(&output, 64 * 1024 * 1024, context)?;
+        let converted = convert_context(raw, context)?;
+        context.check()?;
         // Keep downloaded dependencies, license and metadata for provenance / future material support.
         if work.join("package").exists() {
             std::fs::rename(work.join("package"), cache.join(format!("package-{id}")))
@@ -140,7 +191,24 @@ pub fn load(source: String, cache: PathBuf, cancel: Arc<AtomicBool>) -> Result<I
     let _ = std::fs::remove_dir_all(&work);
     result
 }
+#[cfg(test)]
 fn convert(raw: RawImport) -> Result<Imported, String> {
+    convert_context(
+        raw,
+        crate::load_io::Context {
+            task: None,
+            cancel: None,
+        },
+    )
+}
+fn convert_context(
+    raw: RawImport,
+    context: crate::load_io::Context<'_>,
+) -> Result<Imported, String> {
+    context.check()?;
+    let faces_total = raw.meshes.iter().map(|m| m.counts.len()).sum();
+    let mut faces_done = 0;
+    context.progress(crate::load_task::Phase::Triangulate, 0, faces_total)?;
     if raw.meshes.is_empty()
         || raw.meshes.len() > 1000
         || !raw.meters_per_unit.is_finite()
@@ -152,6 +220,7 @@ fn convert(raw: RawImport) -> Result<Imported, String> {
     let mut meshes = Vec::new();
     let mut total = 0;
     for m in raw.meshes {
+        context.check()?;
         if m.points.len() > 1_500_000
             || m.points
                 .iter()
@@ -163,7 +232,10 @@ fn convert(raw: RawImport) -> Result<Imported, String> {
         }
         let mut min = [f32::INFINITY; 3];
         let mut max = [f32::NEG_INFINITY; 3];
-        for p in &m.points {
+        for (index, p) in m.points.iter().enumerate() {
+            if index.is_multiple_of(4096) {
+                context.check()?;
+            }
             for i in 0..3 {
                 min[i] = min[i].min(p[i]);
                 max[i] = max[i].max(p[i]);
@@ -183,8 +255,20 @@ fn convert(raw: RawImport) -> Result<Imported, String> {
         let mut edge_mask = String::new();
         let mut start = 0;
         for (face, count) in m.counts.into_iter().enumerate() {
+            if face.is_multiple_of(128) {
+                context.progress(
+                    crate::load_task::Phase::Triangulate,
+                    faces_done,
+                    faces_total,
+                )?;
+            }
+            faces_done += 1;
             if !holes.contains(&face) {
-                let mut result = mesh::triangulate(&points, &m.indices[start..start + count])?;
+                let mut result = mesh::triangulate_cancellable(
+                    &points,
+                    &m.indices[start..start + count],
+                    context.cancel,
+                )?;
                 if m.left_handed {
                     for t in &mut result {
                         t.swap(1, 2);
@@ -237,12 +321,17 @@ fn convert(raw: RawImport) -> Result<Imported, String> {
             source: raw.source.clone(),
             prim_path: m.prim_path,
         });
-        asset.validate()?;
+        asset.validate_cancellable(context.cancel)?;
         meshes.push((m.name.chars().take(60).collect(), center, asset));
     }
     if meshes.is_empty() {
         return Err("No non-degenerate USD faces".into());
     }
+    context.progress(
+        crate::load_task::Phase::Triangulate,
+        faces_total,
+        faces_total,
+    )?;
     Ok(Imported {
         report: Report {
             objects: meshes.len(),
@@ -255,13 +344,33 @@ fn convert(raw: RawImport) -> Result<Imported, String> {
         meshes,
     })
 }
-impl Editor {
-    pub fn import_usd(&mut self, imported: Imported) -> Result<Report, String> {
-        self.ensure_not_dragging()?;
-        if self.document.objects.len() + imported.meshes.len() > 10000
-            || self.document.meshes.len() + imported.meshes.len() > 1000
-            || self
-                .document
+/// Immutable append candidate. Expensive validation and framing happen before publication.
+pub struct AppendPlan {
+    document: crate::document::Document,
+    publication: AppendPublication,
+}
+pub(crate) struct AppendPublication {
+    start: usize,
+    report: Report,
+    target: [f32; 3],
+    distance: f32,
+}
+impl AppendPlan {
+    pub fn prepare(
+        mut document: crate::document::Document,
+        first: u64,
+        imported: Imported,
+        cancel: Option<&AtomicBool>,
+    ) -> Result<Self, String> {
+        crate::snapping::check_cancel(cancel)?;
+        if imported.meshes.is_empty() {
+            return Err(
+                "No mesh objects in USD / USDにメッシュがありません / USD中没有网格对象".into(),
+            );
+        }
+        if document.objects.len() + imported.meshes.len() > 10000
+            || document.meshes.len() + imported.meshes.len() > 1000
+            || document
                 .meshes
                 .values()
                 .map(|m| m.triangles.len())
@@ -274,7 +383,11 @@ impl Editor {
         let mut min = [f32::INFINITY; 3];
         let mut max = [f32::NEG_INFINITY; 3];
         for (_, position, mesh) in &imported.meshes {
-            for point in mesh.triangles.iter().flatten() {
+            crate::snapping::check_cancel(cancel)?;
+            for (index, point) in mesh.triangles.iter().flatten().enumerate() {
+                if index.is_multiple_of(3072) {
+                    crate::snapping::check_cancel(cancel)?;
+                }
                 for i in 0..3 {
                     let v = point[i] + position[i];
                     min[i] = min[i].min(v);
@@ -282,18 +395,19 @@ impl Editor {
                 }
             }
         }
-        let first = self.next_id()?;
         let mut objects = Vec::new();
         let mut assets = Vec::new();
         for (i, (name, position, mesh)) in imported.meshes.into_iter().enumerate() {
-            mesh.validate()?;
-            let id = first + i as u64;
-            let mut serial = self.document.meshes.len() + assets.len();
+            crate::snapping::check_cancel(cancel)?;
+            mesh.validate_cancellable(cancel)?;
+            let id = first
+                .checked_add(i as u64)
+                .filter(|id| *id <= 9_007_199_254_740_991)
+                .ok_or("Object ID limit reached")?;
+            let mut serial = document.meshes.len() + assets.len();
             let key = loop {
                 let key = format!("usd-{serial}");
-                if !self.document.meshes.contains_key(&key)
-                    && !assets.iter().any(|(k, _)| k == &key)
-                {
+                if !document.meshes.contains_key(&key) && !assets.iter().any(|(k, _)| k == &key) {
                     break key;
                 }
                 serial += 1;
@@ -314,24 +428,76 @@ impl Editor {
             objects.push(object);
             assets.push((key, mesh));
         }
-        for (id, mesh) in &assets {
-            self.document.meshes.insert(id.clone(), mesh.clone());
+        let start = document.objects.len();
+        document.objects.extend(objects);
+        for (key, mesh) in assets {
+            document.meshes.insert(key, mesh);
         }
-        if let Err(error) = self.edit_span(self.document.objects.len(), 0, objects, Some(first)) {
-            for (id, _) in assets {
-                self.document.meshes.remove(&id);
+        document.version = 3;
+        document.selected = Some(first);
+        crate::snapping::check_cancel(cancel)?;
+        Ok(Self {
+            document,
+            publication: AppendPublication {
+                start,
+                report: imported.report,
+                target: std::array::from_fn(|i| (min[i] + max[i]) * 0.5),
+                distance: ((0..3)
+                    .map(|i| (max[i] - min[i]).powi(2))
+                    .sum::<f32>()
+                    .sqrt()
+                    * 1.5)
+                    .clamp(0.05, 50000.),
+            },
+        })
+    }
+    pub(crate) fn into_parts(self) -> (crate::document::Document, AppendPublication) {
+        (self.document, self.publication)
+    }
+}
+impl AppendPublication {
+    pub(crate) fn publish(
+        self,
+        editor: &mut Editor,
+        mut document: crate::document::Document,
+    ) -> Result<Report, String> {
+        // The caller fences the base document before entering this small publication step.
+        let objects = document.objects.split_off(self.start);
+        let mut keys = Vec::new();
+        for object in &objects {
+            let key = object.mesh_id.as_ref().ok_or("Missing imported mesh")?;
+            if editor.document.meshes.contains_key(key) {
+                return Err("USD append asset conflict".into());
+            }
+            keys.push(key.clone());
+        }
+        for key in &keys {
+            editor
+                .document
+                .meshes
+                .insert(key.clone(), document.meshes[key].clone());
+        }
+        if let Err(error) = editor.edit_span(self.start, 0, objects, document.selected) {
+            for key in keys {
+                editor.document.meshes.remove(&key);
             }
             return Err(error);
         }
-        self.document.version = 3;
-        self.camera_target = std::array::from_fn(|i| (min[i] + max[i]) * 0.5);
-        self.distance = ((0..3)
-            .map(|i| (max[i] - min[i]).powi(2))
-            .sum::<f32>()
-            .sqrt()
-            * 1.5)
-            .clamp(0.05, 50000.);
-        Ok(imported.report)
+        editor.document.version = 3;
+        editor.camera_target = self.target;
+        editor.distance = self.distance;
+        Ok(self.report)
+    }
+}
+impl Editor {
+    #[cfg(test)]
+    pub fn import_usd(&mut self, imported: Imported) -> Result<Report, String> {
+        self.ensure_not_dragging()?;
+        let first = self.next_id()?;
+        let plan = AppendPlan::prepare(self.document.clone(), first, imported, None)?;
+        let (document, publication) = plan.into_parts();
+        document.validate()?;
+        publication.publish(self, document)
     }
 }
 

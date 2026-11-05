@@ -1,0 +1,4491 @@
+{
+  "platform": "macOS-27.2-arm64-arm-64bit",
+  "machine": "arm64",
+  "profile": "debug",
+  "rustc": "rustc 1.99.1 (58cf8f9c3 2026-10-13) (Homebrew)",
+  "input": {
+    "name": "checkpoint.json",
+    "sha256": "0cf1d705e56290fb737b9b52197a131fc77e49b3fe8a08ae28db736e3cc47864",
+    "bytes": 55275803,
+    "label": "NVIDIA IV_pole_a01 derived recovery copy",
+    "sha256_verified_after_runs": true
+  },
+  "mode": "recovery",
+  "runs": [
+    {
+      "diagnostics": {
+        "admission": {
+          "combined_bytes": 41043784,
+          "reserved_working_bytes": 0,
+          "resident_index_bytes": 41043784,
+          "tracked_scenes": 1
+        },
+        "buffer_bytes": 41038184,
+        "cache_epoch": 1,
+        "document_epoch": 1,
+        "indexed_revision": 1,
+        "last_preparation": {
+          "budget": {
+            "concurrent_working_bytes": 0,
+            "estimated_combined_bytes": 469822464,
+            "estimated_working_bytes": 469822464,
+            "instances": 17,
+            "limit_bytes": 536870912,
+            "resident_bytes": 0,
+            "shapes": 17,
+            "triangles": 458726
+          },
+          "buffer_bytes": 41038184,
+          "elapsed_us": 9609579,
+          "memory": {
+            "edge_nodes": 155763,
+            "edge_tree_vec_bytes": 13716872,
+            "edge_vec_bytes": 7493968,
+            "edges": 468369,
+            "face_nodes": 155763,
+            "face_tree_vec_bytes": 13639728,
+            "instances": 17,
+            "primitive_face_bytes": 432,
+            "ready_surface_shapes": 17,
+            "scene_entry_payload_bytes": 3400,
+            "scene_tree_vec_bytes": 2904,
+            "shapes": 17,
+            "triangles": 458726,
+            "vertex_nodes": 28843,
+            "vertex_tree_vec_bytes": 2492672,
+            "vertex_vec_bytes": 3691608,
+            "vertices": 230731
+          },
+          "reused_buffer_bytes": 0,
+          "reused_shapes": 0
+        },
+        "memory": {
+          "edge_nodes": 155763,
+          "edge_tree_vec_bytes": 13716872,
+          "edge_vec_bytes": 7493968,
+          "edges": 468369,
+          "face_nodes": 155763,
+          "face_tree_vec_bytes": 13639728,
+          "instances": 17,
+          "primitive_face_bytes": 432,
+          "ready_surface_shapes": 17,
+          "scene_entry_payload_bytes": 3400,
+          "scene_tree_vec_bytes": 2904,
+          "shapes": 17,
+          "triangles": 458726,
+          "vertex_nodes": 28843,
+          "vertex_tree_vec_bytes": 2492672,
+          "vertex_vec_bytes": 3691608,
+          "vertices": 230731
+        },
+        "render_revision": 1,
+        "retention": {
+          "current_buffer_bytes": 41038184,
+          "evicted_buffer_bytes_total": 0,
+          "evictions_total": 0,
+          "idle_buffer_bytes": 0,
+          "last_trim": {
+            "after_buffer_bytes": 41038184,
+            "before_buffer_bytes": 41038184,
+            "evicted_buffer_bytes": 0,
+            "evicted_shapes": 0,
+            "scene_compaction_deferred": false,
+            "scene_reclaimed_buffer_bytes": 0,
+            "scene_reclaimed_payload_bytes": 0
+          },
+          "limit_bytes": 134217728,
+          "over_budget_bytes": 0,
+          "referenced_buffer_bytes": 41038184
+        }
+      },
+      "first_snap": {
+        "acquire_us": 8,
+        "edge_hit": true,
+        "edge_us": 44479,
+        "face_hit": true,
+        "face_us": 1613,
+        "geometries_built": 0,
+        "objects_visited": 0
+      },
+      "mesh_assets": 16,
+      "mode": "recovery",
+      "objects": 17,
+      "profile": {
+        "commit_started": true,
+        "id": "1",
+        "kind": "recovery",
+        "outcome": "success",
+        "phases": [
+          {
+            "elapsed_us": 2219266,
+            "entries": 1,
+            "phase": "commit"
+          },
+          {
+            "elapsed_us": 298,
+            "entries": 1,
+            "phase": "instances"
+          },
+          {
+            "elapsed_us": 3593454,
+            "entries": 1,
+            "phase": "parse"
+          },
+          {
+            "elapsed_us": 10350,
+            "entries": 1,
+            "phase": "read"
+          },
+          {
+            "elapsed_us": 8110728,
+            "entries": 16,
+            "phase": "surfaces"
+          },
+          {
+            "elapsed_us": 203913,
+            "entries": 1,
+            "phase": "validate"
+          },
+          {
+            "elapsed_us": 1294648,
+            "entries": 16,
+            "phase": "vertices"
+          }
+        ],
+        "total_us": 15432660
+      },
+      "scope": "Headless production CPU load path; no dialog, IPC notification, renderer upload or GPU completion. Recovery writes a private checkpoint but never consumes the input.",
+      "triangles": 458714,
+      "memory": {
+        "interval_ms": 50.0,
+        "errors": [],
+        "samples": [
+          {
+            "root_rss_bytes": 67420160,
+            "tree_rss_sum_bytes": 67420160,
+            "process_count": 1,
+            "at_us": 36113,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 69304320,
+            "tree_rss_sum_bytes": 69304320,
+            "process_count": 1,
+            "at_us": 120915,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 69468160,
+            "tree_rss_sum_bytes": 69468160,
+            "process_count": 1,
+            "at_us": 204642,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 69468160,
+            "tree_rss_sum_bytes": 69468160,
+            "process_count": 1,
+            "at_us": 298174,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 69550080,
+            "tree_rss_sum_bytes": 69550080,
+            "process_count": 1,
+            "at_us": 378927,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 69550080,
+            "tree_rss_sum_bytes": 69550080,
+            "process_count": 1,
+            "at_us": 467732,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 69582848,
+            "tree_rss_sum_bytes": 69582848,
+            "process_count": 1,
+            "at_us": 560198,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 70025216,
+            "tree_rss_sum_bytes": 70025216,
+            "process_count": 1,
+            "at_us": 652955,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 70451200,
+            "tree_rss_sum_bytes": 70451200,
+            "process_count": 1,
+            "at_us": 739637,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 70877184,
+            "tree_rss_sum_bytes": 70877184,
+            "process_count": 1,
+            "at_us": 826053,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 71401472,
+            "tree_rss_sum_bytes": 71401472,
+            "process_count": 1,
+            "at_us": 912735,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 71811072,
+            "tree_rss_sum_bytes": 71811072,
+            "process_count": 1,
+            "at_us": 1007807,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 72187904,
+            "tree_rss_sum_bytes": 72187904,
+            "process_count": 1,
+            "at_us": 1095708,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 72646656,
+            "tree_rss_sum_bytes": 72646656,
+            "process_count": 1,
+            "at_us": 1182393,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 73072640,
+            "tree_rss_sum_bytes": 73072640,
+            "process_count": 1,
+            "at_us": 1265832,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 73547776,
+            "tree_rss_sum_bytes": 73547776,
+            "process_count": 1,
+            "at_us": 1354987,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 73908224,
+            "tree_rss_sum_bytes": 73908224,
+            "process_count": 1,
+            "at_us": 1429872,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 74350592,
+            "tree_rss_sum_bytes": 74350592,
+            "process_count": 1,
+            "at_us": 1515986,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 75907072,
+            "tree_rss_sum_bytes": 75907072,
+            "process_count": 1,
+            "at_us": 1591983,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 76333056,
+            "tree_rss_sum_bytes": 76333056,
+            "process_count": 1,
+            "at_us": 1676882,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 76742656,
+            "tree_rss_sum_bytes": 76742656,
+            "process_count": 1,
+            "at_us": 1769059,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 77185024,
+            "tree_rss_sum_bytes": 77185024,
+            "process_count": 1,
+            "at_us": 1855764,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 77332480,
+            "tree_rss_sum_bytes": 77332480,
+            "process_count": 1,
+            "at_us": 1940481,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 77332480,
+            "tree_rss_sum_bytes": 77332480,
+            "process_count": 1,
+            "at_us": 2030556,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 77463552,
+            "tree_rss_sum_bytes": 77463552,
+            "process_count": 1,
+            "at_us": 2127579,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 77840384,
+            "tree_rss_sum_bytes": 77840384,
+            "process_count": 1,
+            "at_us": 2205363,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 78282752,
+            "tree_rss_sum_bytes": 78282752,
+            "process_count": 1,
+            "at_us": 2294163,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 78725120,
+            "tree_rss_sum_bytes": 78725120,
+            "process_count": 1,
+            "at_us": 2380744,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 79314944,
+            "tree_rss_sum_bytes": 79314944,
+            "process_count": 1,
+            "at_us": 2458282,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 79888384,
+            "tree_rss_sum_bytes": 79888384,
+            "process_count": 1,
+            "at_us": 2533060,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 80363520,
+            "tree_rss_sum_bytes": 80363520,
+            "process_count": 1,
+            "at_us": 2620718,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 81952768,
+            "tree_rss_sum_bytes": 81952768,
+            "process_count": 1,
+            "at_us": 2696153,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 82362368,
+            "tree_rss_sum_bytes": 82362368,
+            "process_count": 1,
+            "at_us": 2771320,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 82771968,
+            "tree_rss_sum_bytes": 82771968,
+            "process_count": 1,
+            "at_us": 2849403,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 83165184,
+            "tree_rss_sum_bytes": 83165184,
+            "process_count": 1,
+            "at_us": 2923897,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 83558400,
+            "tree_rss_sum_bytes": 83558400,
+            "process_count": 1,
+            "at_us": 3010279,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 83656704,
+            "tree_rss_sum_bytes": 83656704,
+            "process_count": 1,
+            "at_us": 3103182,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 84115456,
+            "tree_rss_sum_bytes": 84115456,
+            "process_count": 1,
+            "at_us": 3198099,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 84459520,
+            "tree_rss_sum_bytes": 84459520,
+            "process_count": 1,
+            "at_us": 3322796,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 84770816,
+            "tree_rss_sum_bytes": 84770816,
+            "process_count": 1,
+            "at_us": 3411404,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 86376448,
+            "tree_rss_sum_bytes": 86376448,
+            "process_count": 1,
+            "at_us": 3519770,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 86704128,
+            "tree_rss_sum_bytes": 86704128,
+            "process_count": 1,
+            "at_us": 3615143,
+            "phase": "validate"
+          },
+          {
+            "root_rss_bytes": 87064576,
+            "tree_rss_sum_bytes": 87064576,
+            "process_count": 1,
+            "at_us": 3735859,
+            "phase": "validate"
+          },
+          {
+            "root_rss_bytes": 87244800,
+            "tree_rss_sum_bytes": 87244800,
+            "process_count": 1,
+            "at_us": 3859520,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 87719936,
+            "tree_rss_sum_bytes": 87719936,
+            "process_count": 1,
+            "at_us": 3979002,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 87851008,
+            "tree_rss_sum_bytes": 87851008,
+            "process_count": 1,
+            "at_us": 4112530,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 87998464,
+            "tree_rss_sum_bytes": 87998464,
+            "process_count": 1,
+            "at_us": 4228184,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 88506368,
+            "tree_rss_sum_bytes": 88506368,
+            "process_count": 1,
+            "at_us": 4355952,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 89391104,
+            "tree_rss_sum_bytes": 89391104,
+            "process_count": 1,
+            "at_us": 4476774,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 90521600,
+            "tree_rss_sum_bytes": 90521600,
+            "process_count": 1,
+            "at_us": 4569829,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 90783744,
+            "tree_rss_sum_bytes": 90783744,
+            "process_count": 1,
+            "at_us": 4678550,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 91242496,
+            "tree_rss_sum_bytes": 91242496,
+            "process_count": 1,
+            "at_us": 4788758,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 91635712,
+            "tree_rss_sum_bytes": 91635712,
+            "process_count": 1,
+            "at_us": 4890793,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 91766784,
+            "tree_rss_sum_bytes": 91766784,
+            "process_count": 1,
+            "at_us": 5039507,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 91815936,
+            "tree_rss_sum_bytes": 91815936,
+            "process_count": 1,
+            "at_us": 5142915,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 91815936,
+            "tree_rss_sum_bytes": 91815936,
+            "process_count": 1,
+            "at_us": 5260961,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 93454336,
+            "tree_rss_sum_bytes": 93454336,
+            "process_count": 1,
+            "at_us": 5368960,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 93782016,
+            "tree_rss_sum_bytes": 93782016,
+            "process_count": 1,
+            "at_us": 5486212,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 93929472,
+            "tree_rss_sum_bytes": 93929472,
+            "process_count": 1,
+            "at_us": 5586801,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 94191616,
+            "tree_rss_sum_bytes": 94191616,
+            "process_count": 1,
+            "at_us": 5698080,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 94289920,
+            "tree_rss_sum_bytes": 94289920,
+            "process_count": 1,
+            "at_us": 5787487,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 94404608,
+            "tree_rss_sum_bytes": 94404608,
+            "process_count": 1,
+            "at_us": 5901162,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 94404608,
+            "tree_rss_sum_bytes": 94404608,
+            "process_count": 1,
+            "at_us": 6010680,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 94765056,
+            "tree_rss_sum_bytes": 94765056,
+            "process_count": 1,
+            "at_us": 6345207,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 95354880,
+            "tree_rss_sum_bytes": 95354880,
+            "process_count": 1,
+            "at_us": 6510066,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 96796672,
+            "tree_rss_sum_bytes": 96796672,
+            "process_count": 1,
+            "at_us": 6610993,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 97091584,
+            "tree_rss_sum_bytes": 97091584,
+            "process_count": 1,
+            "at_us": 6717658,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 97189888,
+            "tree_rss_sum_bytes": 97189888,
+            "process_count": 1,
+            "at_us": 6820498,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 97583104,
+            "tree_rss_sum_bytes": 97583104,
+            "process_count": 1,
+            "at_us": 6919344,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 97763328,
+            "tree_rss_sum_bytes": 97763328,
+            "process_count": 1,
+            "at_us": 7024390,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 98418688,
+            "tree_rss_sum_bytes": 98418688,
+            "process_count": 1,
+            "at_us": 7109803,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 99778560,
+            "tree_rss_sum_bytes": 99778560,
+            "process_count": 1,
+            "at_us": 7212161,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 99778560,
+            "tree_rss_sum_bytes": 99778560,
+            "process_count": 1,
+            "at_us": 7302975,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 99909632,
+            "tree_rss_sum_bytes": 99909632,
+            "process_count": 1,
+            "at_us": 7399438,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 100548608,
+            "tree_rss_sum_bytes": 100548608,
+            "process_count": 1,
+            "at_us": 7491869,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 100777984,
+            "tree_rss_sum_bytes": 100777984,
+            "process_count": 1,
+            "at_us": 7589223,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 100794368,
+            "tree_rss_sum_bytes": 100794368,
+            "process_count": 1,
+            "at_us": 7686432,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 101777408,
+            "tree_rss_sum_bytes": 101777408,
+            "process_count": 1,
+            "at_us": 7781431,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 102039552,
+            "tree_rss_sum_bytes": 102039552,
+            "process_count": 1,
+            "at_us": 7881930,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 103055360,
+            "tree_rss_sum_bytes": 103055360,
+            "process_count": 1,
+            "at_us": 7978233,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 104480768,
+            "tree_rss_sum_bytes": 104480768,
+            "process_count": 1,
+            "at_us": 8074028,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 106512384,
+            "tree_rss_sum_bytes": 106512384,
+            "process_count": 1,
+            "at_us": 8165067,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 107642880,
+            "tree_rss_sum_bytes": 107642880,
+            "process_count": 1,
+            "at_us": 8246867,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 107937792,
+            "tree_rss_sum_bytes": 107937792,
+            "process_count": 1,
+            "at_us": 8330041,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 109903872,
+            "tree_rss_sum_bytes": 109903872,
+            "process_count": 1,
+            "at_us": 8420479,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 110084096,
+            "tree_rss_sum_bytes": 110084096,
+            "process_count": 1,
+            "at_us": 8513720,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 110084096,
+            "tree_rss_sum_bytes": 110084096,
+            "process_count": 1,
+            "at_us": 8595578,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 110772224,
+            "tree_rss_sum_bytes": 110772224,
+            "process_count": 1,
+            "at_us": 8683068,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 111394816,
+            "tree_rss_sum_bytes": 111394816,
+            "process_count": 1,
+            "at_us": 8774567,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 111919104,
+            "tree_rss_sum_bytes": 111919104,
+            "process_count": 1,
+            "at_us": 8853666,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 114081792,
+            "tree_rss_sum_bytes": 114081792,
+            "process_count": 1,
+            "at_us": 8932450,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 114212864,
+            "tree_rss_sum_bytes": 114212864,
+            "process_count": 1,
+            "at_us": 9028110,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 115490816,
+            "tree_rss_sum_bytes": 115490816,
+            "process_count": 1,
+            "at_us": 9114010,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 116211712,
+            "tree_rss_sum_bytes": 116211712,
+            "process_count": 1,
+            "at_us": 9203111,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 117096448,
+            "tree_rss_sum_bytes": 117096448,
+            "process_count": 1,
+            "at_us": 9288822,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 117096448,
+            "tree_rss_sum_bytes": 117096448,
+            "process_count": 1,
+            "at_us": 9375371,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 117129216,
+            "tree_rss_sum_bytes": 117129216,
+            "process_count": 1,
+            "at_us": 9463888,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 117129216,
+            "tree_rss_sum_bytes": 117129216,
+            "process_count": 1,
+            "at_us": 9553401,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 117194752,
+            "tree_rss_sum_bytes": 117194752,
+            "process_count": 1,
+            "at_us": 9640861,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 117243904,
+            "tree_rss_sum_bytes": 117243904,
+            "process_count": 1,
+            "at_us": 9730649,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 117800960,
+            "tree_rss_sum_bytes": 117800960,
+            "process_count": 1,
+            "at_us": 9819265,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 118882304,
+            "tree_rss_sum_bytes": 118882304,
+            "process_count": 1,
+            "at_us": 9908136,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 118882304,
+            "tree_rss_sum_bytes": 118882304,
+            "process_count": 1,
+            "at_us": 10005414,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 119144448,
+            "tree_rss_sum_bytes": 119144448,
+            "process_count": 1,
+            "at_us": 10099040,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 119324672,
+            "tree_rss_sum_bytes": 119324672,
+            "process_count": 1,
+            "at_us": 10193811,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 119619584,
+            "tree_rss_sum_bytes": 119619584,
+            "process_count": 1,
+            "at_us": 10294589,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 119619584,
+            "tree_rss_sum_bytes": 119619584,
+            "process_count": 1,
+            "at_us": 10387992,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 120504320,
+            "tree_rss_sum_bytes": 120504320,
+            "process_count": 1,
+            "at_us": 10493822,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 122568704,
+            "tree_rss_sum_bytes": 122568704,
+            "process_count": 1,
+            "at_us": 10598242,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 122568704,
+            "tree_rss_sum_bytes": 122568704,
+            "process_count": 1,
+            "at_us": 10699831,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 123699200,
+            "tree_rss_sum_bytes": 123699200,
+            "process_count": 1,
+            "at_us": 10801879,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 123699200,
+            "tree_rss_sum_bytes": 123699200,
+            "process_count": 1,
+            "at_us": 10905238,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 123699200,
+            "tree_rss_sum_bytes": 123699200,
+            "process_count": 1,
+            "at_us": 11011102,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 125108224,
+            "tree_rss_sum_bytes": 125108224,
+            "process_count": 1,
+            "at_us": 11115005,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 127893504,
+            "tree_rss_sum_bytes": 127893504,
+            "process_count": 1,
+            "at_us": 11223711,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 127893504,
+            "tree_rss_sum_bytes": 127893504,
+            "process_count": 1,
+            "at_us": 11328233,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 128106496,
+            "tree_rss_sum_bytes": 128106496,
+            "process_count": 1,
+            "at_us": 11433245,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 128106496,
+            "tree_rss_sum_bytes": 128106496,
+            "process_count": 1,
+            "at_us": 11534364,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 128106496,
+            "tree_rss_sum_bytes": 128106496,
+            "process_count": 1,
+            "at_us": 11631687,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 128106496,
+            "tree_rss_sum_bytes": 128106496,
+            "process_count": 1,
+            "at_us": 11736109,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 128106496,
+            "tree_rss_sum_bytes": 128106496,
+            "process_count": 1,
+            "at_us": 11833770,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 128106496,
+            "tree_rss_sum_bytes": 128106496,
+            "process_count": 1,
+            "at_us": 11927142,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 129613824,
+            "tree_rss_sum_bytes": 129613824,
+            "process_count": 1,
+            "at_us": 12016685,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 130170880,
+            "tree_rss_sum_bytes": 130170880,
+            "process_count": 1,
+            "at_us": 12121892,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 130220032,
+            "tree_rss_sum_bytes": 130220032,
+            "process_count": 1,
+            "at_us": 12213369,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 130269184,
+            "tree_rss_sum_bytes": 130269184,
+            "process_count": 1,
+            "at_us": 12315931,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 130285568,
+            "tree_rss_sum_bytes": 130285568,
+            "process_count": 1,
+            "at_us": 12409203,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 130285568,
+            "tree_rss_sum_bytes": 130285568,
+            "process_count": 1,
+            "at_us": 12502567,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 130416640,
+            "tree_rss_sum_bytes": 130416640,
+            "process_count": 1,
+            "at_us": 12585075,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 131547136,
+            "tree_rss_sum_bytes": 131547136,
+            "process_count": 1,
+            "at_us": 12682351,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 132399104,
+            "tree_rss_sum_bytes": 132399104,
+            "process_count": 1,
+            "at_us": 12773731,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 132399104,
+            "tree_rss_sum_bytes": 132399104,
+            "process_count": 1,
+            "at_us": 12865780,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 132399104,
+            "tree_rss_sum_bytes": 132399104,
+            "process_count": 1,
+            "at_us": 12962071,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 132841472,
+            "tree_rss_sum_bytes": 132841472,
+            "process_count": 1,
+            "at_us": 13056029,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 133382144,
+            "tree_rss_sum_bytes": 133382144,
+            "process_count": 1,
+            "at_us": 13158789,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 134004736,
+            "tree_rss_sum_bytes": 134004736,
+            "process_count": 1,
+            "at_us": 13249601,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 138756096,
+            "tree_rss_sum_bytes": 138756096,
+            "process_count": 1,
+            "at_us": 13351395,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 140853248,
+            "tree_rss_sum_bytes": 140853248,
+            "process_count": 1,
+            "at_us": 13435386,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 143228928,
+            "tree_rss_sum_bytes": 143228928,
+            "process_count": 1,
+            "at_us": 13530245,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 145522688,
+            "tree_rss_sum_bytes": 145522688,
+            "process_count": 1,
+            "at_us": 13618699,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 147963904,
+            "tree_rss_sum_bytes": 147963904,
+            "process_count": 1,
+            "at_us": 13713456,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 150142976,
+            "tree_rss_sum_bytes": 150142976,
+            "process_count": 1,
+            "at_us": 13802983,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 152535040,
+            "tree_rss_sum_bytes": 152535040,
+            "process_count": 1,
+            "at_us": 13898017,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 154779648,
+            "tree_rss_sum_bytes": 154779648,
+            "process_count": 1,
+            "at_us": 13988919,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 157335552,
+            "tree_rss_sum_bytes": 157335552,
+            "process_count": 1,
+            "at_us": 14084253,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 159694848,
+            "tree_rss_sum_bytes": 159694848,
+            "process_count": 1,
+            "at_us": 14176193,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 162185216,
+            "tree_rss_sum_bytes": 162185216,
+            "process_count": 1,
+            "at_us": 14266374,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 164691968,
+            "tree_rss_sum_bytes": 164691968,
+            "process_count": 1,
+            "at_us": 14362958,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 167198720,
+            "tree_rss_sum_bytes": 167198720,
+            "process_count": 1,
+            "at_us": 14452888,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 169492480,
+            "tree_rss_sum_bytes": 169492480,
+            "process_count": 1,
+            "at_us": 14548462,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 171950080,
+            "tree_rss_sum_bytes": 171950080,
+            "process_count": 1,
+            "at_us": 14638668,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 174342144,
+            "tree_rss_sum_bytes": 174342144,
+            "process_count": 1,
+            "at_us": 14732148,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 176537600,
+            "tree_rss_sum_bytes": 176537600,
+            "process_count": 1,
+            "at_us": 14819392,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 178585600,
+            "tree_rss_sum_bytes": 178585600,
+            "process_count": 1,
+            "at_us": 14901039,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 180830208,
+            "tree_rss_sum_bytes": 180830208,
+            "process_count": 1,
+            "at_us": 14991877,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 183287808,
+            "tree_rss_sum_bytes": 183287808,
+            "process_count": 1,
+            "at_us": 15082912,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 185417728,
+            "tree_rss_sum_bytes": 185417728,
+            "process_count": 1,
+            "at_us": 15161452,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 187711488,
+            "tree_rss_sum_bytes": 187711488,
+            "process_count": 1,
+            "at_us": 15239956,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 189792256,
+            "tree_rss_sum_bytes": 189792256,
+            "process_count": 1,
+            "at_us": 15368610,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 191414272,
+            "tree_rss_sum_bytes": 191414272,
+            "process_count": 1,
+            "at_us": 15474297,
+            "phase": "first_snap"
+          }
+        ],
+        "per_phase": {
+          "commit": {
+            "samples": 24,
+            "sampled_peak_root_rss_bytes": 189792256,
+            "sampled_peak_tree_rss_sum_bytes": 189792256
+          },
+          "first_snap": {
+            "samples": 1,
+            "sampled_peak_root_rss_bytes": 191414272,
+            "sampled_peak_tree_rss_sum_bytes": 191414272
+          },
+          "instances": {
+            "samples": 0,
+            "sampled_peak_root_rss_bytes": null,
+            "sampled_peak_tree_rss_sum_bytes": null
+          },
+          "parse": {
+            "samples": 41,
+            "sampled_peak_root_rss_bytes": 86376448,
+            "sampled_peak_tree_rss_sum_bytes": 86376448
+          },
+          "read": {
+            "samples": 0,
+            "sampled_peak_root_rss_bytes": null,
+            "sampled_peak_tree_rss_sum_bytes": null
+          },
+          "surfaces": {
+            "samples": 77,
+            "sampled_peak_root_rss_bytes": 133382144,
+            "sampled_peak_tree_rss_sum_bytes": 133382144
+          },
+          "validate": {
+            "samples": 2,
+            "sampled_peak_root_rss_bytes": 87064576,
+            "sampled_peak_tree_rss_sum_bytes": 87064576
+          },
+          "vertices": {
+            "samples": 15,
+            "sampled_peak_root_rss_bytes": 130285568,
+            "sampled_peak_tree_rss_sum_bytes": 130285568
+          }
+        },
+        "sampled_peak_root_rss_bytes": 191414272,
+        "sampled_peak_tree_rss_sum_bytes": 191414272,
+        "exit_zero_rss_samples_excluded": 0,
+        "observed_sample_interval_us": {
+          "median": 93272,
+          "max": 334527
+        }
+      },
+      "stage_events": [
+        {
+          "at_us": 24,
+          "phase": "read",
+          "pid": 43546
+        },
+        {
+          "at_us": 10363,
+          "phase": "parse",
+          "pid": 43546
+        },
+        {
+          "at_us": 3603810,
+          "phase": "validate",
+          "pid": 43546
+        },
+        {
+          "at_us": 3807727,
+          "phase": "vertices",
+          "pid": 43546
+        },
+        {
+          "at_us": 3858338,
+          "phase": "surfaces",
+          "pid": 43546
+        },
+        {
+          "at_us": 4152985,
+          "phase": "vertices",
+          "pid": 43546
+        },
+        {
+          "at_us": 4242446,
+          "phase": "surfaces",
+          "pid": 43546
+        },
+        {
+          "at_us": 4889114,
+          "phase": "vertices",
+          "pid": 43546
+        },
+        {
+          "at_us": 4991569,
+          "phase": "surfaces",
+          "pid": 43546
+        },
+        {
+          "at_us": 5689231,
+          "phase": "vertices",
+          "pid": 43546
+        },
+        {
+          "at_us": 5738117,
+          "phase": "surfaces",
+          "pid": 43546
+        },
+        {
+          "at_us": 5976773,
+          "phase": "vertices",
+          "pid": 43546
+        },
+        {
+          "at_us": 6088653,
+          "phase": "surfaces",
+          "pid": 43546
+        },
+        {
+          "at_us": 6912243,
+          "phase": "vertices",
+          "pid": 43546
+        },
+        {
+          "at_us": 6992712,
+          "phase": "surfaces",
+          "pid": 43546
+        },
+        {
+          "at_us": 7444688,
+          "phase": "vertices",
+          "pid": 43546
+        },
+        {
+          "at_us": 7472969,
+          "phase": "surfaces",
+          "pid": 43546
+        },
+        {
+          "at_us": 7641724,
+          "phase": "vertices",
+          "pid": 43546
+        },
+        {
+          "at_us": 7675905,
+          "phase": "surfaces",
+          "pid": 43546
+        },
+        {
+          "at_us": 7835989,
+          "phase": "vertices",
+          "pid": 43546
+        },
+        {
+          "at_us": 8030193,
+          "phase": "surfaces",
+          "pid": 43546
+        },
+        {
+          "at_us": 9190601,
+          "phase": "vertices",
+          "pid": 43546
+        },
+        {
+          "at_us": 9252094,
+          "phase": "surfaces",
+          "pid": 43546
+        },
+        {
+          "at_us": 9610441,
+          "phase": "vertices",
+          "pid": 43546
+        },
+        {
+          "at_us": 9670020,
+          "phase": "surfaces",
+          "pid": 43546
+        },
+        {
+          "at_us": 10063438,
+          "phase": "vertices",
+          "pid": 43546
+        },
+        {
+          "at_us": 10091401,
+          "phase": "surfaces",
+          "pid": 43546
+        },
+        {
+          "at_us": 10268883,
+          "phase": "vertices",
+          "pid": 43546
+        },
+        {
+          "at_us": 10270344,
+          "phase": "surfaces",
+          "pid": 43546
+        },
+        {
+          "at_us": 10276932,
+          "phase": "vertices",
+          "pid": 43546
+        },
+        {
+          "at_us": 10501028,
+          "phase": "surfaces",
+          "pid": 43546
+        },
+        {
+          "at_us": 12089082,
+          "phase": "vertices",
+          "pid": 43546
+        },
+        {
+          "at_us": 12128757,
+          "phase": "surfaces",
+          "pid": 43546
+        },
+        {
+          "at_us": 12294050,
+          "phase": "vertices",
+          "pid": 43546
+        },
+        {
+          "at_us": 12434007,
+          "phase": "surfaces",
+          "pid": 43546
+        },
+        {
+          "at_us": 13213102,
+          "phase": "instances",
+          "pid": 43546
+        },
+        {
+          "at_us": 13213395,
+          "phase": "commit",
+          "pid": 43546
+        },
+        {
+          "at_us": 15432660,
+          "phase": "done",
+          "pid": 43546
+        },
+        {
+          "at_us": 15432660,
+          "phase": "first_snap",
+          "pid": 43546
+        }
+      ],
+      "supervisor_wall_us": 15507275,
+      "run": 1
+    },
+    {
+      "diagnostics": {
+        "admission": {
+          "combined_bytes": 41043784,
+          "reserved_working_bytes": 0,
+          "resident_index_bytes": 41043784,
+          "tracked_scenes": 1
+        },
+        "buffer_bytes": 41038184,
+        "cache_epoch": 1,
+        "document_epoch": 1,
+        "indexed_revision": 1,
+        "last_preparation": {
+          "budget": {
+            "concurrent_working_bytes": 0,
+            "estimated_combined_bytes": 469822464,
+            "estimated_working_bytes": 469822464,
+            "instances": 17,
+            "limit_bytes": 536870912,
+            "resident_bytes": 0,
+            "shapes": 17,
+            "triangles": 458726
+          },
+          "buffer_bytes": 41038184,
+          "elapsed_us": 7585714,
+          "memory": {
+            "edge_nodes": 155763,
+            "edge_tree_vec_bytes": 13716872,
+            "edge_vec_bytes": 7493968,
+            "edges": 468369,
+            "face_nodes": 155763,
+            "face_tree_vec_bytes": 13639728,
+            "instances": 17,
+            "primitive_face_bytes": 432,
+            "ready_surface_shapes": 17,
+            "scene_entry_payload_bytes": 3400,
+            "scene_tree_vec_bytes": 2904,
+            "shapes": 17,
+            "triangles": 458726,
+            "vertex_nodes": 28843,
+            "vertex_tree_vec_bytes": 2492672,
+            "vertex_vec_bytes": 3691608,
+            "vertices": 230731
+          },
+          "reused_buffer_bytes": 0,
+          "reused_shapes": 0
+        },
+        "memory": {
+          "edge_nodes": 155763,
+          "edge_tree_vec_bytes": 13716872,
+          "edge_vec_bytes": 7493968,
+          "edges": 468369,
+          "face_nodes": 155763,
+          "face_tree_vec_bytes": 13639728,
+          "instances": 17,
+          "primitive_face_bytes": 432,
+          "ready_surface_shapes": 17,
+          "scene_entry_payload_bytes": 3400,
+          "scene_tree_vec_bytes": 2904,
+          "shapes": 17,
+          "triangles": 458726,
+          "vertex_nodes": 28843,
+          "vertex_tree_vec_bytes": 2492672,
+          "vertex_vec_bytes": 3691608,
+          "vertices": 230731
+        },
+        "render_revision": 1,
+        "retention": {
+          "current_buffer_bytes": 41038184,
+          "evicted_buffer_bytes_total": 0,
+          "evictions_total": 0,
+          "idle_buffer_bytes": 0,
+          "last_trim": {
+            "after_buffer_bytes": 41038184,
+            "before_buffer_bytes": 41038184,
+            "evicted_buffer_bytes": 0,
+            "evicted_shapes": 0,
+            "scene_compaction_deferred": false,
+            "scene_reclaimed_buffer_bytes": 0,
+            "scene_reclaimed_payload_bytes": 0
+          },
+          "limit_bytes": 134217728,
+          "over_budget_bytes": 0,
+          "referenced_buffer_bytes": 41038184
+        }
+      },
+      "first_snap": {
+        "acquire_us": 6,
+        "edge_hit": true,
+        "edge_us": 24917,
+        "face_hit": true,
+        "face_us": 889,
+        "geometries_built": 0,
+        "objects_visited": 0
+      },
+      "mesh_assets": 16,
+      "mode": "recovery",
+      "objects": 17,
+      "profile": {
+        "commit_started": true,
+        "id": "1",
+        "kind": "recovery",
+        "outcome": "success",
+        "phases": [
+          {
+            "elapsed_us": 2002061,
+            "entries": 1,
+            "phase": "commit"
+          },
+          {
+            "elapsed_us": 344,
+            "entries": 1,
+            "phase": "instances"
+          },
+          {
+            "elapsed_us": 3750241,
+            "entries": 1,
+            "phase": "parse"
+          },
+          {
+            "elapsed_us": 15263,
+            "entries": 1,
+            "phase": "read"
+          },
+          {
+            "elapsed_us": 6490447,
+            "entries": 16,
+            "phase": "surfaces"
+          },
+          {
+            "elapsed_us": 105364,
+            "entries": 1,
+            "phase": "validate"
+          },
+          {
+            "elapsed_us": 989569,
+            "entries": 16,
+            "phase": "vertices"
+          }
+        ],
+        "total_us": 13353291
+      },
+      "scope": "Headless production CPU load path; no dialog, IPC notification, renderer upload or GPU completion. Recovery writes a private checkpoint but never consumes the input.",
+      "triangles": 458714,
+      "memory": {
+        "interval_ms": 50.0,
+        "errors": [],
+        "samples": [
+          {
+            "root_rss_bytes": 43565056,
+            "tree_rss_sum_bytes": 43565056,
+            "process_count": 1,
+            "at_us": 48407,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 69304320,
+            "tree_rss_sum_bytes": 69304320,
+            "process_count": 1,
+            "at_us": 151800,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 69533696,
+            "tree_rss_sum_bytes": 69533696,
+            "process_count": 1,
+            "at_us": 268978,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 69533696,
+            "tree_rss_sum_bytes": 69533696,
+            "process_count": 1,
+            "at_us": 358831,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 69533696,
+            "tree_rss_sum_bytes": 69533696,
+            "process_count": 1,
+            "at_us": 469443,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 69877760,
+            "tree_rss_sum_bytes": 69877760,
+            "process_count": 1,
+            "at_us": 550869,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 70221824,
+            "tree_rss_sum_bytes": 70221824,
+            "process_count": 1,
+            "at_us": 658865,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 70582272,
+            "tree_rss_sum_bytes": 70582272,
+            "process_count": 1,
+            "at_us": 751268,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 70664192,
+            "tree_rss_sum_bytes": 70664192,
+            "process_count": 1,
+            "at_us": 833266,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 70680576,
+            "tree_rss_sum_bytes": 70680576,
+            "process_count": 1,
+            "at_us": 930244,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 71024640,
+            "tree_rss_sum_bytes": 71024640,
+            "process_count": 1,
+            "at_us": 1017270,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 71483392,
+            "tree_rss_sum_bytes": 71483392,
+            "process_count": 1,
+            "at_us": 1112285,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 71892992,
+            "tree_rss_sum_bytes": 71892992,
+            "process_count": 1,
+            "at_us": 1203738,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 72269824,
+            "tree_rss_sum_bytes": 72269824,
+            "process_count": 1,
+            "at_us": 1286013,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 72630272,
+            "tree_rss_sum_bytes": 72630272,
+            "process_count": 1,
+            "at_us": 1364353,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 73170944,
+            "tree_rss_sum_bytes": 73170944,
+            "process_count": 1,
+            "at_us": 1455043,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 73646080,
+            "tree_rss_sum_bytes": 73646080,
+            "process_count": 1,
+            "at_us": 1547259,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 74022912,
+            "tree_rss_sum_bytes": 74022912,
+            "process_count": 1,
+            "at_us": 1625979,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 74448896,
+            "tree_rss_sum_bytes": 74448896,
+            "process_count": 1,
+            "at_us": 1723586,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 76070912,
+            "tree_rss_sum_bytes": 76070912,
+            "process_count": 1,
+            "at_us": 1810853,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 76513280,
+            "tree_rss_sum_bytes": 76513280,
+            "process_count": 1,
+            "at_us": 1898297,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 76922880,
+            "tree_rss_sum_bytes": 76922880,
+            "process_count": 1,
+            "at_us": 1983527,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 77365248,
+            "tree_rss_sum_bytes": 77365248,
+            "process_count": 1,
+            "at_us": 2074570,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 77955072,
+            "tree_rss_sum_bytes": 77955072,
+            "process_count": 1,
+            "at_us": 2161793,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 78397440,
+            "tree_rss_sum_bytes": 78397440,
+            "process_count": 1,
+            "at_us": 2246967,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 78856192,
+            "tree_rss_sum_bytes": 78856192,
+            "process_count": 1,
+            "at_us": 2341144,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 79314944,
+            "tree_rss_sum_bytes": 79314944,
+            "process_count": 1,
+            "at_us": 2446609,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 79724544,
+            "tree_rss_sum_bytes": 79724544,
+            "process_count": 1,
+            "at_us": 2544710,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 79790080,
+            "tree_rss_sum_bytes": 79790080,
+            "process_count": 1,
+            "at_us": 2628914,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 80232448,
+            "tree_rss_sum_bytes": 80232448,
+            "process_count": 1,
+            "at_us": 2718725,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 81231872,
+            "tree_rss_sum_bytes": 81231872,
+            "process_count": 1,
+            "at_us": 2794733,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 82903040,
+            "tree_rss_sum_bytes": 82903040,
+            "process_count": 1,
+            "at_us": 2881270,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 83329024,
+            "tree_rss_sum_bytes": 83329024,
+            "process_count": 1,
+            "at_us": 2976031,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 83771392,
+            "tree_rss_sum_bytes": 83771392,
+            "process_count": 1,
+            "at_us": 3070280,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 84197376,
+            "tree_rss_sum_bytes": 84197376,
+            "process_count": 1,
+            "at_us": 3168624,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 84623360,
+            "tree_rss_sum_bytes": 84623360,
+            "process_count": 1,
+            "at_us": 3257021,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 84738048,
+            "tree_rss_sum_bytes": 84738048,
+            "process_count": 1,
+            "at_us": 3354370,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 85049344,
+            "tree_rss_sum_bytes": 85049344,
+            "process_count": 1,
+            "at_us": 3445818,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 85049344,
+            "tree_rss_sum_bytes": 85049344,
+            "process_count": 1,
+            "at_us": 3536522,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 85049344,
+            "tree_rss_sum_bytes": 85049344,
+            "process_count": 1,
+            "at_us": 3627939,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 86638592,
+            "tree_rss_sum_bytes": 86638592,
+            "process_count": 1,
+            "at_us": 3720022,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 87244800,
+            "tree_rss_sum_bytes": 87244800,
+            "process_count": 1,
+            "at_us": 3814336,
+            "phase": "validate"
+          },
+          {
+            "root_rss_bytes": 87588864,
+            "tree_rss_sum_bytes": 87588864,
+            "process_count": 1,
+            "at_us": 3902900,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 87998464,
+            "tree_rss_sum_bytes": 87998464,
+            "process_count": 1,
+            "at_us": 4000709,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 88031232,
+            "tree_rss_sum_bytes": 88031232,
+            "process_count": 1,
+            "at_us": 4090348,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 89145344,
+            "tree_rss_sum_bytes": 89145344,
+            "process_count": 1,
+            "at_us": 4180690,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 90849280,
+            "tree_rss_sum_bytes": 90849280,
+            "process_count": 1,
+            "at_us": 4266841,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 90865664,
+            "tree_rss_sum_bytes": 90865664,
+            "process_count": 1,
+            "at_us": 4344650,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 90865664,
+            "tree_rss_sum_bytes": 90865664,
+            "process_count": 1,
+            "at_us": 4422369,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 91062272,
+            "tree_rss_sum_bytes": 91062272,
+            "process_count": 1,
+            "at_us": 4509122,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 91553792,
+            "tree_rss_sum_bytes": 91553792,
+            "process_count": 1,
+            "at_us": 4588818,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 93257728,
+            "tree_rss_sum_bytes": 93257728,
+            "process_count": 1,
+            "at_us": 4674110,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 93257728,
+            "tree_rss_sum_bytes": 93257728,
+            "process_count": 1,
+            "at_us": 4761531,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 93257728,
+            "tree_rss_sum_bytes": 93257728,
+            "process_count": 1,
+            "at_us": 4838170,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 93519872,
+            "tree_rss_sum_bytes": 93519872,
+            "process_count": 1,
+            "at_us": 4924468,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 93847552,
+            "tree_rss_sum_bytes": 93847552,
+            "process_count": 1,
+            "at_us": 5016037,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 94371840,
+            "tree_rss_sum_bytes": 94371840,
+            "process_count": 1,
+            "at_us": 5105897,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 95125504,
+            "tree_rss_sum_bytes": 95125504,
+            "process_count": 1,
+            "at_us": 5205039,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 96600064,
+            "tree_rss_sum_bytes": 96600064,
+            "process_count": 1,
+            "at_us": 5295401,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 96600064,
+            "tree_rss_sum_bytes": 96600064,
+            "process_count": 1,
+            "at_us": 5377695,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 97206272,
+            "tree_rss_sum_bytes": 97206272,
+            "process_count": 1,
+            "at_us": 5468209,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 97484800,
+            "tree_rss_sum_bytes": 97484800,
+            "process_count": 1,
+            "at_us": 5556524,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 98779136,
+            "tree_rss_sum_bytes": 98779136,
+            "process_count": 1,
+            "at_us": 5647713,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 99909632,
+            "tree_rss_sum_bytes": 99909632,
+            "process_count": 1,
+            "at_us": 5743275,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 99909632,
+            "tree_rss_sum_bytes": 99909632,
+            "process_count": 1,
+            "at_us": 5836010,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 100204544,
+            "tree_rss_sum_bytes": 100204544,
+            "process_count": 1,
+            "at_us": 5924536,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 100450304,
+            "tree_rss_sum_bytes": 100450304,
+            "process_count": 1,
+            "at_us": 6000600,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 100466688,
+            "tree_rss_sum_bytes": 100466688,
+            "process_count": 1,
+            "at_us": 6089689,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 100696064,
+            "tree_rss_sum_bytes": 100696064,
+            "process_count": 1,
+            "at_us": 6179347,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 101466112,
+            "tree_rss_sum_bytes": 101466112,
+            "process_count": 1,
+            "at_us": 6265584,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 101957632,
+            "tree_rss_sum_bytes": 101957632,
+            "process_count": 1,
+            "at_us": 6352464,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 103923712,
+            "tree_rss_sum_bytes": 103923712,
+            "process_count": 1,
+            "at_us": 6442223,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 105955328,
+            "tree_rss_sum_bytes": 105955328,
+            "process_count": 1,
+            "at_us": 6529274,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 106659840,
+            "tree_rss_sum_bytes": 106659840,
+            "process_count": 1,
+            "at_us": 6619036,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 108593152,
+            "tree_rss_sum_bytes": 108593152,
+            "process_count": 1,
+            "at_us": 6700841,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 110231552,
+            "tree_rss_sum_bytes": 110231552,
+            "process_count": 1,
+            "at_us": 6786846,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 110231552,
+            "tree_rss_sum_bytes": 110231552,
+            "process_count": 1,
+            "at_us": 6878969,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 110231552,
+            "tree_rss_sum_bytes": 110231552,
+            "process_count": 1,
+            "at_us": 6954174,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 111312896,
+            "tree_rss_sum_bytes": 111312896,
+            "process_count": 1,
+            "at_us": 7045869,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 112017408,
+            "tree_rss_sum_bytes": 112017408,
+            "process_count": 1,
+            "at_us": 7131690,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 114229248,
+            "tree_rss_sum_bytes": 114229248,
+            "process_count": 1,
+            "at_us": 7223741,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 114245632,
+            "tree_rss_sum_bytes": 114245632,
+            "process_count": 1,
+            "at_us": 7297944,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 115589120,
+            "tree_rss_sum_bytes": 115589120,
+            "process_count": 1,
+            "at_us": 7384556,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 116277248,
+            "tree_rss_sum_bytes": 116277248,
+            "process_count": 1,
+            "at_us": 7472704,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 116719616,
+            "tree_rss_sum_bytes": 116719616,
+            "process_count": 1,
+            "at_us": 7560644,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 116719616,
+            "tree_rss_sum_bytes": 116719616,
+            "process_count": 1,
+            "at_us": 7645317,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 116719616,
+            "tree_rss_sum_bytes": 116719616,
+            "process_count": 1,
+            "at_us": 7728946,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 116899840,
+            "tree_rss_sum_bytes": 116899840,
+            "process_count": 1,
+            "at_us": 7816171,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 116916224,
+            "tree_rss_sum_bytes": 116916224,
+            "process_count": 1,
+            "at_us": 7901675,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 116916224,
+            "tree_rss_sum_bytes": 116916224,
+            "process_count": 1,
+            "at_us": 7994922,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 118767616,
+            "tree_rss_sum_bytes": 118767616,
+            "process_count": 1,
+            "at_us": 8078389,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 118767616,
+            "tree_rss_sum_bytes": 118767616,
+            "process_count": 1,
+            "at_us": 8169460,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 118767616,
+            "tree_rss_sum_bytes": 118767616,
+            "process_count": 1,
+            "at_us": 8254628,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 118980608,
+            "tree_rss_sum_bytes": 118980608,
+            "process_count": 1,
+            "at_us": 8345680,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 119029760,
+            "tree_rss_sum_bytes": 119029760,
+            "process_count": 1,
+            "at_us": 8430644,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 119914496,
+            "tree_rss_sum_bytes": 119914496,
+            "process_count": 1,
+            "at_us": 8529493,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 122109952,
+            "tree_rss_sum_bytes": 122109952,
+            "process_count": 1,
+            "at_us": 8617541,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 122322944,
+            "tree_rss_sum_bytes": 122322944,
+            "process_count": 1,
+            "at_us": 8702224,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 123453440,
+            "tree_rss_sum_bytes": 123453440,
+            "process_count": 1,
+            "at_us": 8793571,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 123453440,
+            "tree_rss_sum_bytes": 123453440,
+            "process_count": 1,
+            "at_us": 8888947,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 123453440,
+            "tree_rss_sum_bytes": 123453440,
+            "process_count": 1,
+            "at_us": 8990216,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 123715584,
+            "tree_rss_sum_bytes": 123715584,
+            "process_count": 1,
+            "at_us": 9089308,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 124436480,
+            "tree_rss_sum_bytes": 124436480,
+            "process_count": 1,
+            "at_us": 9195993,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 125239296,
+            "tree_rss_sum_bytes": 125239296,
+            "process_count": 1,
+            "at_us": 9292530,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 125763584,
+            "tree_rss_sum_bytes": 125763584,
+            "process_count": 1,
+            "at_us": 9394933,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 126287872,
+            "tree_rss_sum_bytes": 126287872,
+            "process_count": 1,
+            "at_us": 9483228,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 126763008,
+            "tree_rss_sum_bytes": 126763008,
+            "process_count": 1,
+            "at_us": 9582269,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 127483904,
+            "tree_rss_sum_bytes": 127483904,
+            "process_count": 1,
+            "at_us": 9682387,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 128565248,
+            "tree_rss_sum_bytes": 128565248,
+            "process_count": 1,
+            "at_us": 9783369,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 129073152,
+            "tree_rss_sum_bytes": 129073152,
+            "process_count": 1,
+            "at_us": 9887660,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 129564672,
+            "tree_rss_sum_bytes": 129564672,
+            "process_count": 1,
+            "at_us": 9990991,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 130056192,
+            "tree_rss_sum_bytes": 130056192,
+            "process_count": 1,
+            "at_us": 10086534,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 130121728,
+            "tree_rss_sum_bytes": 130121728,
+            "process_count": 1,
+            "at_us": 10185385,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 130121728,
+            "tree_rss_sum_bytes": 130121728,
+            "process_count": 1,
+            "at_us": 10287590,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 130170880,
+            "tree_rss_sum_bytes": 130170880,
+            "process_count": 1,
+            "at_us": 10387027,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 130809856,
+            "tree_rss_sum_bytes": 130809856,
+            "process_count": 1,
+            "at_us": 10486006,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 131645440,
+            "tree_rss_sum_bytes": 131645440,
+            "process_count": 1,
+            "at_us": 10574123,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 132218880,
+            "tree_rss_sum_bytes": 132218880,
+            "process_count": 1,
+            "at_us": 10670382,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 132218880,
+            "tree_rss_sum_bytes": 132218880,
+            "process_count": 1,
+            "at_us": 10759368,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 132218880,
+            "tree_rss_sum_bytes": 132218880,
+            "process_count": 1,
+            "at_us": 10857868,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 132562944,
+            "tree_rss_sum_bytes": 132562944,
+            "process_count": 1,
+            "at_us": 10955664,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 132988928,
+            "tree_rss_sum_bytes": 132988928,
+            "process_count": 1,
+            "at_us": 11060043,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 134365184,
+            "tree_rss_sum_bytes": 134365184,
+            "process_count": 1,
+            "at_us": 11154066,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 134365184,
+            "tree_rss_sum_bytes": 134365184,
+            "process_count": 1,
+            "at_us": 11257506,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 134365184,
+            "tree_rss_sum_bytes": 134365184,
+            "process_count": 1,
+            "at_us": 11357845,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 136019968,
+            "tree_rss_sum_bytes": 136019968,
+            "process_count": 1,
+            "at_us": 11462320,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 140361728,
+            "tree_rss_sum_bytes": 140361728,
+            "process_count": 1,
+            "at_us": 11558355,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 142458880,
+            "tree_rss_sum_bytes": 142458880,
+            "process_count": 1,
+            "at_us": 11649208,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 144883712,
+            "tree_rss_sum_bytes": 144883712,
+            "process_count": 1,
+            "at_us": 11740960,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 147292160,
+            "tree_rss_sum_bytes": 147292160,
+            "process_count": 1,
+            "at_us": 11832681,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 149667840,
+            "tree_rss_sum_bytes": 149667840,
+            "process_count": 1,
+            "at_us": 11922221,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 151830528,
+            "tree_rss_sum_bytes": 151830528,
+            "process_count": 1,
+            "at_us": 12003647,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 154189824,
+            "tree_rss_sum_bytes": 154189824,
+            "process_count": 1,
+            "at_us": 12092973,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 156696576,
+            "tree_rss_sum_bytes": 156696576,
+            "process_count": 1,
+            "at_us": 12186297,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 159023104,
+            "tree_rss_sum_bytes": 159023104,
+            "process_count": 1,
+            "at_us": 12276304,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 161628160,
+            "tree_rss_sum_bytes": 161628160,
+            "process_count": 1,
+            "at_us": 12365213,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 164331520,
+            "tree_rss_sum_bytes": 164331520,
+            "process_count": 1,
+            "at_us": 12455672,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 167034880,
+            "tree_rss_sum_bytes": 167034880,
+            "process_count": 1,
+            "at_us": 12540504,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 169328640,
+            "tree_rss_sum_bytes": 169328640,
+            "process_count": 1,
+            "at_us": 12618847,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 171835392,
+            "tree_rss_sum_bytes": 171835392,
+            "process_count": 1,
+            "at_us": 12705135,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 174620672,
+            "tree_rss_sum_bytes": 174620672,
+            "process_count": 1,
+            "at_us": 12789577,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 177209344,
+            "tree_rss_sum_bytes": 177209344,
+            "process_count": 1,
+            "at_us": 12878844,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 179798016,
+            "tree_rss_sum_bytes": 179798016,
+            "process_count": 1,
+            "at_us": 12963546,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 182517760,
+            "tree_rss_sum_bytes": 182517760,
+            "process_count": 1,
+            "at_us": 13048564,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 185286656,
+            "tree_rss_sum_bytes": 185286656,
+            "process_count": 1,
+            "at_us": 13133760,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 188121088,
+            "tree_rss_sum_bytes": 188121088,
+            "process_count": 1,
+            "at_us": 13222072,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 190644224,
+            "tree_rss_sum_bytes": 190644224,
+            "process_count": 1,
+            "at_us": 13305608,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 192004096,
+            "tree_rss_sum_bytes": 192004096,
+            "process_count": 1,
+            "at_us": 13392718,
+            "phase": "first_snap"
+          }
+        ],
+        "per_phase": {
+          "commit": {
+            "samples": 23,
+            "sampled_peak_root_rss_bytes": 190644224,
+            "sampled_peak_tree_rss_sum_bytes": 190644224
+          },
+          "first_snap": {
+            "samples": 1,
+            "sampled_peak_root_rss_bytes": 192004096,
+            "sampled_peak_tree_rss_sum_bytes": 192004096
+          },
+          "instances": {
+            "samples": 0,
+            "sampled_peak_root_rss_bytes": null,
+            "sampled_peak_tree_rss_sum_bytes": null
+          },
+          "parse": {
+            "samples": 41,
+            "sampled_peak_root_rss_bytes": 86638592,
+            "sampled_peak_tree_rss_sum_bytes": 86638592
+          },
+          "read": {
+            "samples": 0,
+            "sampled_peak_root_rss_bytes": null,
+            "sampled_peak_tree_rss_sum_bytes": null
+          },
+          "surfaces": {
+            "samples": 74,
+            "sampled_peak_root_rss_bytes": 134365184,
+            "sampled_peak_tree_rss_sum_bytes": 134365184
+          },
+          "validate": {
+            "samples": 1,
+            "sampled_peak_root_rss_bytes": 87244800,
+            "sampled_peak_tree_rss_sum_bytes": 87244800
+          },
+          "vertices": {
+            "samples": 8,
+            "sampled_peak_root_rss_bytes": 130170880,
+            "sampled_peak_tree_rss_sum_bytes": 130170880
+          }
+        },
+        "sampled_peak_root_rss_bytes": 192004096,
+        "sampled_peak_tree_rss_sum_bytes": 192004096,
+        "exit_zero_rss_samples_excluded": 0,
+        "observed_sample_interval_us": {
+          "median": 89853,
+          "max": 117178
+        }
+      },
+      "stage_events": [
+        {
+          "at_us": 46,
+          "phase": "read",
+          "pid": 43744
+        },
+        {
+          "at_us": 15280,
+          "phase": "parse",
+          "pid": 43744
+        },
+        {
+          "at_us": 3765511,
+          "phase": "validate",
+          "pid": 43744
+        },
+        {
+          "at_us": 3870874,
+          "phase": "vertices",
+          "pid": 43744
+        },
+        {
+          "at_us": 3897245,
+          "phase": "surfaces",
+          "pid": 43744
+        },
+        {
+          "at_us": 4052554,
+          "phase": "vertices",
+          "pid": 43744
+        },
+        {
+          "at_us": 4111569,
+          "phase": "surfaces",
+          "pid": 43744
+        },
+        {
+          "at_us": 4462790,
+          "phase": "vertices",
+          "pid": 43744
+        },
+        {
+          "at_us": 4516318,
+          "phase": "surfaces",
+          "pid": 43744
+        },
+        {
+          "at_us": 4858970,
+          "phase": "vertices",
+          "pid": 43744
+        },
+        {
+          "at_us": 4882322,
+          "phase": "surfaces",
+          "pid": 43744
+        },
+        {
+          "at_us": 5026087,
+          "phase": "vertices",
+          "pid": 43744
+        },
+        {
+          "at_us": 5079799,
+          "phase": "surfaces",
+          "pid": 43744
+        },
+        {
+          "at_us": 5481350,
+          "phase": "vertices",
+          "pid": 43744
+        },
+        {
+          "at_us": 5547953,
+          "phase": "surfaces",
+          "pid": 43744
+        },
+        {
+          "at_us": 5938207,
+          "phase": "vertices",
+          "pid": 43744
+        },
+        {
+          "at_us": 5963695,
+          "phase": "surfaces",
+          "pid": 43744
+        },
+        {
+          "at_us": 6101451,
+          "phase": "vertices",
+          "pid": 43744
+        },
+        {
+          "at_us": 6131535,
+          "phase": "surfaces",
+          "pid": 43744
+        },
+        {
+          "at_us": 6269784,
+          "phase": "vertices",
+          "pid": 43744
+        },
+        {
+          "at_us": 6428723,
+          "phase": "surfaces",
+          "pid": 43744
+        },
+        {
+          "at_us": 7458105,
+          "phase": "vertices",
+          "pid": 43744
+        },
+        {
+          "at_us": 7510422,
+          "phase": "surfaces",
+          "pid": 43744
+        },
+        {
+          "at_us": 7840839,
+          "phase": "vertices",
+          "pid": 43744
+        },
+        {
+          "at_us": 7888900,
+          "phase": "surfaces",
+          "pid": 43744
+        },
+        {
+          "at_us": 8216022,
+          "phase": "vertices",
+          "pid": 43744
+        },
+        {
+          "at_us": 8237101,
+          "phase": "surfaces",
+          "pid": 43744
+        },
+        {
+          "at_us": 8369096,
+          "phase": "vertices",
+          "pid": 43744
+        },
+        {
+          "at_us": 8369979,
+          "phase": "surfaces",
+          "pid": 43744
+        },
+        {
+          "at_us": 8373551,
+          "phase": "vertices",
+          "pid": 43744
+        },
+        {
+          "at_us": 8558211,
+          "phase": "surfaces",
+          "pid": 43744
+        },
+        {
+          "at_us": 10061837,
+          "phase": "vertices",
+          "pid": 43744
+        },
+        {
+          "at_us": 10106359,
+          "phase": "surfaces",
+          "pid": 43744
+        },
+        {
+          "at_us": 10307147,
+          "phase": "vertices",
+          "pid": 43744
+        },
+        {
+          "at_us": 10448106,
+          "phase": "surfaces",
+          "pid": 43744
+        },
+        {
+          "at_us": 11350894,
+          "phase": "instances",
+          "pid": 43744
+        },
+        {
+          "at_us": 11351232,
+          "phase": "commit",
+          "pid": 43744
+        },
+        {
+          "at_us": 13353291,
+          "phase": "done",
+          "pid": 43744
+        },
+        {
+          "at_us": 13353291,
+          "phase": "first_snap",
+          "pid": 43744
+        }
+      ],
+      "supervisor_wall_us": 13430455,
+      "run": 2
+    },
+    {
+      "diagnostics": {
+        "admission": {
+          "combined_bytes": 41043784,
+          "reserved_working_bytes": 0,
+          "resident_index_bytes": 41043784,
+          "tracked_scenes": 1
+        },
+        "buffer_bytes": 41038184,
+        "cache_epoch": 1,
+        "document_epoch": 1,
+        "indexed_revision": 1,
+        "last_preparation": {
+          "budget": {
+            "concurrent_working_bytes": 0,
+            "estimated_combined_bytes": 469822464,
+            "estimated_working_bytes": 469822464,
+            "instances": 17,
+            "limit_bytes": 536870912,
+            "resident_bytes": 0,
+            "shapes": 17,
+            "triangles": 458726
+          },
+          "buffer_bytes": 41038184,
+          "elapsed_us": 9583719,
+          "memory": {
+            "edge_nodes": 155763,
+            "edge_tree_vec_bytes": 13716872,
+            "edge_vec_bytes": 7493968,
+            "edges": 468369,
+            "face_nodes": 155763,
+            "face_tree_vec_bytes": 13639728,
+            "instances": 17,
+            "primitive_face_bytes": 432,
+            "ready_surface_shapes": 17,
+            "scene_entry_payload_bytes": 3400,
+            "scene_tree_vec_bytes": 2904,
+            "shapes": 17,
+            "triangles": 458726,
+            "vertex_nodes": 28843,
+            "vertex_tree_vec_bytes": 2492672,
+            "vertex_vec_bytes": 3691608,
+            "vertices": 230731
+          },
+          "reused_buffer_bytes": 0,
+          "reused_shapes": 0
+        },
+        "memory": {
+          "edge_nodes": 155763,
+          "edge_tree_vec_bytes": 13716872,
+          "edge_vec_bytes": 7493968,
+          "edges": 468369,
+          "face_nodes": 155763,
+          "face_tree_vec_bytes": 13639728,
+          "instances": 17,
+          "primitive_face_bytes": 432,
+          "ready_surface_shapes": 17,
+          "scene_entry_payload_bytes": 3400,
+          "scene_tree_vec_bytes": 2904,
+          "shapes": 17,
+          "triangles": 458726,
+          "vertex_nodes": 28843,
+          "vertex_tree_vec_bytes": 2492672,
+          "vertex_vec_bytes": 3691608,
+          "vertices": 230731
+        },
+        "render_revision": 1,
+        "retention": {
+          "current_buffer_bytes": 41038184,
+          "evicted_buffer_bytes_total": 0,
+          "evictions_total": 0,
+          "idle_buffer_bytes": 0,
+          "last_trim": {
+            "after_buffer_bytes": 41038184,
+            "before_buffer_bytes": 41038184,
+            "evicted_buffer_bytes": 0,
+            "evicted_shapes": 0,
+            "scene_compaction_deferred": false,
+            "scene_reclaimed_buffer_bytes": 0,
+            "scene_reclaimed_payload_bytes": 0
+          },
+          "limit_bytes": 134217728,
+          "over_budget_bytes": 0,
+          "referenced_buffer_bytes": 41038184
+        }
+      },
+      "first_snap": {
+        "acquire_us": 6,
+        "edge_hit": true,
+        "edge_us": 30871,
+        "face_hit": true,
+        "face_us": 1083,
+        "geometries_built": 0,
+        "objects_visited": 0
+      },
+      "mesh_assets": 16,
+      "mode": "recovery",
+      "objects": 17,
+      "profile": {
+        "commit_started": true,
+        "id": "1",
+        "kind": "recovery",
+        "outcome": "success",
+        "phases": [
+          {
+            "elapsed_us": 2300731,
+            "entries": 1,
+            "phase": "commit"
+          },
+          {
+            "elapsed_us": 303,
+            "entries": 1,
+            "phase": "instances"
+          },
+          {
+            "elapsed_us": 3378072,
+            "entries": 1,
+            "phase": "parse"
+          },
+          {
+            "elapsed_us": 10176,
+            "entries": 1,
+            "phase": "read"
+          },
+          {
+            "elapsed_us": 8311452,
+            "entries": 16,
+            "phase": "surfaces"
+          },
+          {
+            "elapsed_us": 98635,
+            "entries": 1,
+            "phase": "validate"
+          },
+          {
+            "elapsed_us": 1173337,
+            "entries": 16,
+            "phase": "vertices"
+          }
+        ],
+        "total_us": 15272709
+      },
+      "scope": "Headless production CPU load path; no dialog, IPC notification, renderer upload or GPU completion. Recovery writes a private checkpoint but never consumes the input.",
+      "triangles": 458714,
+      "memory": {
+        "interval_ms": 50.0,
+        "errors": [],
+        "samples": [
+          {
+            "root_rss_bytes": 68845568,
+            "tree_rss_sum_bytes": 68845568,
+            "process_count": 1,
+            "at_us": 37497,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 68993024,
+            "tree_rss_sum_bytes": 68993024,
+            "process_count": 1,
+            "at_us": 123289,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 68993024,
+            "tree_rss_sum_bytes": 68993024,
+            "process_count": 1,
+            "at_us": 210518,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 68993024,
+            "tree_rss_sum_bytes": 68993024,
+            "process_count": 1,
+            "at_us": 296751,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 69156864,
+            "tree_rss_sum_bytes": 69156864,
+            "process_count": 1,
+            "at_us": 374004,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 69615616,
+            "tree_rss_sum_bytes": 69615616,
+            "process_count": 1,
+            "at_us": 459269,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 70074368,
+            "tree_rss_sum_bytes": 70074368,
+            "process_count": 1,
+            "at_us": 533520,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 70582272,
+            "tree_rss_sum_bytes": 70582272,
+            "process_count": 1,
+            "at_us": 618599,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 71647232,
+            "tree_rss_sum_bytes": 71647232,
+            "process_count": 1,
+            "at_us": 703201,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 71925760,
+            "tree_rss_sum_bytes": 71925760,
+            "process_count": 1,
+            "at_us": 789166,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 72630272,
+            "tree_rss_sum_bytes": 72630272,
+            "process_count": 1,
+            "at_us": 876177,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 72990720,
+            "tree_rss_sum_bytes": 72990720,
+            "process_count": 1,
+            "at_us": 961558,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 73252864,
+            "tree_rss_sum_bytes": 73252864,
+            "process_count": 1,
+            "at_us": 1052675,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 73744384,
+            "tree_rss_sum_bytes": 73744384,
+            "process_count": 1,
+            "at_us": 1136625,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 74203136,
+            "tree_rss_sum_bytes": 74203136,
+            "process_count": 1,
+            "at_us": 1220389,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 74629120,
+            "tree_rss_sum_bytes": 74629120,
+            "process_count": 1,
+            "at_us": 1300623,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 76283904,
+            "tree_rss_sum_bytes": 76283904,
+            "process_count": 1,
+            "at_us": 1388100,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 76726272,
+            "tree_rss_sum_bytes": 76726272,
+            "process_count": 1,
+            "at_us": 1476755,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 77168640,
+            "tree_rss_sum_bytes": 77168640,
+            "process_count": 1,
+            "at_us": 1558911,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 77578240,
+            "tree_rss_sum_bytes": 77578240,
+            "process_count": 1,
+            "at_us": 1654471,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 77578240,
+            "tree_rss_sum_bytes": 77578240,
+            "process_count": 1,
+            "at_us": 1739633,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 78331904,
+            "tree_rss_sum_bytes": 78331904,
+            "process_count": 1,
+            "at_us": 1834586,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 78643200,
+            "tree_rss_sum_bytes": 78643200,
+            "process_count": 1,
+            "at_us": 1925972,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 78643200,
+            "tree_rss_sum_bytes": 78643200,
+            "process_count": 1,
+            "at_us": 2016265,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 79577088,
+            "tree_rss_sum_bytes": 79577088,
+            "process_count": 1,
+            "at_us": 2113517,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 79691776,
+            "tree_rss_sum_bytes": 79691776,
+            "process_count": 1,
+            "at_us": 2204374,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 79757312,
+            "tree_rss_sum_bytes": 79757312,
+            "process_count": 1,
+            "at_us": 2294319,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 80429056,
+            "tree_rss_sum_bytes": 80429056,
+            "process_count": 1,
+            "at_us": 2382040,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 80871424,
+            "tree_rss_sum_bytes": 80871424,
+            "process_count": 1,
+            "at_us": 2476481,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 82509824,
+            "tree_rss_sum_bytes": 82509824,
+            "process_count": 1,
+            "at_us": 2567862,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 82886656,
+            "tree_rss_sum_bytes": 82886656,
+            "process_count": 1,
+            "at_us": 2651284,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 83312640,
+            "tree_rss_sum_bytes": 83312640,
+            "process_count": 1,
+            "at_us": 2750786,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 83722240,
+            "tree_rss_sum_bytes": 83722240,
+            "process_count": 1,
+            "at_us": 2843084,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 84000768,
+            "tree_rss_sum_bytes": 84000768,
+            "process_count": 1,
+            "at_us": 2936693,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 84115456,
+            "tree_rss_sum_bytes": 84115456,
+            "process_count": 1,
+            "at_us": 3029219,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 84541440,
+            "tree_rss_sum_bytes": 84541440,
+            "process_count": 1,
+            "at_us": 3121351,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 85000192,
+            "tree_rss_sum_bytes": 85000192,
+            "process_count": 1,
+            "at_us": 3214885,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 86638592,
+            "tree_rss_sum_bytes": 86638592,
+            "process_count": 1,
+            "at_us": 3312765,
+            "phase": "parse"
+          },
+          {
+            "root_rss_bytes": 87097344,
+            "tree_rss_sum_bytes": 87097344,
+            "process_count": 1,
+            "at_us": 3401127,
+            "phase": "validate"
+          },
+          {
+            "root_rss_bytes": 87425024,
+            "tree_rss_sum_bytes": 87425024,
+            "process_count": 1,
+            "at_us": 3489889,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 88047616,
+            "tree_rss_sum_bytes": 88047616,
+            "process_count": 1,
+            "at_us": 3585356,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 88522752,
+            "tree_rss_sum_bytes": 88522752,
+            "process_count": 1,
+            "at_us": 3673197,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 89669632,
+            "tree_rss_sum_bytes": 89669632,
+            "process_count": 1,
+            "at_us": 3762806,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 90537984,
+            "tree_rss_sum_bytes": 90537984,
+            "process_count": 1,
+            "at_us": 3858802,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 91701248,
+            "tree_rss_sum_bytes": 91701248,
+            "process_count": 1,
+            "at_us": 3934099,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 91701248,
+            "tree_rss_sum_bytes": 91701248,
+            "process_count": 1,
+            "at_us": 4021427,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 91717632,
+            "tree_rss_sum_bytes": 91717632,
+            "process_count": 1,
+            "at_us": 4099580,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 92389376,
+            "tree_rss_sum_bytes": 92389376,
+            "process_count": 1,
+            "at_us": 4184594,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 94109696,
+            "tree_rss_sum_bytes": 94109696,
+            "process_count": 1,
+            "at_us": 4269309,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 94273536,
+            "tree_rss_sum_bytes": 94273536,
+            "process_count": 1,
+            "at_us": 4348613,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 94273536,
+            "tree_rss_sum_bytes": 94273536,
+            "process_count": 1,
+            "at_us": 4450068,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 94519296,
+            "tree_rss_sum_bytes": 94519296,
+            "process_count": 1,
+            "at_us": 4541228,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 94650368,
+            "tree_rss_sum_bytes": 94650368,
+            "process_count": 1,
+            "at_us": 4632339,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 94650368,
+            "tree_rss_sum_bytes": 94650368,
+            "process_count": 1,
+            "at_us": 4721956,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 95289344,
+            "tree_rss_sum_bytes": 95289344,
+            "process_count": 1,
+            "at_us": 4823938,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 96157696,
+            "tree_rss_sum_bytes": 96157696,
+            "process_count": 1,
+            "at_us": 4914867,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 97763328,
+            "tree_rss_sum_bytes": 97763328,
+            "process_count": 1,
+            "at_us": 5007568,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 97763328,
+            "tree_rss_sum_bytes": 97763328,
+            "process_count": 1,
+            "at_us": 5128234,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 98451456,
+            "tree_rss_sum_bytes": 98451456,
+            "process_count": 1,
+            "at_us": 5218560,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 98467840,
+            "tree_rss_sum_bytes": 98467840,
+            "process_count": 1,
+            "at_us": 5310256,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 99352576,
+            "tree_rss_sum_bytes": 99352576,
+            "process_count": 1,
+            "at_us": 5391046,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 99794944,
+            "tree_rss_sum_bytes": 99794944,
+            "process_count": 1,
+            "at_us": 5480261,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 100040704,
+            "tree_rss_sum_bytes": 100040704,
+            "process_count": 1,
+            "at_us": 5599504,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 100171776,
+            "tree_rss_sum_bytes": 100171776,
+            "process_count": 1,
+            "at_us": 5702936,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 100171776,
+            "tree_rss_sum_bytes": 100171776,
+            "process_count": 1,
+            "at_us": 5793899,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 100679680,
+            "tree_rss_sum_bytes": 100679680,
+            "process_count": 1,
+            "at_us": 5903461,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 100810752,
+            "tree_rss_sum_bytes": 100810752,
+            "process_count": 1,
+            "at_us": 6007361,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 100859904,
+            "tree_rss_sum_bytes": 100859904,
+            "process_count": 1,
+            "at_us": 6111092,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 101203968,
+            "tree_rss_sum_bytes": 101203968,
+            "process_count": 1,
+            "at_us": 6209926,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 101613568,
+            "tree_rss_sum_bytes": 101613568,
+            "process_count": 1,
+            "at_us": 6324248,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 101957632,
+            "tree_rss_sum_bytes": 101957632,
+            "process_count": 1,
+            "at_us": 6436385,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 103432192,
+            "tree_rss_sum_bytes": 103432192,
+            "process_count": 1,
+            "at_us": 6548931,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 105185280,
+            "tree_rss_sum_bytes": 105185280,
+            "process_count": 1,
+            "at_us": 6814340,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 106741760,
+            "tree_rss_sum_bytes": 106741760,
+            "process_count": 1,
+            "at_us": 6931330,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 107364352,
+            "tree_rss_sum_bytes": 107364352,
+            "process_count": 1,
+            "at_us": 7036955,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 107872256,
+            "tree_rss_sum_bytes": 107872256,
+            "process_count": 1,
+            "at_us": 7142363,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 110133248,
+            "tree_rss_sum_bytes": 110133248,
+            "process_count": 1,
+            "at_us": 7247960,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 110133248,
+            "tree_rss_sum_bytes": 110133248,
+            "process_count": 1,
+            "at_us": 7373013,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 110313472,
+            "tree_rss_sum_bytes": 110313472,
+            "process_count": 1,
+            "at_us": 7525424,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 110346240,
+            "tree_rss_sum_bytes": 110346240,
+            "process_count": 1,
+            "at_us": 7676592,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 110346240,
+            "tree_rss_sum_bytes": 110346240,
+            "process_count": 1,
+            "at_us": 7806629,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 111362048,
+            "tree_rss_sum_bytes": 111362048,
+            "process_count": 1,
+            "at_us": 8354035,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 111706112,
+            "tree_rss_sum_bytes": 111706112,
+            "process_count": 1,
+            "at_us": 8474075,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 112148480,
+            "tree_rss_sum_bytes": 112148480,
+            "process_count": 1,
+            "at_us": 8597146,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 114049024,
+            "tree_rss_sum_bytes": 114049024,
+            "process_count": 1,
+            "at_us": 8710315,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 114507776,
+            "tree_rss_sum_bytes": 114507776,
+            "process_count": 1,
+            "at_us": 8811827,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 115654656,
+            "tree_rss_sum_bytes": 115654656,
+            "process_count": 1,
+            "at_us": 8912557,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 116129792,
+            "tree_rss_sum_bytes": 116129792,
+            "process_count": 1,
+            "at_us": 9029915,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 116637696,
+            "tree_rss_sum_bytes": 116637696,
+            "process_count": 1,
+            "at_us": 9146537,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 117129216,
+            "tree_rss_sum_bytes": 117129216,
+            "process_count": 1,
+            "at_us": 9248341,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 117637120,
+            "tree_rss_sum_bytes": 117637120,
+            "process_count": 1,
+            "at_us": 9346354,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 118210560,
+            "tree_rss_sum_bytes": 118210560,
+            "process_count": 1,
+            "at_us": 9440196,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 119914496,
+            "tree_rss_sum_bytes": 119914496,
+            "process_count": 1,
+            "at_us": 9534334,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 119914496,
+            "tree_rss_sum_bytes": 119914496,
+            "process_count": 1,
+            "at_us": 9622442,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 119914496,
+            "tree_rss_sum_bytes": 119914496,
+            "process_count": 1,
+            "at_us": 9702027,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 120291328,
+            "tree_rss_sum_bytes": 120291328,
+            "process_count": 1,
+            "at_us": 9793603,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 121159680,
+            "tree_rss_sum_bytes": 121159680,
+            "process_count": 1,
+            "at_us": 9884427,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 123011072,
+            "tree_rss_sum_bytes": 123011072,
+            "process_count": 1,
+            "at_us": 9966649,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 123011072,
+            "tree_rss_sum_bytes": 123011072,
+            "process_count": 1,
+            "at_us": 10056354,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 123011072,
+            "tree_rss_sum_bytes": 123011072,
+            "process_count": 1,
+            "at_us": 10147236,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 123027456,
+            "tree_rss_sum_bytes": 123027456,
+            "process_count": 1,
+            "at_us": 10226281,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 123027456,
+            "tree_rss_sum_bytes": 123027456,
+            "process_count": 1,
+            "at_us": 10305848,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 123060224,
+            "tree_rss_sum_bytes": 123060224,
+            "process_count": 1,
+            "at_us": 10383749,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 124944384,
+            "tree_rss_sum_bytes": 124944384,
+            "process_count": 1,
+            "at_us": 10482022,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 127025152,
+            "tree_rss_sum_bytes": 127025152,
+            "process_count": 1,
+            "at_us": 10572725,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 129269760,
+            "tree_rss_sum_bytes": 129269760,
+            "process_count": 1,
+            "at_us": 10662632,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 130400256,
+            "tree_rss_sum_bytes": 130400256,
+            "process_count": 1,
+            "at_us": 10753688,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 130400256,
+            "tree_rss_sum_bytes": 130400256,
+            "process_count": 1,
+            "at_us": 10834041,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 130400256,
+            "tree_rss_sum_bytes": 130400256,
+            "process_count": 1,
+            "at_us": 10933947,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 130400256,
+            "tree_rss_sum_bytes": 130400256,
+            "process_count": 1,
+            "at_us": 11021480,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 130662400,
+            "tree_rss_sum_bytes": 130662400,
+            "process_count": 1,
+            "at_us": 11125170,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 131088384,
+            "tree_rss_sum_bytes": 131088384,
+            "process_count": 1,
+            "at_us": 11210971,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 132677632,
+            "tree_rss_sum_bytes": 132677632,
+            "process_count": 1,
+            "at_us": 11302117,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 133316608,
+            "tree_rss_sum_bytes": 133316608,
+            "process_count": 1,
+            "at_us": 11395694,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 133611520,
+            "tree_rss_sum_bytes": 133611520,
+            "process_count": 1,
+            "at_us": 11486209,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 133611520,
+            "tree_rss_sum_bytes": 133611520,
+            "process_count": 1,
+            "at_us": 11576266,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 133611520,
+            "tree_rss_sum_bytes": 133611520,
+            "process_count": 1,
+            "at_us": 11670040,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 135036928,
+            "tree_rss_sum_bytes": 135036928,
+            "process_count": 1,
+            "at_us": 11772711,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 135544832,
+            "tree_rss_sum_bytes": 135544832,
+            "process_count": 1,
+            "at_us": 11867052,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 135790592,
+            "tree_rss_sum_bytes": 135790592,
+            "process_count": 1,
+            "at_us": 11961176,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 135790592,
+            "tree_rss_sum_bytes": 135790592,
+            "process_count": 1,
+            "at_us": 12044440,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 135790592,
+            "tree_rss_sum_bytes": 135790592,
+            "process_count": 1,
+            "at_us": 12135106,
+            "phase": "vertices"
+          },
+          {
+            "root_rss_bytes": 135790592,
+            "tree_rss_sum_bytes": 135790592,
+            "process_count": 1,
+            "at_us": 12229618,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 135806976,
+            "tree_rss_sum_bytes": 135806976,
+            "process_count": 1,
+            "at_us": 12311928,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 136953856,
+            "tree_rss_sum_bytes": 136953856,
+            "process_count": 1,
+            "at_us": 12410633,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 137805824,
+            "tree_rss_sum_bytes": 137805824,
+            "process_count": 1,
+            "at_us": 12490091,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 137805824,
+            "tree_rss_sum_bytes": 137805824,
+            "process_count": 1,
+            "at_us": 12581906,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 137805824,
+            "tree_rss_sum_bytes": 137805824,
+            "process_count": 1,
+            "at_us": 12679667,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 137805824,
+            "tree_rss_sum_bytes": 137805824,
+            "process_count": 1,
+            "at_us": 12769144,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 138084352,
+            "tree_rss_sum_bytes": 138084352,
+            "process_count": 1,
+            "at_us": 12861933,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 138608640,
+            "tree_rss_sum_bytes": 138608640,
+            "process_count": 1,
+            "at_us": 12956285,
+            "phase": "surfaces"
+          },
+          {
+            "root_rss_bytes": 138969088,
+            "tree_rss_sum_bytes": 138969088,
+            "process_count": 1,
+            "at_us": 13037000,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 144146432,
+            "tree_rss_sum_bytes": 144146432,
+            "process_count": 1,
+            "at_us": 13125324,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 145637376,
+            "tree_rss_sum_bytes": 145637376,
+            "process_count": 1,
+            "at_us": 13233209,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 147898368,
+            "tree_rss_sum_bytes": 147898368,
+            "process_count": 1,
+            "at_us": 13327957,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 150093824,
+            "tree_rss_sum_bytes": 150093824,
+            "process_count": 1,
+            "at_us": 13419661,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 152502272,
+            "tree_rss_sum_bytes": 152502272,
+            "process_count": 1,
+            "at_us": 13516229,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 154927104,
+            "tree_rss_sum_bytes": 154927104,
+            "process_count": 1,
+            "at_us": 13610818,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 157106176,
+            "tree_rss_sum_bytes": 157106176,
+            "process_count": 1,
+            "at_us": 13713208,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 159023104,
+            "tree_rss_sum_bytes": 159023104,
+            "process_count": 1,
+            "at_us": 13797493,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 161529856,
+            "tree_rss_sum_bytes": 161529856,
+            "process_count": 1,
+            "at_us": 13891310,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 164020224,
+            "tree_rss_sum_bytes": 164020224,
+            "process_count": 1,
+            "at_us": 13981243,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 166084608,
+            "tree_rss_sum_bytes": 166084608,
+            "process_count": 1,
+            "at_us": 14060466,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 168624128,
+            "tree_rss_sum_bytes": 168624128,
+            "process_count": 1,
+            "at_us": 14155671,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 170885120,
+            "tree_rss_sum_bytes": 170885120,
+            "process_count": 1,
+            "at_us": 14250644,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 173113344,
+            "tree_rss_sum_bytes": 173113344,
+            "process_count": 1,
+            "at_us": 14342470,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 175603712,
+            "tree_rss_sum_bytes": 175603712,
+            "process_count": 1,
+            "at_us": 14434371,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 177799168,
+            "tree_rss_sum_bytes": 177799168,
+            "process_count": 1,
+            "at_us": 14513273,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 179896320,
+            "tree_rss_sum_bytes": 179896320,
+            "process_count": 1,
+            "at_us": 14599282,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 182140928,
+            "tree_rss_sum_bytes": 182140928,
+            "process_count": 1,
+            "at_us": 14689838,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 184320000,
+            "tree_rss_sum_bytes": 184320000,
+            "process_count": 1,
+            "at_us": 14785825,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 186597376,
+            "tree_rss_sum_bytes": 186597376,
+            "process_count": 1,
+            "at_us": 14885471,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 189054976,
+            "tree_rss_sum_bytes": 189054976,
+            "process_count": 1,
+            "at_us": 14973743,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 191217664,
+            "tree_rss_sum_bytes": 191217664,
+            "process_count": 1,
+            "at_us": 15052568,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 193593344,
+            "tree_rss_sum_bytes": 193593344,
+            "process_count": 1,
+            "at_us": 15150397,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 195428352,
+            "tree_rss_sum_bytes": 195428352,
+            "process_count": 1,
+            "at_us": 15229682,
+            "phase": "commit"
+          },
+          {
+            "root_rss_bytes": 196395008,
+            "tree_rss_sum_bytes": 196395008,
+            "process_count": 1,
+            "at_us": 15323434,
+            "phase": "first_snap"
+          }
+        ],
+        "per_phase": {
+          "commit": {
+            "samples": 25,
+            "sampled_peak_root_rss_bytes": 195428352,
+            "sampled_peak_tree_rss_sum_bytes": 195428352
+          },
+          "first_snap": {
+            "samples": 1,
+            "sampled_peak_root_rss_bytes": 196395008,
+            "sampled_peak_tree_rss_sum_bytes": 196395008
+          },
+          "instances": {
+            "samples": 0,
+            "sampled_peak_root_rss_bytes": null,
+            "sampled_peak_tree_rss_sum_bytes": null
+          },
+          "parse": {
+            "samples": 38,
+            "sampled_peak_root_rss_bytes": 86638592,
+            "sampled_peak_tree_rss_sum_bytes": 86638592
+          },
+          "read": {
+            "samples": 0,
+            "sampled_peak_root_rss_bytes": null,
+            "sampled_peak_tree_rss_sum_bytes": null
+          },
+          "surfaces": {
+            "samples": 76,
+            "sampled_peak_root_rss_bytes": 138608640,
+            "sampled_peak_tree_rss_sum_bytes": 138608640
+          },
+          "validate": {
+            "samples": 1,
+            "sampled_peak_root_rss_bytes": 87097344,
+            "sampled_peak_tree_rss_sum_bytes": 87097344
+          },
+          "vertices": {
+            "samples": 16,
+            "sampled_peak_root_rss_bytes": 135790592,
+            "sampled_peak_tree_rss_sum_bytes": 135790592
+          }
+        },
+        "sampled_peak_root_rss_bytes": 196395008,
+        "sampled_peak_tree_rss_sum_bytes": 196395008,
+        "exit_zero_rss_samples_excluded": 0,
+        "observed_sample_interval_us": {
+          "median": 91481.0,
+          "max": 547406
+        }
+      },
+      "stage_events": [
+        {
+          "at_us": 23,
+          "phase": "read",
+          "pid": 43915
+        },
+        {
+          "at_us": 10193,
+          "phase": "parse",
+          "pid": 43915
+        },
+        {
+          "at_us": 3388255,
+          "phase": "validate",
+          "pid": 43915
+        },
+        {
+          "at_us": 3486890,
+          "phase": "vertices",
+          "pid": 43915
+        },
+        {
+          "at_us": 3514833,
+          "phase": "surfaces",
+          "pid": 43915
+        },
+        {
+          "at_us": 3666682,
+          "phase": "vertices",
+          "pid": 43915
+        },
+        {
+          "at_us": 3721175,
+          "phase": "surfaces",
+          "pid": 43915
+        },
+        {
+          "at_us": 4071018,
+          "phase": "vertices",
+          "pid": 43915
+        },
+        {
+          "at_us": 4131161,
+          "phase": "surfaces",
+          "pid": 43915
+        },
+        {
+          "at_us": 4519866,
+          "phase": "vertices",
+          "pid": 43915
+        },
+        {
+          "at_us": 4547032,
+          "phase": "surfaces",
+          "pid": 43915
+        },
+        {
+          "at_us": 4703656,
+          "phase": "vertices",
+          "pid": 43915
+        },
+        {
+          "at_us": 4762971,
+          "phase": "surfaces",
+          "pid": 43915
+        },
+        {
+          "at_us": 5219984,
+          "phase": "vertices",
+          "pid": 43915
+        },
+        {
+          "at_us": 5280239,
+          "phase": "surfaces",
+          "pid": 43915
+        },
+        {
+          "at_us": 5762178,
+          "phase": "vertices",
+          "pid": 43915
+        },
+        {
+          "at_us": 5797210,
+          "phase": "surfaces",
+          "pid": 43915
+        },
+        {
+          "at_us": 6028570,
+          "phase": "vertices",
+          "pid": 43915
+        },
+        {
+          "at_us": 6070277,
+          "phase": "surfaces",
+          "pid": 43915
+        },
+        {
+          "at_us": 6311004,
+          "phase": "vertices",
+          "pid": 43915
+        },
+        {
+          "at_us": 6594131,
+          "phase": "surfaces",
+          "pid": 43915
+        },
+        {
+          "at_us": 9185558,
+          "phase": "vertices",
+          "pid": 43915
+        },
+        {
+          "at_us": 9263473,
+          "phase": "surfaces",
+          "pid": 43915
+        },
+        {
+          "at_us": 9682393,
+          "phase": "vertices",
+          "pid": 43915
+        },
+        {
+          "at_us": 9742495,
+          "phase": "surfaces",
+          "pid": 43915
+        },
+        {
+          "at_us": 10146104,
+          "phase": "vertices",
+          "pid": 43915
+        },
+        {
+          "at_us": 10172005,
+          "phase": "surfaces",
+          "pid": 43915
+        },
+        {
+          "at_us": 10322952,
+          "phase": "vertices",
+          "pid": 43915
+        },
+        {
+          "at_us": 10323955,
+          "phase": "surfaces",
+          "pid": 43915
+        },
+        {
+          "at_us": 10327664,
+          "phase": "vertices",
+          "pid": 43915
+        },
+        {
+          "at_us": 10524260,
+          "phase": "surfaces",
+          "pid": 43915
+        },
+        {
+          "at_us": 11861815,
+          "phase": "vertices",
+          "pid": 43915
+        },
+        {
+          "at_us": 11891892,
+          "phase": "surfaces",
+          "pid": 43915
+        },
+        {
+          "at_us": 12063782,
+          "phase": "vertices",
+          "pid": 43915
+        },
+        {
+          "at_us": 12196362,
+          "phase": "surfaces",
+          "pid": 43915
+        },
+        {
+          "at_us": 12971681,
+          "phase": "instances",
+          "pid": 43915
+        },
+        {
+          "at_us": 12971980,
+          "phase": "commit",
+          "pid": 43915
+        },
+        {
+          "at_us": 15272709,
+          "phase": "done",
+          "pid": 43915
+        },
+        {
+          "at_us": 15272709,
+          "phase": "first_snap",
+          "pid": 43915
+        }
+      ],
+      "supervisor_wall_us": 15356313,
+      "run": 3
+    }
+  ],
+  "summary": {
+    "median_total_us": 15272709,
+    "median_phase_us": {
+      "commit": 2219266,
+      "instances": 303,
+      "parse": 3593454,
+      "read": 10350,
+      "surfaces": 8110728,
+      "validate": 105364,
+      "vertices": 1173337
+    },
+    "phase_observed_runs": {
+      "commit": 3,
+      "instances": 3,
+      "parse": 3,
+      "read": 3,
+      "surfaces": 3,
+      "validate": 3,
+      "vertices": 3
+    },
+    "max_sampled_tree_rss_sum_bytes": 196395008
+  },
+  "scope": "Fresh processes, warm filesystem cache possible; headless CPU replay, not native UI/GPU readiness. RSS sum can double-count shared pages; sampled peaks miss short spikes. Phase attribution uses first stdout event as clock anchor and is approximate. Null means no RSS samples, never zero usage."
+}

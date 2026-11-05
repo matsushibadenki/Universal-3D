@@ -66,6 +66,26 @@ impl Document {
     }
 
     pub fn validate(&self) -> Result<(), String> {
+        self.validate_context(None, None)
+    }
+    pub fn validate_with_task(&self, task: &crate::load_task::Task) -> Result<(), String> {
+        self.validate_context(Some(task), Some(task.cancel_flag()))
+    }
+    pub fn validate_cancellable(
+        &self,
+        cancel: Option<&std::sync::atomic::AtomicBool>,
+    ) -> Result<(), String> {
+        self.validate_context(None, cancel)
+    }
+    fn validate_context(
+        &self,
+        task: Option<&crate::load_task::Task>,
+        cancel: Option<&std::sync::atomic::AtomicBool>,
+    ) -> Result<(), String> {
+        crate::snapping::check_cancel(cancel)?;
+        if let Some(task) = task {
+            task.progress(crate::load_task::Phase::Validate, 0, self.meshes.len())?;
+        }
         if !matches!(self.version, 1..=3) || self.objects.len() > 10000 {
             return Err("Unsupported document version or too many objects".into());
         }
@@ -79,14 +99,29 @@ impl Document {
         {
             return Err("Document exceeds mesh budget".into());
         }
-        for (id, mesh) in &self.meshes {
+        for (position, (id, mesh)) in self.meshes.iter().enumerate() {
+            crate::snapping::check_cancel(cancel)?;
             if id.len() > 128 {
                 return Err("Invalid mesh ID".into());
             }
-            mesh.validate()?;
+            if cancel.is_some() {
+                mesh.validate_cancellable(cancel)?;
+            } else {
+                mesh.validate()?;
+            }
+            if let Some(task) = task {
+                task.progress(
+                    crate::load_task::Phase::Validate,
+                    position + 1,
+                    self.meshes.len(),
+                )?;
+            }
         }
         let mut ids = std::collections::HashSet::new();
-        for o in &self.objects {
+        for (position, o) in self.objects.iter().enumerate() {
+            if position.is_multiple_of(128) {
+                crate::snapping::check_cancel(cancel)?;
+            }
             o.validate()?;
             self.validate_mesh_reference(o)?;
             if !ids.insert(o.id) {
@@ -96,7 +131,7 @@ impl Document {
         if self.selected.is_some_and(|id| !ids.contains(&id)) {
             return Err("Invalid selection".into());
         }
-        Ok(())
+        crate::snapping::check_cancel(cancel)
     }
 }
 impl Document {
@@ -491,6 +526,32 @@ impl Editor {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn document_validation_reports_mesh_progress_and_cancel_is_read_only() {
+        let mut editor = Editor::new();
+        editor.import_usd(crate::usd::tests::fixture()).unwrap();
+        let document = editor.document.clone();
+        let stamp = editor.stamp();
+        let history = (editor.undo.len(), editor.redo.len(), editor.dirty);
+        let tasks = crate::load_task::Tasks::default();
+        let guard = tasks.begin(crate::load_task::Kind::Open).unwrap();
+        document.validate_with_task(&guard.task).unwrap();
+        let progress = tasks.snapshot().unwrap();
+        assert_eq!(progress.phase, crate::load_task::Phase::Validate);
+        assert_eq!((progress.completed, progress.total), (1, 1));
+        tasks.cancel(&progress.id);
+        assert_eq!(
+            document.validate_with_task(&guard.task).unwrap_err(),
+            "LOAD_CANCELLED"
+        );
+        assert_eq!(editor.document, document);
+        assert_eq!(editor.stamp(), stamp);
+        assert_eq!(
+            (editor.undo.len(), editor.redo.len(), editor.dirty),
+            history
+        );
+        assert!(document.validate().is_ok());
+    }
     #[test]
     fn splices_restore_insert_delete_reorder_and_selection() {
         let mut e = Editor::new();

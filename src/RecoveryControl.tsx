@@ -10,12 +10,14 @@ type RecoveryState = {
   candidates: { id: string; filename: string; saved_at: number }[];
   saved_at: number | null;
   error: string | null;
+  scanning: boolean;
 };
 export function RecoveryControl({ t }: { t: (key: Key) => string }) {
   const [state, setState] = useState<RecoveryState>({
     candidates: [],
     saved_at: null,
     error: null,
+    scanning: true,
   });
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState("");
@@ -27,14 +29,17 @@ export function RecoveryControl({ t }: { t: (key: Key) => string }) {
     if (!desktop) return;
     let disposed = false;
     let pending = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
     async function refresh() {
       if (pending) return;
       pending = true;
+      let scanning = false;
       try {
         const next = await invoke<RecoveryState>("get_recovery_state");
         if (disposed) return;
         setState(next);
-        if (!initialized.current) {
+        scanning = !!next.scanning;
+        if (!initialized.current && !scanning) {
           initialized.current = true;
           if (next.candidates.length) {
             setSelected(next.candidates[0].id);
@@ -46,13 +51,14 @@ export function RecoveryControl({ t }: { t: (key: Key) => string }) {
           setState((previous) => ({ ...previous, error: String(e) }));
       } finally {
         pending = false;
+        if (!disposed)
+          timer = setTimeout(() => void refresh(), scanning ? 250 : 5000);
       }
     }
     void refresh();
-    const timer = window.setInterval(() => void refresh(), 5000);
     return () => {
       disposed = true;
-      window.clearInterval(timer);
+      clearTimeout(timer);
     };
   }, []);
   useEffect(() => {
@@ -84,13 +90,15 @@ export function RecoveryControl({ t }: { t: (key: Key) => string }) {
   if (!desktop) return null;
   const status = state.error
     ? t("recoveryFailed")
-    : state.saved_at
-      ? `${t("recoverySaved")} · ${new Date(state.saved_at * 1000).toLocaleTimeString()}`
-      : t("recoveryWaiting");
+    : state.scanning
+      ? t("recoveryScanning")
+      : state.saved_at
+        ? `${t("recoverySaved")} · ${new Date(state.saved_at * 1000).toLocaleTimeString()}`
+        : t("recoveryWaiting");
   const candidate = state.candidates.find((item) => item.id === selected);
   const Icon = state.error
     ? TriangleAlert
-    : state.candidates.length
+    : state.scanning || state.candidates.length
       ? History
       : ShieldCheck;
   return (
@@ -99,6 +107,7 @@ export function RecoveryControl({ t }: { t: (key: Key) => string }) {
         className={`recovery-status${state.error ? " has-error" : ""}`}
         title={status}
         aria-label={status}
+        aria-busy={state.scanning}
         onClick={() => {
           setSelected(state.candidates[0]?.id ?? "");
           setOpen(true);
@@ -114,8 +123,10 @@ export function RecoveryControl({ t }: { t: (key: Key) => string }) {
         onKeyDown={(e) => e.stopPropagation()}
         onCancel={(e) => {
           e.preventDefault();
-          if (!busy) setOpen(false);
-          else
+          if (!busy) {
+            initialized.current = true;
+            setOpen(false);
+          } else
             void cancelCurrentLoad("recovery").catch((e) =>
               setError(String(e)),
             );
@@ -164,7 +175,10 @@ export function RecoveryControl({ t }: { t: (key: Key) => string }) {
             <button
               type="button"
               disabled={busy}
-              onClick={() => setOpen(false)}
+              onClick={() => {
+                initialized.current = true;
+                setOpen(false);
+              }}
             >
               {t("recoveryLater")}
             </button>

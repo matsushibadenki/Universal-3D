@@ -542,6 +542,9 @@ impl TransformDrag {
     pub fn vertex_enabled(&self, snap_toggle: bool, held: bool) -> bool {
         self.geometry_mode(snap_toggle, held).is_some()
     }
+    pub fn has_vertex_targets(&self) -> bool {
+        self.vertex_targets.is_some()
+    }
     pub fn prepare_vertices(&mut self, editor: &Editor) {
         if self.vertex_targets.is_none() {
             self.vertex_targets = Some(Arc::new(VertexIndex::new(editor, self.size, false)));
